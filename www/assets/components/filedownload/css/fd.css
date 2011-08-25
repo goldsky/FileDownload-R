@@ -1,0 +1,28 @@
+
+.fd-firstDir{}
+.fd-lastDir{}
+.fd-firstFile{}
+.fd-lastFile{}
+.fd-dir{}
+.fd-file{}
+.fd-path{}
+
+.fd-altRow{
+    background-color: #efefef;
+}
+
+.fd-group-dir{
+    background-color: #ddd;
+}
+
+table.fd-table tr {
+    border-bottom: 1px solid #ccc;
+}
+
+table.fd-table tr td {
+     padding:5px;
+}
+
+.fd-xlsx {
+    background-color: #E3D1E6;
+}

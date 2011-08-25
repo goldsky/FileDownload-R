@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model package="filedownload" baseClass="xPDOObject" platform="mysql" defaultEngine="MyISAM">
+    <object class="FDL" table="fd_count" extends="xPDOSimpleObject">
+        <field key="ctx" dbtype="varchar" precision="255" phptype="string" null="true" default="web" />
+        <field key="filename" dbtype="varchar" precision="255" phptype="string" null="true" default="" />
+        <field key="count" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="true" default="0" />
+        <field key="hash" dbtype="varchar" precision="255" phptype="string" null="true" default="" />
+    </object>
+</model>
