@@ -1,5 +1,11 @@
 Changelog for FileDownload.
 
+FileDownload 1.0.0.beta-2
+====================================
++ Added FileDownloadLink snippet for a single file download
++ Added parse template code to the class for FileDownloadLink
++ Added &toArray parameter for both snippets
+
 FileDownload 1.0.0.beta-1
 ====================================
 - Initial release

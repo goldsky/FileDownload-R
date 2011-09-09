@@ -50,4 +50,15 @@ $properties = include $sources['properties'] . 'filedownload.properties.php';
 $snippets[0]->setProperties($properties);
 unset($properties);
 
+$snippets[1] = $modx->newObject('modSnippet');
+$snippets[1]->fromArray(array(
+    'id' => 1,
+    'name' => 'FileDownloadLink',
+    'description' => 'Snippet to provide a download link for a file.',
+    'snippet' => getSnippetContent($sources['source_core'].'/elements/snippets/filedownloadlink.snippet.php'),
+        ), '', true, true);
+$properties = include $sources['properties'] . 'filedownload.properties.php';
+$snippets[0]->setProperties($properties);
+unset($properties);
+
 return $snippets;
