@@ -1,4 +1,9 @@
 
+.fd-header{
+    background-color: firebrick;
+    color: white;
+}
+
 .fd-firstDir{}
 .fd-lastDir{}
 .fd-firstFile{}

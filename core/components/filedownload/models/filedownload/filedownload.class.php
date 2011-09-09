@@ -466,6 +466,14 @@ class FileDownload {
         return $chunk;
     }
 
+    public function parseTplCode($code, $phs) {
+        $chunk = $this->modx->newObject('modChunk');
+        $chunk->setContent($code);
+        $chunk->setCacheable(false);
+        $phs = $this->replacePropPhs($phs);
+        return $chunk->process($phs);
+    }
+
     /**
      * Get the right image type to the specified file's extension, or fall back
      * to the default image.

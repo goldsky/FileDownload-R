@@ -630,6 +630,12 @@ if (!$contents) {
     return '';
 }
 
-$output = $fdl->parseTemplate();
+if (!empty($scriptProperties['toArray'])) {
+    $output = '<pre>';
+    $output .= print_r($contents);
+    $output .= '</pre>';
+} else {
+    $output = $fdl->parseTemplate();
+}
 
 return $output;
