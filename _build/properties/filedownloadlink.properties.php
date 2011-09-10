@@ -20,25 +20,36 @@
  * FileDownload; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
  * Suite 330, Boston, MA 02111-1307 USA
  *
- * Resolve creating db tables
+ * FileDownload build script
  *
  * @package filedownload
  * @subpackage build
  */
-if ($object->xpdo) {
-    switch ($options[xPDOTransport::PACKAGE_ACTION]) {
-        case xPDOTransport::ACTION_INSTALL:
-            $modx = & $object->xpdo;
-            $modelPath = $modx->getOption('core_path') . 'components/filedownload/models/';
-            $modx->addPackage('filedownload', $modelPath);
-            $manager = $modx->getManager();
-            $manager->createObjectContainer('FDL');
+if (!function_exists("fixJson")) {
 
-            break;
-        case xPDOTransport::ACTION_UPGRADE:
-        case xPDOTransport::ACTION_UNINSTALL:
-            break;
+    function fixJson(array $array) {
+        $fixed = array();
+        foreach ($array as $k => $v) {
+            $fixed[] = array(
+                'name' => $v['name'],
+                'desc' => $v['desc'],
+                'type' => $v['xtype'],
+                'options' => empty($v['options']) ? '' : $v['options'],
+                'value' => $v['value'],
+                'lexicon' => $v['lexicon'],
+            );
+        }
+        return $fixed;
     }
+
 }
 
-return true;
+ob_start();
+include dirname(__FILE__) . '/default.filedownloadlink.properties.js';
+$json = ob_get_contents();
+ob_end_clean();
+
+$properties = $modx->fromJSON($json);
+$properties = fixJson($properties);
+
+return $properties;

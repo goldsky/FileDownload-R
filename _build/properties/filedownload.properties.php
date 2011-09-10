@@ -25,23 +25,27 @@
  * @package filedownload
  * @subpackage build
  */
-function fixJson(array $array) {
-    $fixed = array();
-    foreach ($array as $k => $v) {
-        $fixed[] = array(
-            'name' => $v['name'],
-            'desc' => $v['desc'],
-            'type' => $v['xtype'],
-            'options' => empty($v['options']) ? '' : $v['options'],
-            'value' => $v['value'],
-            'lexicon' => $v['desc_trans'],
-        );
+if (!function_exists("fixJson")) {
+
+    function fixJson(array $array) {
+        $fixed = array();
+        foreach ($array as $k => $v) {
+            $fixed[] = array(
+                'name' => $v['name'],
+                'desc' => $v['desc'],
+                'type' => $v['xtype'],
+                'options' => empty($v['options']) ? '' : $v['options'],
+                'value' => $v['value'],
+                'lexicon' => $v['lexicon'],
+            );
+        }
+        return $fixed;
     }
-    return $fixed;
+
 }
 
 ob_start();
-include dirname(__FILE__) . '/default.properties.js';
+include dirname(__FILE__) . '/default.filedownload.properties.js';
 $json = ob_get_contents();
 ob_end_clean();
 

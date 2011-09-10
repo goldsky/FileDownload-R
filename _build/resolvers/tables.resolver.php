@@ -25,19 +25,35 @@
  * @package filedownload
  * @subpackage build
  */
-if ($object->xpdo && !empty($options['fdl_keep_db'])) {
+if ($modx = & $object->xpdo) {
     switch ($options[xPDOTransport::PACKAGE_ACTION]) {
         case xPDOTransport::ACTION_INSTALL:
+            $modelPath = $modx->getOption('core_path') . 'components/filedownload/models/';
+            $modx->addPackage('filedownload', realpath($modelPath) . DIRECTORY_SEPARATOR);
+            $manager = $modx->getManager();
+            $manager->createObjectContainer('FDL');
+
+            break;
+
         case xPDOTransport::ACTION_UPGRADE:
             break;
+
         case xPDOTransport::ACTION_UNINSTALL:
-            $modx = & $object->xpdo;
             $modelPath = $modx->getOption('core_path') . 'components/filedownload/models/';
-            $modx->addPackage('filedownload', $modelPath);
+            $modx->addPackage('filedownload', realpath($modelPath) . DIRECTORY_SEPARATOR);
             $manager = $modx->getManager();
-            $manager->removeObjectContainer('FDL');
+
+            if (!$manager->removeObjectContainer('FDL')) {
+                $modx->log(xPDO::LOG_LEVEL_ERROR,'$modelPath = ' . $modelPath);
+                $modx->log(xPDO::LOG_LEVEL_ERROR,'realpath($modelPath) . DIRECTORY_SEPARATOR = ' . realpath($modelPath) . DIRECTORY_SEPARATOR);
+                $modx->log(modX::LOG_LEVEL_ERROR, '[FileDownload] table was unable to delete');
+                return false;
+            } else {
+                $modx->log(modX::LOG_LEVEL_INFO, '[FileDownload] table was deleted successfully');
+            }
 
             break;
     }
 }
+
 return true;

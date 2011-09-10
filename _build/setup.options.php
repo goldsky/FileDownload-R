@@ -30,19 +30,34 @@ $output = '';
 /* get values based on mode */
 switch ($options[xPDOTransport::PACKAGE_ACTION]) {
     case xPDOTransport::ACTION_INSTALL:
+        break;
     case xPDOTransport::ACTION_UPGRADE:
         break;
     case xPDOTransport::ACTION_UNINSTALL:
-        /* do output html */
-        $output = '
+        $modx = & $object->xpdo;
+        $modelPath = $modx->getOption('core_path') . 'components/filedownload/models/';
+        $modx->addPackage('filedownload', realpath($modelPath) . DIRECTORY_SEPARATOR);
+        $cat = $modx->getObject('FDL');
+        if (!$cat) {
+            $modx->log(xPDO::LOG_LEVEL_INFO,'realpath($modelPath) . DIRECTORY_SEPARATOR = ' . realpath($modelPath) . DIRECTORY_SEPARATOR);
+            $modx->log(xPDO::LOG_LEVEL_INFO,'var_dump($cat) = ' . var_dump($cat));
+            $modx->log(xPDO::LOG_LEVEL_INFO,'[FileDownload] could not load the filedownload package while uninstalling.');
+        } else {
+            $modx->log(xPDO::LOG_LEVEL_INFO,'[FileDownload] pass through the xPDOTransport::ACTION_UNINSTALL');
+        }
+        break;
+}
+
+if ($cat) {
+    /* do output html */
+    $output = '
 <h2>FileDownload Uninstaller</h2>
 <p>You are about to uninstall FileDownload snippet. Do you also want to remove the FileDownload\'s database?</p>
 <br />
 <input type="checkbox" name="fdl_keep_db" id="fdl_keep_db" value="1" selected="selected" />
-<p>It is recommended if you keep the download number information.</p>
+<p>It is recommended if you keep the download countings.</p>
 <br /><br />
 ';
-        break;
 }
 
 return $output;

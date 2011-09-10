@@ -1,13 +1,12 @@
 <?php
-
 /**
  * Default English lexicon topic
- *
+ * 
  * @language en
  * @package filedownload
  * @subpackage lexicon
  */
-$_lang['fd.err_save_counter'] = 'Could not save the download counting.';
+/* FileDownload & FileDownloadLink snippet */
 
 $_lang['prop_fd.ajaxContainerId_desc'] = "The Ajax's element container id.";
 $_lang['prop_fd.ajaxControllerPage_desc'] = "The MODX's resource page id as the
@@ -101,4 +100,3 @@ $_lang['prop_fd.userGroups_desc'] = "This will make the download link active for
     will receive a JavaScript alert with the message contained in the noDownload
     language setting. Multiple groups can be specified by using a comma
     delimited list.";
-

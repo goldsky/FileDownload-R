@@ -956,15 +956,15 @@ class FileDownload {
             $cssName[] = $this->config['cssLastFile'];
         }
         if ($this->config['cssExtension']) {
-            $cssNameExt = array();
+            $cssNameExt = '';
             if (!empty($this->config['cssExtensionPrefix'])) {
-                $cssNameExt[] = $this->config['cssExtensionPrefix'];
+                $cssNameExt .= $this->config['cssExtensionPrefix'];
             }
-            $cssNameExt[] = $ext;
+            $cssNameExt .= $ext;
             if (!empty($this->config['cssExtensionSuffix'])) {
-                $cssNameExt[] = $this->config['cssExtensionSuffix'];
+                $cssNameExt .= $this->config['cssExtensionSuffix'];
             }
-            $cssName[] = @implode('', $cssNameExt);
+            $cssName[] = $cssNameExt;
         }
         $o = '';
         $cssNames = @implode(' ', $cssName);

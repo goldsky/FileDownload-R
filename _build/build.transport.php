@@ -40,18 +40,18 @@ define('PKG_RELEASE', 'b.2');
 require_once dirname(__FILE__) . '/build.config.php';
 require_once MODX_CORE_PATH . 'model/modx/modx.class.php';
 
-$root = dirname(dirname(__FILE__)) . '/';
+$root = dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR;
 $sources = array(
     'root' => $root,
-    'build' => $root . '_build/',
-    'data' => $root . '_build/data/',
-    'properties' => $root . '_build/properties/',
-    'resolvers' => $root . '_build/resolvers/',
-    'lexicon' => $root . 'core/components/filedownload/lexicon/',
-    'docs' => $root . 'core/components/filedownload/docs/',
-    'chunks' => $root . 'core/components/filedownload/themes/default/chunks/',
-    'source_assets' => $root . 'www/assets/components/filedownload',
-    'source_core' => $root . 'core/components/filedownload',
+    'build' => $root . '_build' . DIRECTORY_SEPARATOR,
+    'data' => realpath($root . '_build/data/') . DIRECTORY_SEPARATOR,
+    'properties' => realpath($root . '_build/properties/') . DIRECTORY_SEPARATOR,
+    'resolvers' => realpath($root . '_build/resolvers/') . DIRECTORY_SEPARATOR,
+    'lexicon' => realpath($root . 'core/components/filedownload/lexicon/') . DIRECTORY_SEPARATOR,
+    'docs' => realpath($root . 'core/components/filedownload/docs/') . DIRECTORY_SEPARATOR,
+    'chunks' => realpath($root . 'core/components/filedownload/themes/default/chunks/') . DIRECTORY_SEPARATOR,
+    'source_assets' => realpath($root . 'www/assets/components/filedownload'),
+    'source_core' => realpath($root . 'core/components/filedownload'),
 );
 unset($root);
 
@@ -59,12 +59,15 @@ $modx = new modX();
 $modx->initialize('mgr');
 echo '<pre>'; /* used for nice formatting of log messages */
 $modx->setLogLevel(modX::LOG_LEVEL_INFO);
+flush();
 $modx->setLogTarget(XPDO_CLI_MODE ? 'ECHO' : 'HTML');
 
 $modx->loadClass('transport.modPackageBuilder', '', false, true);
 $builder = new modPackageBuilder($modx);
 $builder->createPackage(PKG_NAME_LOWER, PKG_VERSION, PKG_RELEASE);
 $builder->registerNamespace(PKG_NAME_LOWER, false, true, '{core_path}components/filedownload/');
+$modx->getService('lexicon', 'modLexicon');
+$modx->lexicon->load('filedownload:properties');
 
 /* create category */
 $category = $modx->newObject('modCategory');
@@ -73,6 +76,7 @@ $category->set('category', PKG_NAME);
 
 /* add snippets */
 $modx->log(modX::LOG_LEVEL_INFO, 'Packaging in snippets...');
+flush();
 $snippets = include $sources['data'] . 'transport.snippets.php';
 if (empty($snippets))
     $modx->log(modX::LOG_LEVEL_ERROR, 'Could not package in snippets.');
@@ -80,6 +84,7 @@ $category->addMany($snippets);
 
 /* add chunks */
 $modx->log(modX::LOG_LEVEL_INFO, 'Packaging in chunks...');
+flush();
 $chunks = include $sources['data'] . 'transport.chunks.php';
 if (empty($chunks))
     $modx->log(modX::LOG_LEVEL_ERROR, 'Could not pack in chunks.');
@@ -107,39 +112,43 @@ $attr = array(
 $vehicle = $builder->createVehicle($category, $attr);
 
 $modx->log(modX::LOG_LEVEL_INFO, 'Adding file resolvers to category...');
+flush();
 $vehicle->resolve('file', array(
     'source' => $sources['source_assets'],
-    'target' => "return MODX_ASSETS_PATH . 'components/';",
+    'target' => "return MODX_ASSETS_PATH . 'components' . DIRECTORY_SEPARATOR;",
 ));
 $vehicle->resolve('file', array(
     'source' => $sources['source_core'],
-    'target' => "return MODX_CORE_PATH . 'components/';",
+    'target' => "return MODX_CORE_PATH . 'components' . DIRECTORY_SEPARATOR;",
 ));
 $builder->putVehicle($vehicle);
 
 $modx->log(modX::LOG_LEVEL_INFO, 'Adding in PHP resolvers...');
+flush();
 $vehicle->resolve('php', array(
-    'source' => $sources['resolvers'] . 'tables.resolve.php',
+    'source' => $sources['resolvers'] . 'tables.resolver.php',
 ));
-$vehicle->resolve('php',array(
-    'source' => $sources['resolvers'] . 'options.resolve.php',
+$vehicle->resolve('php', array(
+    'source' => $sources['resolvers'] . 'options.resolver.php',
 ));
 $builder->putVehicle($vehicle);
 unset($vehicle);
 
 /* now pack in the license file, readme and setup options */
 $modx->log(modX::LOG_LEVEL_INFO, 'Adding package attributes and setup options...');
+flush();
 $builder->setPackageAttributes(array(
     'license' => file_get_contents($sources['docs'] . 'license.txt'),
     'readme' => file_get_contents($sources['docs'] . 'readme.txt'),
     'changelog' => file_get_contents($sources['docs'] . 'changelog.txt'),
     'setup-options' => array(
-        'source' => $sources['build'].'setup.options.php',
+        'source' => $sources['build'] . 'setup.options.php'
     )
 ));
 
 /* zip up package */
 $modx->log(modX::LOG_LEVEL_INFO, 'Packing up transport package zip...');
+flush();
 $builder->pack();
 
 $mtime = microtime();

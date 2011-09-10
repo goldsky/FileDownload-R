@@ -1,0 +1,429 @@
+[{
+    "name":"ajaxContainerId",
+    "desc":"prop_fd.ajaxContainerId_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"file-download",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"The Ajax's element container id.",
+    "menu":null
+},{
+    "name":"browseDirectories",
+    "desc":"prop_fd.browseDirectories_desc",
+    "xtype":"combo-boolean",
+    "options":"",
+    "value":"",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"Allows users to view subdirectories\n    of the specified directory. When using this feature the following templates\n    get used: parent & directory.",
+    "menu":null
+},{
+    "name":"chkDesc",
+    "desc":"prop_fd.chkDesc_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"This allows descriptions to be added to the\n    file listing included in a chunk. All of the files and descriptions should\n    be listed in the chunk using the following format:\n    path to file/filename|description||",
+    "menu":null
+},{
+    "name":"countDownloads",
+    "desc":"prop_fd.countDownloads_desc",
+    "xtype":"combo-boolean",
+    "options":"",
+    "value":true,
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"With the countDownloads parameter set\n    to 1, everytime a user downloads a file, it will be tracked in a database\n    table.",
+    "menu":null
+},{
+    "name":"cssAltRow",
+    "desc":"prop_fd.cssAltRow_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"fd-altRow",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"This specifies the class that will be\n    applied to every other file/folder so a ledger look can be styled.",
+    "menu":null
+},{
+    "name":"cssDir",
+    "desc":"prop_fd.cssDir_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"fd-dir",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"This specifies the class name that will be\n    applied to all directories.",
+    "menu":null
+},{
+    "name":"cssExtension",
+    "desc":"prop_fd.cssExtension_desc",
+    "xtype":"combo-boolean",
+    "options":"",
+    "value":"",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"With this parameter set to 1, a class\n    will be added to each file according to the file's extension.",
+    "menu":null
+},{
+    "name":"cssExtensionPrefix",
+    "desc":"prop_fd.cssExtensionPrefix_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"fd-",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"Prefix to the cssExtension class\n    name.",
+    "menu":null
+},{
+    "name":"cssExtensionSuffix",
+    "desc":"prop_fd.cssExtensionSuffix_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"Suffix to the cssExtension class\n    name",
+    "menu":null
+},{
+    "name":"cssFile",
+    "desc":"prop_fd.cssFile_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"fd-file",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"This specifies the class name that will be\n    applied to all file rows.",
+    "menu":null
+},{
+    "name":"cssFirstDir",
+    "desc":"prop_fd.cssFirstDir_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"fd-firstDir",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"This specifies the class name that will be\n    applied to the first directory.",
+    "menu":null
+},{
+    "name":"cssFirstFile",
+    "desc":"prop_fd.cssFirstFile_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"fd-firstFile",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"This specifies the class name that will\n    be applied to the first file.",
+    "menu":null
+},{
+    "name":"cssGroupDir",
+    "desc":"prop_fd.cssGroupDir_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"fd-group-dir",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"This specifies the class name that will be\n    applied to the directory for multi-directories grouping.",
+    "menu":null
+},{
+    "name":"cssLastDir",
+    "desc":"prop_fd.cssLastDir_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"fd-lastDir",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"This specifies the class name that will be\n    applied to the last folder.",
+    "menu":null
+},{
+    "name":"cssLastFile",
+    "desc":"prop_fd.cssLastFile_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"fd-lastFile",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"This specifies the class name that will be\n    applied to the last file.",
+    "menu":null
+},{
+    "name":"cssPath",
+    "desc":"prop_fd.cssPath_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"fd-path",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"This specifies the class that will be applied\n    to the path when using directory browsing.",
+    "menu":null
+},{
+    "name":"dateFormat",
+    "desc":"prop_fd.dateFormat_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"Y-m-d",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"PHP's date formatting for each file in the\n    output.",
+    "menu":null
+},{
+    "name":"extHidden",
+    "desc":"prop_fd.extHidden_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"This will exclude the files displayed to\n    files with a valid extension from the comma delimited list of file\n    extensions.",
+    "menu":null
+},{
+    "name":"extShown",
+    "desc":"prop_fd.extShown_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"This will limit the files displayed to files\n    with a valid extension from the list. comma delimited list of file\n    extensions",
+    "menu":null
+},{
+    "name":"fileCss",
+    "desc":"prop_fd.fileCss_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"{assets_url}components/filedownload/css/fd.css",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"FileDownload's Cascading Style Sheet file for\n    the page header",
+    "menu":null
+},{
+    "name":"fileJs",
+    "desc":"prop_fd.fileJs_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"{assets_url}components/filedownload/js/fd.js",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"FileDownload's Javascript file for the page\n    header",
+    "menu":null
+},{
+    "name":"getDir",
+    "desc":"prop_fd.getDir_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"This is used to specify which directories to\n    display with the snippet. Multiple directories can be specified by\n    seperating them with a comma. When specifying multiple directories the\n    directory browsing functionality is no longer available.",
+    "menu":null
+},{
+    "name":"getFile",
+    "desc":"prop_fd.getFile_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"This will make the snippet output only the\n    file specified. The getFolder parameter is still required and getFile should\n    be a file inside of the directory. This allows for use of the download\n    script and download counting with a single file.",
+    "menu":null
+},{
+    "name":"groupByDirectory",
+    "desc":"prop_fd.groupByDirectory_desc",
+    "xtype":"combo-boolean",
+    "options":"",
+    "value":"",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"When multiple directories are\n    specified in the getDir parameter, this parameter will group the files by\n    directory. The directory template will be added above each group.",
+    "menu":null
+},{
+    "name":"imgLocat",
+    "desc":"prop_fd.imgLocat_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"{assets_url}components/filedownload/img/filetype/",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"Path to the images to associate with each\n    file extension. The images will be outputted with [+fd.image+]\n    placeholder.",
+    "menu":null
+},{
+    "name":"imgTypes",
+    "desc":"prop_fd.imgTypes_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"fdImages",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"A chunk's name to allow associations between\n    file extensions and an image.",
+    "menu":null
+},{
+    "name":"noDownload",
+    "desc":"prop_fd.noDownload_desc",
+    "xtype":"combo-boolean",
+    "options":"",
+    "value":false,
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"prop_fd.noDownload_desc",
+    "menu":null
+},{
+    "name":"saltText",
+    "desc":"prop_fd.saltText_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"FileDownload",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"Fill this parameter with any text. This text\n    will be added to the file's link to disguise the direct paths",
+    "menu":null
+},{
+    "name":"sortBy",
+    "desc":"prop_fd.sortBy_desc",
+    "xtype":"list",
+    "options":[{
+        "text":"filename",
+        "value":"filename",
+        "name":"filename"
+    },{
+        "text":"extension",
+        "value":"extension",
+        "name":"extension"
+    },{
+        "text":"path",
+        "value":"path",
+        "name":"Path"
+    },{
+        "text":"size",
+        "value":"size",
+        "name":"size"
+    },{
+        "text":"sizeText",
+        "value":"sizeText",
+        "name":"sizeText"
+    },{
+        "text":"type",
+        "value":"type",
+        "name":"Type"
+    },{
+        "text":"date",
+        "value":"date",
+        "name":"Date"
+    },{
+        "text":"description",
+        "value":"description",
+        "name":"Description"
+    },{
+        "text":"count",
+        "value":"count",
+        "name":"count"
+    },{
+        "text":"fullPath",
+        "value":"fullPath",
+        "name":"fullPath"
+    }],
+    "value":"filename",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"This allows the files to be sorted by all of\n    the fields listed. When using the directory browsing feature the files will\n    be sorted by type first, this will put the directories first in the list.\n    When multiple directories are specified and the group by directory feature\n    is used; the files are sorted by path first to keep the files in order by\n    directory.",
+    "menu":null
+},{
+    "name":"sortByCaseSensitive",
+    "desc":"prop_fd.sortByCaseSensitive_desc",
+    "xtype":"combo-boolean",
+    "options":"",
+    "value":"",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"Case sensitive option for\n    sorting.",
+    "menu":null
+},{
+    "name":"sortOrder",
+    "desc":"prop_fd.sortOrder_desc",
+    "xtype":"list",
+    "options":[{
+        "text":"Ascending",
+        "value":"asc",
+        "name":"Ascending"
+    },{
+        "text":"Descending",
+        "value":"desc",
+        "name":"Descending"
+    }],
+    "value":"asc",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"Sort order",
+    "menu":null
+},{
+    "name":"sortOrderNatural",
+    "desc":"prop_fd.sortOrderNatural_desc",
+    "xtype":"combo-boolean",
+    "options":"",
+    "value":true,
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"Sort order option by a natural\n    order",
+    "menu":null
+},{
+    "name":"tplDir",
+    "desc":"prop_fd.tplDir_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"tpl-row-dir",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"This is the folder template (chunk/file) if it\n    is accessible",
+    "menu":null
+},{
+    "name":"tplFile",
+    "desc":"prop_fd.getFile_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"tpl-row-file",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"This will make the snippet output only the\n    file specified. The getFolder parameter is still required and getFile should\n    be a file inside of the directory. This allows for use of the download\n    script and download counting with a single file.",
+    "menu":null
+},{
+    "name":"tplGroupDir",
+    "desc":"prop_fd.tplGroupDirectory_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"tpl-group-dir",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"prop_fd.tplGroupDirectory_desc",
+    "menu":null
+},{
+    "name":"tplIndex",
+    "desc":"prop_fd.tplIndex_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"tpl-index",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"index.html file/chunk to hide the download\n    folders",
+    "menu":null
+},{
+    "name":"tplWrapper",
+    "desc":"prop_fd.tplWrapper_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"tpl-wrapper",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"This is the container template (chunk/file)\n    of all of the snippet's results",
+    "menu":null
+},{
+    "name":"userGroups",
+    "desc":"prop_fd.userGroups_desc",
+    "xtype":"textfield",
+    "options":"",
+    "value":"",
+    "lexicon":"filedownload:properties",
+    "overridden":false,
+    "desc_trans":"This will make the download link active for\n    users that belong to the specified groups. If a user is not logged in they\n    will receive a JavaScript alert with the message contained in the noDownload\n    language setting. Multiple groups can be specified by using a comma\n    delimited list.",
+    "menu":null
+}]
