@@ -52,8 +52,13 @@ if (get_magic_quotes_gpc()) {
  * @var string
  */
 $scriptProperties['getFile'] = $modx->getOption('getFile', $scriptProperties);
-
-if (empty($scriptProperties['getFile'])) {
+/**
+ * for Output Filter Modifier
+ * @link http://rtfm.modx.com/display/revolution20/Custom+Output+Filter+Examples#CustomOutputFilterExamples-CreatingaCustomOutputModifier
+ */
+if (empty($scriptProperties['getFile']) && !empty($scriptProperties['input'])) {
+    $scriptProperties['getFile'] = $scriptProperties['input'];
+} elseif (empty($scriptProperties['getFile']) && empty($scriptProperties['input'])) {
     return '<!-- getFile parameter is empty -->';
 }
 $comma = stristr($scriptProperties['getFile'], ',');
@@ -221,7 +226,7 @@ if ($scriptProperties['fileCss'] !== 'disabled') {
     $modx->regClientCSS($fdl->replacePropPhs($scriptProperties['fileCss']));
 }
 
-if ($scriptProperties['ajaxMode'] && !empty ($scriptProperties['ajaxControllerPage'])) {
+if ($scriptProperties['ajaxMode'] && !empty($scriptProperties['ajaxControllerPage'])) {
     // require dojo
     if (!file_exists(realpath(MODX_BASE_PATH . 'assets/components/filedownload/js/dojo/dojo.js'))) {
         return 'dojo.js is required.';
@@ -251,7 +256,20 @@ if (!$contents) {
     return '';
 }
 
-if (!empty($scriptProperties['toArray'])) {
+$output = '';
+
+/**
+ * for Output Filter Modifier
+ * @link http://rtfm.modx.com/display/revolution20/Custom+Output+Filter+Examples#CustomOutputFilterExamples-CreatingaCustomOutputModifier
+ */
+if (!empty($scriptProperties['input'])) {
+    $output = $contents['file'][0][$scriptProperties['options']];
+    if (empty($output)
+            && !is_numeric($output) // avoid 0 (zero) of the download counting.
+    ) {
+        $output = $fdl->parseTplCode($scriptProperties['tplCode'], $contents['file'][0]);
+    }
+} elseif (!empty($scriptProperties['toArray'])) {
     $output = '<pre>';
     $output .= print_r($contents['file'][0]);
     $output .= '</pre>';
