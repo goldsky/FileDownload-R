@@ -20,7 +20,7 @@
  * FileDownload; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
  * Suite 330, Boston, MA 02111-1307 USA
  *
- * Resolve creating db tables
+ * Build the setup options form.
  *
  * @package filedownload
  * @subpackage build
@@ -30,27 +30,11 @@ $output = '';
 /* get values based on mode */
 switch ($options[xPDOTransport::PACKAGE_ACTION]) {
     case xPDOTransport::ACTION_INSTALL:
-        break;
     case xPDOTransport::ACTION_UPGRADE:
         break;
     case xPDOTransport::ACTION_UNINSTALL:
-        $modx = & $object->xpdo;
-        $modelPath = $modx->getOption('core_path') . 'components/filedownload/models/';
-        $modx->addPackage('filedownload', realpath($modelPath) . DIRECTORY_SEPARATOR);
-        $cat = $modx->getObject('FDL');
-        if (!$cat) {
-            $modx->log(xPDO::LOG_LEVEL_INFO,'realpath($modelPath) . DIRECTORY_SEPARATOR = ' . realpath($modelPath) . DIRECTORY_SEPARATOR);
-            $modx->log(xPDO::LOG_LEVEL_INFO,'var_dump($cat) = ' . var_dump($cat));
-            $modx->log(xPDO::LOG_LEVEL_INFO,'[FileDownload] could not load the filedownload package while uninstalling.');
-        } else {
-            $modx->log(xPDO::LOG_LEVEL_INFO,'[FileDownload] pass through the xPDOTransport::ACTION_UNINSTALL');
-        }
-        break;
-}
-
-if ($cat) {
-    /* do output html */
-    $output = '
+        /* do output html */
+        $output = '
 <h2>FileDownload Uninstaller</h2>
 <p>You are about to uninstall FileDownload snippet. Do you also want to remove the FileDownload\'s database?</p>
 <br />
@@ -58,6 +42,7 @@ if ($cat) {
 <p>It is recommended if you keep the download countings.</p>
 <br /><br />
 ';
+        break;
 }
 
 return $output;

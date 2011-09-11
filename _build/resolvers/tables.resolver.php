@@ -32,26 +32,9 @@ if ($modx = & $object->xpdo) {
             $modx->addPackage('filedownload', realpath($modelPath) . DIRECTORY_SEPARATOR);
             $manager = $modx->getManager();
             $manager->createObjectContainer('FDL');
-
             break;
-
         case xPDOTransport::ACTION_UPGRADE:
-            break;
-
         case xPDOTransport::ACTION_UNINSTALL:
-            $modelPath = $modx->getOption('core_path') . 'components/filedownload/models/';
-            $modx->addPackage('filedownload', realpath($modelPath) . DIRECTORY_SEPARATOR);
-            $manager = $modx->getManager();
-
-            if (!$manager->removeObjectContainer('FDL')) {
-                $modx->log(xPDO::LOG_LEVEL_ERROR,'$modelPath = ' . $modelPath);
-                $modx->log(xPDO::LOG_LEVEL_ERROR,'realpath($modelPath) . DIRECTORY_SEPARATOR = ' . realpath($modelPath) . DIRECTORY_SEPARATOR);
-                $modx->log(modX::LOG_LEVEL_ERROR, '[FileDownload] table was unable to delete');
-                return false;
-            } else {
-                $modx->log(modX::LOG_LEVEL_INFO, '[FileDownload] table was deleted successfully');
-            }
-
             break;
     }
 }

@@ -1,1 +1,8 @@
-*
+/core/
+!/core/components/filedownload/
+/www/
+!/www/assets/components/filedownload/
+/_build/build.config.php
+/nbproject/
+/evo/
+/bahan/

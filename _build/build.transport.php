@@ -45,8 +45,9 @@ $sources = array(
     'root' => $root,
     'build' => $root . '_build' . DIRECTORY_SEPARATOR,
     'data' => realpath($root . '_build/data/') . DIRECTORY_SEPARATOR,
-    'properties' => realpath($root . '_build/properties/') . DIRECTORY_SEPARATOR,
+    'properties' => realpath($root . '_build/data/properties/') . DIRECTORY_SEPARATOR,
     'resolvers' => realpath($root . '_build/resolvers/') . DIRECTORY_SEPARATOR,
+    'validators' => realpath($root . '_build/validators/') . DIRECTORY_SEPARATOR,
     'lexicon' => realpath($root . 'core/components/filedownload/lexicon/') . DIRECTORY_SEPARATOR,
     'docs' => realpath($root . 'core/components/filedownload/docs/') . DIRECTORY_SEPARATOR,
     'chunks' => realpath($root . 'core/components/filedownload/themes/default/chunks/') . DIRECTORY_SEPARATOR,
@@ -128,8 +129,12 @@ flush();
 $vehicle->resolve('php', array(
     'source' => $sources['resolvers'] . 'tables.resolver.php',
 ));
-$vehicle->resolve('php', array(
-    'source' => $sources['resolvers'] . 'options.resolver.php',
+$builder->putVehicle($vehicle);
+
+$modx->log(modX::LOG_LEVEL_INFO, 'Adding in PHP validators...');
+flush();
+$vehicle->validate('php', array(
+    'source' => $sources['validators'] . 'options.validator.php',
 ));
 $builder->putVehicle($vehicle);
 unset($vehicle);
