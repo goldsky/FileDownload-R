@@ -213,10 +213,12 @@ array_walk($scriptProperties, create_function('&$val', 'if (!is_array($val)) $va
 $fdl = $modx->getService('fdl'
         , 'FileDownload'
         , $modx->getOption('core_path') . 'components/filedownload/models/filedownload/'
-        , $scriptProperties);
+        );
 
 if (!($fdl instanceof FileDownload))
     return 'instanceof error.';
+
+$fdl->setConfigs($scriptProperties);
 
 if (!$fdl->isAllowed()) {
     return '';
@@ -269,10 +271,12 @@ if (!empty($scriptProperties['input'])) {
     ) {
         $output = $fdl->parseTplCode($scriptProperties['tplCode'], $contents['file'][0]);
     }
-} elseif (!empty($scriptProperties['toArray'])) {
+} elseif (!empty($toArray)) {
     $output = '<pre>';
-    $output .= print_r($contents['file'][0]);
+    $output .= print_r($contents['file'][0], true);
     $output .= '</pre>';
+} elseif (!empty($toPlaceholder)) {
+    return $modx->setPlaceholder($toPlaceholder, $fdl->parseTplCode($scriptProperties['tplCode'], $contents['file'][0]));
 } else {
     $output = $fdl->parseTplCode($scriptProperties['tplCode'], $contents['file'][0]);
 }

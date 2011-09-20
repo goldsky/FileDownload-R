@@ -13,21 +13,25 @@
 class FileDownload {
 
     public $modx;
-    public $config = array();
+    public $config;
+    private $_template;
     public $error = array();
     private $_count = array();
     private $_imgType = array();
-    private $_template = array();
 
-    public function __construct(modX &$modx, array $config = array()) {
+    public function __construct(modX &$modx) {
         $this->modx = &$modx;
+    }
 
+    public function setConfigs($config) {
         $config['getDir'] = $this->_checkPath($config['getDir']);
         $config['getFile'] = $this->_checkPath($config['getFile']);
 
         $config = $this->replacePropPhs($config);
         $basePath = $this->modx->getOption('core_path') . 'components/filedownload/';
         $assetsUrl = $this->modx->getOption('assets_url') . 'components/filedownload/';
+        $this->config = array();
+        $this->_template = array();
         $this->config = array_merge(array(
             'basePath' => $basePath,
             'corePath' => $basePath,

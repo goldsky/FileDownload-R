@@ -580,10 +580,12 @@ array_walk($scriptProperties, create_function('&$val', 'if (!is_array($val)) $va
 $fdl = $modx->getService('fdl'
         , 'FileDownload'
         , $modx->getOption('core_path') . 'components/filedownload/models/filedownload/'
-        , $scriptProperties);
+        );
 
 if (!($fdl instanceof FileDownload))
     return 'instanceof error.';
+
+$fdl->setConfigs($scriptProperties);
 
 if (!$fdl->isAllowed()) {
     return '';
@@ -593,7 +595,7 @@ if ($scriptProperties['fileCss'] !== 'disabled') {
     $modx->regClientCSS($fdl->replacePropPhs($scriptProperties['fileCss']));
 }
 
-if ($scriptProperties['ajaxMode'] && !empty ($scriptProperties['ajaxControllerPage'])) {
+if ($scriptProperties['ajaxMode'] && !empty($scriptProperties['ajaxControllerPage'])) {
     // require dojo
     if (!file_exists(realpath(MODX_BASE_PATH . 'assets/components/filedownload/js/dojo/dojo.js'))) {
         return 'dojo.js is required.';
@@ -630,10 +632,12 @@ if (!$contents) {
     return '';
 }
 
-if (!empty($scriptProperties['toArray'])) {
+if (!empty($toArray)) {
     $output = '<pre>';
-    $output .= print_r($contents);
+    $output .= print_r($contents, true);
     $output .= '</pre>';
+} elseif (!empty($toPlaceholder)) {
+    return $modx->setPlaceholder($toPlaceholder, $fdl->parseTemplate());
 } else {
     $output = $fdl->parseTemplate();
 }
