@@ -620,16 +620,51 @@ class FileDownload {
             return FALSE;
         }
 
-        if ($fd = fopen($filePath, "r")) {
-            header('Content-type: application/force-download');
-            header('Content-Disposition: inline; filename="' . $filePath . '"');
-            header('Content-Transfer-Encoding: Binary');
-            header('Content-length: ' . filesize($filePath));
-            header('Content-Type: application/octet-stream');
-            header('Content-Disposition: attachment; filename="' . $fileName . '"');
-            readfile("$filePath");
+        if (file_exists($filePath)) {
+            // required for IE
+            if (ini_get('zlib.output_compression')) {
+                ini_set('zlib.output_compression', 'Off');
+            }
 
-            fclose($fd);
+            @set_time_limit(300);
+            @ini_set('magic_quotes_runtime', 0);
+            ob_end_clean(); //added to fix ZIP file corruption
+            ob_start(); //added to fix ZIP file corruption
+
+            header('Pragma: public');  // required
+            header('Expires: 0');  // no cache
+            header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+            header('Last-Modified: ' . gmdate('D, d M Y H:i:s', filemtime($filePath)) . ' GMT');
+            header('Cache-Control: private', false);
+            header('Content-Description: File Transfer');
+            header('Content-Type:'); //added to fix ZIP file corruption
+            header('Content-Disposition: attachment; filename="' . basename($filePath) . '"');
+            header('Content-Transfer-Encoding: binary');
+            header('Content-Length: ' . (string)(filesize($filePath))); // provide file size
+            header('Connection: close');
+            sleep(1);
+
+            //Close the session to allow for header() to be sent
+            session_write_close();
+            ob_flush();
+            flush();
+
+            $chunksize = 1 * (1024 * 1024); // how many bytes per chunk
+            $buffer = '';
+            $handle = @fopen($filePath, 'rb');
+            if ($handle === false) {
+                return false;
+            }
+            while (!feof($handle) && connection_status()==0) {
+                $buffer = @fread($handle, $chunksize);
+                if (!$buffer) {
+                    die();
+                }
+                echo $buffer;
+                ob_flush();
+                flush();
+            }
+            fclose($handle);
 
             if ($this->config['countDownloads']) {
                 // save the new count
