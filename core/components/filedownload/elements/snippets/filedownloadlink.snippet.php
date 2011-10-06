@@ -199,6 +199,13 @@ $scriptProperties['tplCode'] = $modx->getOption('tplCode', $scriptProperties, '<
  * @since ver 2.0.0
  */
 $scriptProperties['saltText'] = $modx->getOption('saltText', $scriptProperties);
+/**
+ * This parameter provides the direct link
+ * @default: 0
+ * @var string
+ * @since ver 2.0.0
+ */
+$scriptProperties['directLink'] = $modx->getOption('directLink', $scriptProperties, 0);
 
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////

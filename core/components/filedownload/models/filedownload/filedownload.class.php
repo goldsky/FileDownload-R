@@ -390,7 +390,13 @@ class FileDownload {
             return FALSE;
         }
 
-        $link = $this->_linkFileDownload($checkedDb['filename'], $checkedDb['hash'], $checkedDb['ctx']);
+        if ($this->config['directLink']) {
+            $link = $this->_directLinkFileDownload($checkedDb['filename']);
+            if (!$link)
+                return FALSE;
+        } else {
+            $link = $this->_linkFileDownload($checkedDb['filename'], $checkedDb['hash'], $checkedDb['ctx']);
+        }
 
         $info = array(
             'ctx' => $checkedDb['ctx'],
@@ -536,6 +542,36 @@ class FileDownload {
     }
 
     /**
+     * Set the direct link to the file path
+     * @param   string  $filePath   absolute file path
+     * @return  array   the download link and the javascript's attribute
+     */
+    private function _directLinkFileDownload($filePath) {
+        $link = array();
+        if ($this->config['noDownload']) {
+            $link['url'] = $filePath;
+            $link['attribute'] = '';
+        } else {
+            if ($this->config['ajaxMode']) {
+                $link['url'] = 'javascript:void(0);';
+                $link['attribute'] = ' onclick="fileDownload(\'' . $hash . '\')"';
+            } else {
+                // to use this method, the file should always be placed on the web root
+                $corePath = str_replace('/', DIRECTORY_SEPARATOR, MODX_CORE_PATH);
+                if (stristr($filePath, $corePath)) {
+                    return FALSE;
+                }
+                $fileUrl = str_ireplace(MODX_BASE_PATH, MODX_SITE_URL, $filePath);
+                $fileUrl = str_replace(DIRECTORY_SEPARATOR, '/', $fileUrl);
+                $parseUrl = parse_url($fileUrl);
+                $link['url'] = $parseUrl['path'];
+                $link['attribute'] = '';
+            }
+        }
+        return $link;
+    }
+
+    /**
      * @todo _linkDirOpen: change the hard coded html to template
      * @param   string  $dirPath    directory's path
      * @param   string  $hash       hash
@@ -597,9 +633,9 @@ class FileDownload {
     }
 
     /**
-     * @todo downloadFile: push the file to the browser
-     * @param type $hash
-     * @return type
+     * Download action
+     * @param   string  $hash   hashed text
+     * @return  void    file is pulled to the browser
      */
     public function downloadFile($hash) {
         if (empty($hash)) {
