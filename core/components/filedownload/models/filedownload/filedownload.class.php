@@ -561,10 +561,12 @@ class FileDownload {
                 if (stristr($filePath, $corePath)) {
                     return FALSE;
                 }
+                // switching from absolute path to url is nuts
                 $fileUrl = str_ireplace(MODX_BASE_PATH, MODX_SITE_URL, $filePath);
                 $fileUrl = str_replace(DIRECTORY_SEPARATOR, '/', $fileUrl);
                 $parseUrl = parse_url($fileUrl);
-                $link['url'] = $parseUrl['path'];
+                $url = ltrim($parseUrl['path'], '/' . MODX_HTTP_HOST);
+                $link['url'] = MODX_URL_SCHEME . MODX_HTTP_HOST . '/' . $url;
                 $link['attribute'] = '';
             }
         }
