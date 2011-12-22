@@ -1,5 +1,9 @@
 Changelog for FileDownload.
 
+FileDownload 1.0.0.rc-1
+====================================
++ Fixed the correct realpath
+
 FileDownload 1.0.0.beta-4
 ====================================
 + Added &directLink property to give a direct path for big files

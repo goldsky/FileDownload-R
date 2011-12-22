@@ -12,10 +12,10 @@
  */
 class FileDownload {
 
-    public $modx;
-    public $config;
+    public  $modx;
+    public  $config;
     private $_template;
-    public $error = array();
+    public  $error = array();
     private $_count = array();
     private $_imgType = array();
 
@@ -65,19 +65,10 @@ class FileDownload {
             $xPath = @explode(',', $paths);
             $cleanPaths = array();
             foreach ($xPath as $path) {
-                $path = trim($path);
-                if (empty($path))
+                $realpath = realpath($path);
+                if (empty($realpath))
                     continue;
-                // clean up double slashes
-                $pathSlashes = @explode(DIRECTORY_SEPARATOR, $path);
-                $pathArray = array();
-                foreach ($pathSlashes as $slashed) {
-                    if (empty($slashed))
-                        continue;
-                    $pathArray[] = $slashed;
-                }
-                $iPath = @implode(DIRECTORY_SEPARATOR, $pathArray);
-                $cleanPaths[] = $iPath;
+                $cleanPaths[] = $realpath;
             }
         }
 
@@ -167,6 +158,7 @@ class FileDownload {
             'ctx' => $file['ctx'],
             'filename' => $file['filename']
                 ));
+        $checked = array();
         if ($fdlObj === null) {
             $fdlObj = $this->modx->newObject('FDL');
             $fdlObj->fromArray(array(
@@ -202,7 +194,6 @@ class FileDownload {
             return $mergedContents;
         }
 
-        $countMergedContents = count($mergedContents);
         $this->_count['dirs'] = 0;
         $this->_count['files'] = 0;
 
@@ -301,7 +292,7 @@ class FileDownload {
                     $alias = $notation[1];
 
                     $date = date($this->config['dateFormat'], filemtime($fullPath));
-                    $link = $this->_linkDirOpen($fullPath, $checkedDb['hash'], $checkedDb['ctx']);
+                    $link = $this->_linkDirOpen($checkedDb['hash'], $checkedDb['ctx']);
 
                     $imgType = $this->_imgType('dir');
                     $dir = array(
@@ -367,7 +358,6 @@ class FileDownload {
             return FALSE;
         }
 
-        $filetype = filetype($fileRealPath);
         $baseName = basename($fileRealPath);
         $ext = strtolower(end(explode('.', $baseName)));
         $size = filesize($fileRealPath);
@@ -427,6 +417,7 @@ class FileDownload {
     private function _aliasName($path) {
         $xPipes = array();
         $xPipes = @explode('|', $path);
+        $notation = array();
         $notation[0] = trim($xPipes[0]);
         $notation[1] = !isset($xPipes[1]) ? '' : trim($xPipes[1]);
 
@@ -507,6 +498,7 @@ class FileDownload {
         }
         $fdImagesChunk = $this->modx->getChunk($this->config['imgTypes']);
         $fdImagesChunkX = @explode(',', $fdImagesChunk);
+        $imgType = array();
         foreach ($fdImagesChunkX as $v) {
             $typeX = @explode('=', $v);
             $imgType[strtolower(trim($typeX[0]))] = trim($typeX[1]);
@@ -575,12 +567,11 @@ class FileDownload {
 
     /**
      * @todo _linkDirOpen: change the hard coded html to template
-     * @param   string  $dirPath    directory's path
      * @param   string  $hash       hash
      * @param   string  $ctx        specifies a context to limit URL generation to.
      * @return  array   the open directory link and the javascript's attribute
      */
-    private function _linkDirOpen($dirPath, $hash, $ctx = 'web') {
+    private function _linkDirOpen($hash, $ctx = 'web') {
         if (!$this->config['browseDirectories']) {
             return FALSE;
         }
@@ -628,7 +619,7 @@ class FileDownload {
         $fdlObj->set('count', $newCount);
         if ($fdlObj->save() === false) {
             // @todo setDirProp: lexicon string
-            return $modx->error->failure($modx->lexicon('fd.err_save_counter'));
+            return $this->modx->error->failure($this->modx->lexicon('fd.err_save_counter'));
         }
 
         return TRUE;
@@ -650,7 +641,6 @@ class FileDownload {
 
         $ctx = $fdlObj->get('ctx');
         $filePath = $fdlObj->get('filename');
-        $fileName = basename($filePath);
         $path = dirname($path);
         $count = $fdlObj->get('count');
 
@@ -710,7 +700,7 @@ class FileDownload {
                 $fdlObj->set('count', $newCount);
                 if ($fdlObj->save() === false) {
                     // @todo downloadFile: lexicon string
-                    return $modx->error->failure($modx->lexicon('filedownload.fdl_err_save'));
+                    return $this->modx->error->failure($this->modx->lexicon('filedownload.fdl_err_save'));
                 }
             }
 
@@ -860,6 +850,7 @@ class FileDownload {
         if (!$this->config['groupByDirectory']) {
             $sort = $this->_groupByType($contents);
         } else {
+            $sortPath = array();
             foreach ($contents as $k => $file) {
                 if (!$this->config['browseDirectories'] && $file['type'] === 'dir') {
                     continue;
@@ -890,13 +881,16 @@ class FileDownload {
             return FALSE;
         }
 
+        $sortType = array();
         foreach ($contents as $k => $file) {
             if (!$this->config['browseDirectories'] && $file['type'] === 'dir') {
                 continue;
             }
             $sortType[$file['type']][$k] = $file;
         }
-
+        if (empty($sortType)) {
+            return FALSE;
+        }
         foreach ($sortType as $k => $file) {
             $sortType[$k] = $this->_sortMultiOrders(
                     $file
@@ -923,7 +917,6 @@ class FileDownload {
             $sort['file'] = $sortType['file'];
             // template
             $row = 1;
-            $countFile = count($sort['file']);
             foreach ($sort['file'] as $k => $v) {
                 $v['class'] = $this->_cssFile($row, $v['ext']);
                 $this->_template['wrapper'] .= $this->_tplFile($v);
@@ -949,6 +942,7 @@ class FileDownload {
             return $array;
         }
 
+        $temp = array();
         foreach (array_keys($array) as $key) {
             $temp[$key] = $array[$key][$index];
         }
@@ -970,6 +964,7 @@ class FileDownload {
             }
         }
 
+        $sorted = array();
         foreach (array_keys($temp) as $key) {
             if (is_numeric($key)) {
                 $sorted[] = $array[$key];
@@ -1179,7 +1174,7 @@ class FileDownload {
             }
 
             $hash = $fdlObj->get('hash');
-            $link = $this->_linkDirOpen($trailingPath, $hash);
+            $link = $this->_linkDirOpen($hash);
             $trail[$k] = array(
                 'title' => $breadcrumb,
                 'link' => $link['url'],
