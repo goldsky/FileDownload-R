@@ -1,7 +1,7 @@
 <?php
 /**
  * Default English lexicon topic
- * 
+ *
  * @language en
  * @package filedownload
  * @subpackage lexicon
@@ -89,6 +89,7 @@ $_lang['prop_fd.sortOrderNatural_desc'] = "Sort order option by a natural
 $_lang['prop_fd.tplDir_desc'] = "This is the folder template (chunk/file) if it
     is accessible";
 $_lang['prop_fd.tplFile_desc'] = "This is the file row template (chunk/file)";
+$_lang['prop_fd.tpl_desc'] = "Template with @BINDING (@CODE / @FILE [/@CHUNK]) ability";
 $_lang['prop_fd.tplGroupDir_desc'] = "This is the template of the directory path
     if the &groupByDirectory is enabled";
 $_lang['prop_fd.tplIndex_desc'] = "index.html file/chunk to hide the download
