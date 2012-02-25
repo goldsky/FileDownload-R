@@ -107,7 +107,14 @@ class FileDownload {
      * @param array $contents
      */
     private function _getDescription($contents) {
-        if (empty($this->config['chkDesc']) || empty($contents)) {
+        if (empty($contents)) {
+            return '';
+        }
+
+        if (empty($this->config['chkDesc'])) {
+            foreach ($contents as $key => $file) {
+                $contents[$key]['description'] = '';
+            }
             return $contents;
         }
 
@@ -425,54 +432,82 @@ class FileDownload {
     }
 
     /**
-     * Get chunk from modx or fall back to the default file chunk
-     * @param   string  $name   chunk's name
-     * @param   array   $phs    placeholders in an array
+     * Parsing template
+     * @param   string  $tpl    @BINDINGs options, code/file/chunk/no @binding to chunk
+     * @param   array   $phs    placeholders
+     * @return  string  parsed output
      */
-    private function _getChunk($name, array $properties) {
-        $chunk = null;
-        if (!isset($this->chunks[$name])) {
-            $chunk = $this->_getChunkTpl($name);
-            if (empty($chunk)) {
-                $chunk = $this->modx->getObject('modChunk', array('name' => $name), true);
-                if ($chunk == false)
-                    return false;
+    public function parseTpl($tpl, array $phs) {
+        $output = '';
+        if (preg_match('/^(@CODE|@INLINE)/i', $tpl)) {
+            $tplString= preg_replace('/^(@CODE|@INLINE)/i', '', $tpl);
+            // tricks @CODE: / @INLINE:
+            $tplString = ltrim($tplString, ':');
+            $tplString = trim($tplString);
+            $output = $this->parseTplCode($tplString, $phs);
+        } elseif (preg_match('/^@FILE/i', $tpl)) {
+            $tplFile = preg_replace('/^@FILE/i', '', $tpl);
+            // tricks @FILE:
+            $tplFile = ltrim($tplFile, ':');
+            $tplFile = trim($tplFile);
+            $tplFile = $this->replacePropPhs($tplFile);
+            try {
+                $output = $this->parseTplFile($tplFile, $phs);
+            } catch(Exception $e) {
+                return $e->getMessage();
             }
-            $this->chunks[$name] = $chunk->getContent();
-        } else {
-            $o = $this->chunks[$name];
-            $chunk = $this->modx->newObject('modChunk');
-            $chunk->setContent($o);
         }
-        $chunk->setCacheable(false);
-        $properties = $this->replacePropPhs($properties);
-        return $chunk->process($properties);
+        // ignore @CHUNK / @CHUNK: / empty @BINDING
+        else {
+            $tpl= preg_replace('/^@CHUNK/i', '', $tpl);
+            // tricks @CHUNK:
+            $tpl = ltrim($tpl, ':');
+            $tpl = trim($tpl);
+
+            $chunk = $this->modx->getObject('modChunk', array ('name' => $tpl), true);
+            if (empty($chunk)) {
+                // try to use @splittingred's fallback
+                $f = $this->config['chunksPath'] . strtolower($tpl) . '.chunk.tpl';
+                try {
+                    $output = $this->parseTplFile($f, $phs);
+                } catch(Exception $e) {
+                    $output = $e->getMessage();
+                    return 'Chunk: ' . $tpl . ' is not found, neither the file ' . $output;
+                }
+            } else {
+                $output = $this->modx->getChunk($tpl, $phs);
+            }
+        }
+
+        return $output;
     }
 
     /**
-     * Returns a modChunk object from a template file.
-     * @access  private
-     * @param   string  $name The name of the Chunk. Will parse to name.chunk.tpl
-     * @return  modChunk/boolean Returns the modChunk object if found, otherwise false.
+     * Parsing file based template
+     * @param   string  $file   file path
+     * @param   array   $phs    placeholders
+     * @return  string  parsed output
+     * @throws Exception if file is not found
      */
-    private function _getChunkTpl($name) {
+    public function parseTplFile($file, $phs) {
         $chunk = false;
-        $f = $this->config['chunksPath'] . strtolower($name) . '.chunk.tpl';
-        if (file_exists($f)) {
-            $o = file_get_contents($f);
-            $chunk = $this->modx->newObject('modChunk');
-            $chunk->set('name', $name);
-            $chunk->setContent($o);
+        if (!file_exists($file)) {
+            throw new Exception ('File: ' . $file . ' is not found.');
         }
-        return $chunk;
-    }
-
-    public function parseTplCode($code, $phs) {
+        $o = file_get_contents($file);
         $chunk = $this->modx->newObject('modChunk');
-        $chunk->setContent($code);
+
+        // just to create a name for the modChunk object.
+        $name = strtolower(basename($file));
+        $name = rtrim($name, '.tpl');
+        $name = rtrim($name, '.chunk');
+        $chunk->set('name', $name);
+
         $chunk->setCacheable(false);
-        $phs = $this->replacePropPhs($phs);
-        return $chunk->process($phs);
+        $chunk->setContent($o);
+        $output = $chunk->process($phs);
+
+        return $output;
     }
 
     /**
@@ -1061,7 +1096,8 @@ class FileDownload {
         if (!$this->config['ajaxMode']) {
 
         }
-        $tpl = $this->_getChunk($this->config['tplDir'], $phs);
+//        $tpl = $this->_getChunk($this->config['tplDir'], $phs);
+        $tpl = $this->parseTpl($this->config['tplDir'], $phs);
 
         return $tpl;
     }
@@ -1081,7 +1117,8 @@ class FileDownload {
         if (!$this->config['ajaxMode']) {
 
         }
-        $tpl = $this->_getChunk($this->config['tplFile'], $phs);
+//        $tpl = $this->_getChunk($this->config['tplFile'], $phs);
+        $tpl = $this->parseTpl($this->config['tplFile'], $phs);
 
         return $tpl;
     }
@@ -1100,7 +1137,8 @@ class FileDownload {
         }
         $phs['fd.class'] = (!empty($this->config['cssGroupDir'])) ? ' class="' . $this->config['cssGroupDir'] . '"' : '';
         $phs['fd.groupDirectory'] = $this->_trimPath($path);
-        $tpl = $this->_getChunk($this->config['tplGroupDir'], $phs);
+//        $tpl = $this->_getChunk($this->config['tplGroupDir'], $phs);
+        $tpl = $this->parseTpl($this->config['tplGroupDir'], $phs);
 
         return $tpl;
     }
@@ -1114,7 +1152,8 @@ class FileDownload {
         $path = $this->_breadcrumbs();
         $phs['fd.path'] = $path;
         $phs['fd.rows'] = $this->_template['wrapper'];
-        $tpl = $this->_getChunk($this->config['tplWrapper'], $phs);
+//        $tpl = $this->_getChunk($this->config['tplWrapper'], $phs);
+        $tpl = $this->parseTpl($this->config['tplWrapper'], $phs);
 
         return $tpl;
     }
@@ -1196,7 +1235,7 @@ class FileDownload {
     }
 
     /**
-     * Replace the property's placholders
+     * Replace the property's placeholders
      * @param   string|array    $subject    Property
      * @return  array           The replaced results
      */

@@ -1,5 +1,11 @@
 Changelog for FileDownload.
 
+FileDownload 1.0.0.rc-2
+====================================
++ Refactored template parser
++ Added @BINDINGs to the tpl parameters
++ Added template for forbidden access
+
 FileDownload 1.0.0.rc-1
 ====================================
 + Fixed the correct realpath

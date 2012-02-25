@@ -21,9 +21,10 @@
  * FileDownload; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
  * Suite 330, Boston, MA 02111-1307 USA
  *
- * @author Kyle Jaebker <http://muddydogpaws.com>
- * @author goldsky <goldsky@fastmail.fm> <http://virtudraft.com>
- * @package filedownload
+ * @author      Kyle Jaebker <http://muddydogpaws.com>
+ * @author      goldsky <goldsky@fastmail.fm> <http://virtudraft.com>
+ * @package     filedownload
+ * @subpackage  filedownload snippet
  */
 if (get_magic_quotes_gpc()) {
     if (!function_exists('stripslashes_gpc')) {
@@ -341,6 +342,16 @@ $scriptProperties['tplWrapper'] = $modx->getOption('tplWrapper', $scriptProperti
  * @since ver 2.0.0
  */
 $scriptProperties['tplIndex'] = $modx->getOption('tplIndex', $scriptProperties, 'tpl-index');
+
+/**
+ * Template for forbidden access
+ * @options: @BINDINGs
+ * @default: @FILE: [[++core_path]]components/filedownload/elements/chunks/tpl-notallowed.chunk.tpl
+ * @var string
+ * @since ver 2.0.0
+ */
+$scriptProperties['tplNotAllowed'] = $modx->getOption('tplNotAllowed', $scriptProperties, '@FILE: [[++core_path]]components/filedownload/elements/chunks/tpl-notallowed.chunk.tpl');
+
 /**
  * This specifies the class that will be applied to every other file/directory so
  * a ledger look can be styled.
@@ -596,7 +607,7 @@ if (!($fdl instanceof FileDownload))
 $fdl->setConfigs($scriptProperties);
 
 if (!$fdl->isAllowed()) {
-    return '';
+    return $fdl->parseTpl($scriptProperties['tplNotAllowed'], array());
 }
 
 if ($scriptProperties['fileCss'] !== 'disabled') {
@@ -641,13 +652,13 @@ if (!$contents) {
 }
 
 if (!empty($toArray)) {
-    $output = '<pre>';
-    $output .= print_r($contents, true);
-    $output .= '</pre>';
-} elseif (!empty($toPlaceholder)) {
-    return $modx->setPlaceholder($toPlaceholder, $fdl->parseTemplate());
+    $output = '<pre>' . print_r($contents, true) . '</pre>';
 } else {
     $output = $fdl->parseTemplate();
 }
 
+if (!empty($toPlaceholder)) {
+    $modx->setPlaceholder($toPlaceholder, $output);
+    return '';
+}
 return $output;

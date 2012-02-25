@@ -21,8 +21,9 @@
  * FileDownload; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
  * Suite 330, Boston, MA 02111-1307 USA
  *
- * @author goldsky <goldsky@fastmail.fm> <http://virtudraft.com>
- * @package filedownload
+ * @author      goldsky <goldsky@fastmail.fm> <http://virtudraft.com>
+ * @package     filedownload
+ * @subpackage  filedownloadlink snippet
  */
 if (get_magic_quotes_gpc()) {
     if (!function_exists('stripslashes_gpc')) {
@@ -191,7 +192,20 @@ $scriptProperties['imgTypes'] = $modx->getOption('imgTypes', $scriptProperties);
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['tplCode'] = $modx->getOption('tplCode', $scriptProperties, '<a href="[[+link]]">[[+filename]]</a>');
+$scriptProperties['tpl'] = $modx->getOption('tpl', $scriptProperties, '@CODE: <a href="[[+link]]">[[+filename]]</a>');
+if (!empty($scriptProperties['tplCode'])) {
+    $scriptProperties['tpl'] = '@CODE: ' . $scriptProperties['tplCode'];
+}
+
+/**
+ * Template for forbidden access
+ * @options: @BINDINGs
+ * @default: @FILE: [[++core_path]]components/filedownload/elements/chunks/tpl-notallowed.chunk.tpl
+ * @var string
+ * @since ver 2.0.0
+ */
+$scriptProperties['tplNotAllowed'] = $modx->getOption('tplNotAllowed', $scriptProperties, '@FILE: [[++core_path]]components/filedownload/elements/chunks/tpl-notallowed.chunk.tpl');
+
 /**
  * This text will be added to the file's hashed link to disguise the direct path
  * @default: FileDownload
@@ -220,7 +234,7 @@ array_walk($scriptProperties, create_function('&$val', 'if (!is_array($val)) $va
 $fdl = $modx->getService('fdl'
         , 'FileDownload'
         , $modx->getOption('core_path') . 'components/filedownload/models/filedownload/'
-        );
+);
 
 if (!($fdl instanceof FileDownload))
     return 'instanceof error.';
@@ -228,7 +242,7 @@ if (!($fdl instanceof FileDownload))
 $fdl->setConfigs($scriptProperties);
 
 if (!$fdl->isAllowed()) {
-    return '';
+    return $fdl->parseTpl($scriptProperties['tplNotAllowed'], array());
 }
 
 if ($scriptProperties['fileCss'] !== 'disabled') {
@@ -266,7 +280,6 @@ if (!$contents) {
 }
 
 $output = '';
-
 /**
  * for Output Filter Modifier
  * @link http://rtfm.modx.com/display/revolution20/Custom+Output+Filter+Examples#CustomOutputFilterExamples-CreatingaCustomOutputModifier
@@ -276,16 +289,19 @@ if (!empty($scriptProperties['input'])) {
     if (empty($output)
             && !is_numeric($output) // avoid 0 (zero) of the download counting.
     ) {
-        $output = $fdl->parseTplCode($scriptProperties['tplCode'], $contents['file'][0]);
+        $output = $fdl->parseTpl($scriptProperties['tpl'], $contents['file'][0]);
     }
 } elseif (!empty($toArray)) {
     $output = '<pre>';
     $output .= print_r($contents['file'][0], true);
     $output .= '</pre>';
-} elseif (!empty($toPlaceholder)) {
-    return $modx->setPlaceholder($toPlaceholder, $fdl->parseTplCode($scriptProperties['tplCode'], $contents['file'][0]));
 } else {
-    $output = $fdl->parseTplCode($scriptProperties['tplCode'], $contents['file'][0]);
+    $output = $fdl->parseTpl($scriptProperties['tpl'], $contents['file'][0]);
+}
+
+if (!empty($toPlaceholder)) {
+    $modx->setPlaceholder($toPlaceholder, $output);
+    return '';
 }
 
 return $output;
