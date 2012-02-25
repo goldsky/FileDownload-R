@@ -483,6 +483,20 @@ class FileDownload {
     }
 
     /**
+     * Parsing inline template code
+     * @param   string  $code   HTML with tags
+     * @param   array   $phs    placeholders
+     * @return  string  parsed output
+     */
+    public function parseTplCode($code, $phs) {
+        $chunk = $this->modx->newObject('modChunk');
+        $chunk->setContent($code);
+        $chunk->setCacheable(false);
+        $phs = $this->replacePropPhs($phs);
+        return $chunk->process($phs);
+    }
+
+    /**
      * Parsing file based template
      * @param   string  $file   file path
      * @param   array   $phs    placeholders
