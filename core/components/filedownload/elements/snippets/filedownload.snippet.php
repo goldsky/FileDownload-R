@@ -452,13 +452,7 @@ unset($scriptProperties['folderCss']);
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'cssFile' instead.
  */
-$scriptProperties['fileCss'] = $modx->getOption('fileCss', $scriptProperties);
-if (!empty($scriptProperties['fileCss']) && empty($scriptProperties['cssFile'])) {
-    $scriptProperties['cssFile'] = $scriptProperties['fileCss'];
-} else {
-    $scriptProperties['cssFile'] = $modx->getOption('cssFile', $scriptProperties);
-}
-unset($scriptProperties['fileCss']);
+$scriptProperties['cssFile'] = $modx->getOption('cssFile', $scriptProperties);
 /**
  * This specifies the class that will be applied to the directory for multi-
  * directory grouping.
