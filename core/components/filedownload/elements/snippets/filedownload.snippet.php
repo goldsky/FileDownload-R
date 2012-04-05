@@ -1,5 +1,8 @@
 <?php
 
+header('Content-Type: text/html; charset=utf-8');
+mb_internal_encoding("UTF-8");
+
 /**
  * The snippet for the FileDownload package for MODX Revolution
  * This is the conversion of the original FileDownload snippet for MODX

@@ -1,0 +1,29 @@
+http://forum.dklab.ru/viewtopic.php?p=91015#91015
+
+2.1.1 / 2010-07-19
+
+	* Добавлены методы array_change_key_case(), range(), strtr()
+	* Улучшен метод convert_files_from()
+	* Unicode Character Database 5.2.0
+	* Исправлены ошибки в trim(), ltrim(), rtrim(), str_pad(), которые могут возникать в некоторых случаях
+
+2.1.0 / 2010-03-26
+
+	* Удалён метод unescape_recursive()
+	* Добавлен метод convert_files_from()
+	* Несколько методов теперь могут принимать массив и делать их обход рекурсивно
+	* Почти все методы для обработки строк могут принимать и возвращать NULL
+
+2.0.2 / 2010-02-13
+
+	* Новые методы is_ascii(), ltrim(), rtrim(), trim(), str_pad(), strspn()
+	* Исправлена небольшая ошибка в str_limit()
+	* Исправлена ошибка в методах convert_from() и convert_to(): они ошибочно возвращали FALSE,
+	  если подать на вход массив, содержащий элементы типа boolean со значением FALSE
+
+2.0.1 / 2010-02-08
+
+	* Удалён метод convert_from_cp1259(), используйте convert_from('cp1251')
+	* Метод convert_from_utf16() теперь приватный, используйте convert_from('UTF-16')
+	* Добавлены методы convert_to(), diactrical_remove(), diactrical_restore()
+	* Другие мелкие исправления

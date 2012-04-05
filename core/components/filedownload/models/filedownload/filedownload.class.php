@@ -12,15 +12,16 @@
  */
 class FileDownload {
 
-    public  $modx;
-    public  $config;
+    public $modx;
+    public $config;
     private $_template;
-    public  $error = array();
+    public $error = array();
     private $_count = array();
     private $_imgType = array();
 
     public function __construct(modX &$modx) {
         $this->modx = &$modx;
+        mb_internal_encoding("UTF-8");
     }
 
     public function setConfigs($config) {
@@ -163,14 +164,14 @@ class FileDownload {
 
         $fdlObj = $this->modx->getObject('FDL', array(
             'ctx' => $file['ctx'],
-            'filename' => $file['filename']
+            'filename' => utf8_encode($file['filename'])
                 ));
         $checked = array();
         if ($fdlObj === null) {
             $fdlObj = $this->modx->newObject('FDL');
             $fdlObj->fromArray(array(
                 'ctx' => $file['ctx'],
-                'filename' => $file['filename'],
+                'filename' => utf8_encode($file['filename']),
                 'count' => 0,
                 'hash' => $this->_setHashedParam($file['ctx'], $file['filename'])
             ));
@@ -239,6 +240,22 @@ class FileDownload {
     }
 
     /**
+     * Load UTF-8 Class
+     * @param   string  $callback       method's name
+     * @param   array   $callbackParams call back parameters (in an array)
+     * @author  Rin
+     * @link    http://forum.dklab.ru/viewtopic.php?p=91015#91015
+     * @return  string  converted text
+     */
+    private function _utfRin($callback, array $callbackParams = array()) {
+        include_once(dirname(dirname(dirname(__FILE__))) . '/includes/UTF8-2.1.1/UTF8.php');
+        include_once(dirname(dirname(dirname(__FILE__))) . '/includes/UTF8-2.1.1/ReflectionTypehint.php');
+
+        $utf = call_user_func_array(array('UTF8', $callback), $callbackParams);
+        return $utf;
+    }
+
+    /**
      * Retrieve the content of the given directory path
      * @param   array   $paths      The specified root path
      * @return  array   Dir's contents in an array
@@ -253,12 +270,13 @@ class FileDownload {
             if (!is_dir($rootPath)) {
                 // @todo: lexicon
                 $this->modx->log(
-                        modX::LOG_LEVEL_ERROR,
-                        '&getDir parameter expects a correct dir path. ' . $rootPath . ' is given.'
-                        );
+                        modX::LOG_LEVEL_ERROR, '&getDir parameter expects a correct dir path. ' . $rootPath . ' is given.'
+                );
                 return FALSE;
             }
+
             $scanDir = scandir($rootPath);
+
             foreach ($scanDir as $file) {
                 if ($file === '.'
                         || $file === '..'
@@ -359,9 +377,8 @@ class FileDownload {
         if (!is_file($fileRealPath) || !$fileRealPath) {
             // @todo: lexicon
             $this->modx->log(
-                    modX::LOG_LEVEL_ERROR,
-                    '&getFile parameter expects a correct file path. ' . $path . ' is given.'
-                    );
+                    modX::LOG_LEVEL_ERROR, '&getFile parameter expects a correct file path. ' . $path . ' is given.'
+            );
             return FALSE;
         }
 
@@ -388,7 +405,7 @@ class FileDownload {
         }
 
         if ($this->config['directLink']) {
-            $link = $this->_directLinkFileDownload($checkedDb['filename']);
+            $link = $this->_directLinkFileDownload(utf8_decode($checkedDb['filename']));
             if (!$link)
                 return FALSE;
         } else {
@@ -398,8 +415,8 @@ class FileDownload {
         $info = array(
             'ctx' => $checkedDb['ctx'],
             'fullPath' => $fileRealPath,
-            'path' => dirname($fileRealPath),
-            'filename' => $baseName,
+            'path' => utf8_encode(dirname($fileRealPath)),
+            'filename' => utf8_encode($baseName),
             'alias' => $alias,
             'type' => filetype($fileRealPath),
             'ext' => $ext,
@@ -440,7 +457,7 @@ class FileDownload {
     public function parseTpl($tpl, array $phs) {
         $output = '';
         if (preg_match('/^(@CODE|@INLINE)/i', $tpl)) {
-            $tplString= preg_replace('/^(@CODE|@INLINE)/i', '', $tpl);
+            $tplString = preg_replace('/^(@CODE|@INLINE)/i', '', $tpl);
             // tricks @CODE: / @INLINE:
             $tplString = ltrim($tplString, ':');
             $tplString = trim($tplString);
@@ -453,24 +470,24 @@ class FileDownload {
             $tplFile = $this->replacePropPhs($tplFile);
             try {
                 $output = $this->parseTplFile($tplFile, $phs);
-            } catch(Exception $e) {
+            } catch (Exception $e) {
                 return $e->getMessage();
             }
         }
         // ignore @CHUNK / @CHUNK: / empty @BINDING
         else {
-            $tpl= preg_replace('/^@CHUNK/i', '', $tpl);
+            $tpl = preg_replace('/^@CHUNK/i', '', $tpl);
             // tricks @CHUNK:
             $tpl = ltrim($tpl, ':');
             $tpl = trim($tpl);
 
-            $chunk = $this->modx->getObject('modChunk', array ('name' => $tpl), true);
+            $chunk = $this->modx->getObject('modChunk', array('name' => $tpl), true);
             if (empty($chunk)) {
                 // try to use @splittingred's fallback
                 $f = $this->config['chunksPath'] . strtolower($tpl) . '.chunk.tpl';
                 try {
                     $output = $this->parseTplFile($f, $phs);
-                } catch(Exception $e) {
+                } catch (Exception $e) {
                     $output = $e->getMessage();
                     return 'Chunk: ' . $tpl . ' is not found, neither the file ' . $output;
                 }
@@ -506,7 +523,7 @@ class FileDownload {
     public function parseTplFile($file, $phs) {
         $chunk = false;
         if (!file_exists($file)) {
-            throw new Exception ('File: ' . $file . ' is not found.');
+            throw new Exception('File: ' . $file . ' is not found.');
         }
         $o = file_get_contents($file);
         $chunk = $this->modx->newObject('modChunk');
@@ -689,7 +706,7 @@ class FileDownload {
         }
 
         $ctx = $fdlObj->get('ctx');
-        $filePath = $fdlObj->get('filename');
+        $filePath = utf8_decode($fdlObj->get('filename'));
         $path = dirname($path);
         $count = $fdlObj->get('count');
 
@@ -717,7 +734,7 @@ class FileDownload {
             header('Content-Type:'); //added to fix ZIP file corruption
             header('Content-Disposition: attachment; filename="' . basename($filePath) . '"');
             header('Content-Transfer-Encoding: binary');
-            header('Content-Length: ' . (string)(filesize($filePath))); // provide file size
+            header('Content-Length: ' . (string) (filesize($filePath))); // provide file size
             header('Connection: close');
             sleep(1);
 
@@ -732,7 +749,7 @@ class FileDownload {
             if ($handle === false) {
                 return false;
             }
-            while (!feof($handle) && connection_status()==0) {
+            while (!feof($handle) && connection_status() == 0) {
                 $buffer = @fread($handle, $chunksize);
                 if (!$buffer) {
                     die();
@@ -986,7 +1003,7 @@ class FileDownload {
      * @return  array   the sorted array
      * @link    modified from http://www.php.net/manual/en/function.sort.php#104464
      */
-    private function _sortMultiOrders($array, $index, $order, $natSort=FALSE, $caseSensitive=FALSE) {
+    private function _sortMultiOrders($array, $index, $order, $natSort = FALSE, $caseSensitive = FALSE) {
         if (!is_array($array) || count($array) < 1) {
             return $array;
         }
