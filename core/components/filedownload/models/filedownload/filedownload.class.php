@@ -26,6 +26,7 @@ class FileDownload {
 
     public function setConfigs($config) {
         $config['getDir'] = $this->_checkPath($config['getDir']);
+        $config['origDir'] = $config['getDir']; // getDir will be overridden by setDirProp()
         $config['getFile'] = $this->_checkPath($config['getFile']);
 
         $config = $this->replacePropPhs($config);
@@ -62,18 +63,150 @@ class FileDownload {
      * @return  array   Dir paths in an array
      */
     private function _checkPath($paths) {
+        $cleanPaths = array();
         if (!empty($paths)) {
             $xPath = @explode(',', $paths);
-            $cleanPaths = array();
             foreach ($xPath as $path) {
+                $path = $this->trimString($path);
                 $realpath = realpath($path);
-                if (empty($realpath))
-                    continue;
+                if (empty($realpath)) {
+                    $realpath = realpath(MODX_BASE_PATH . $path);
+                    if (empty($realpath)) {
+                        continue;
+                    }
+                }
                 $cleanPaths[] = $realpath;
             }
         }
 
         return $cleanPaths;
+    }
+
+    /**
+     * View any string as a hexdump.
+     *
+     * This is most commonly used to view binary data from streams
+     * or sockets while debugging, but can be used to view any string
+     * with non-viewable characters.
+     *
+     * @version     1.3.2
+     * @author      Aidan Lister <aidan@php.net>
+     * @author      Peter Waller <iridum@php.net>
+     * @link        http://aidanlister.com/2004/04/viewing-binary-data-as-a-hexdump-in-php/
+     * @param       string  $data        The string to be dumped
+     * @param       bool    $htmloutput  [default: true] Set to false for non-HTML output
+     * @param       bool    $uppercase   [default: false] Set to true for uppercase hex
+     * @param       bool    $return      [default: false] Set to true to return the dump
+     */
+    public function hexdump($data, $htmloutput = true, $uppercase = false, $return = false) {
+        // Init
+        $hexi = '';
+        $ascii = '';
+        $dump = ($htmloutput === true) ? '<pre>' : '';
+        $offset = 0;
+        $len = strlen($data);
+
+        // Upper or lower case hexadecimal
+        $x = ($uppercase === false) ? 'x' : 'X';
+
+        // Iterate string
+        for ($i = $j = 0; $i < $len; $i++) {
+            // Convert to hexidecimal
+            $hexi .= sprintf("%02$x ", ord($data[$i]));
+
+            // Replace non-viewable bytes with '.'
+            if (ord($data[$i]) >= 32) {
+                $ascii .= ($htmloutput === true) ?
+                        htmlentities($data[$i]) :
+                        $data[$i];
+            } else {
+                $ascii .= '.';
+            }
+
+            // Add extra column spacing
+            if ($j === 7) {
+                $hexi .= ' ';
+                $ascii .= ' ';
+            }
+
+            // Add row
+            if (++$j === 16 || $i === $len - 1) {
+                // Join the hexi / ascii output
+                $dump .= sprintf("%04$x  %-49s  %s", $offset, $hexi, $ascii);
+
+                // Reset vars
+                $hexi = $ascii = '';
+                $offset += 16;
+                $j = 0;
+
+                // Add newline
+                if ($i !== $len - 1) {
+                    $dump .= "\n";
+                }
+            }
+        }
+
+        // Finish dump
+        $dump .= $htmloutput === true ?
+                '</pre>' :
+                '';
+        $dump .= "\n";
+
+        // Output method
+        if ($return === false) {
+            echo $dump;
+        } else {
+            return $dump;
+        }
+    }
+
+    /**
+     * Trim array values
+     * @param   array   $array      array contents
+     * @param   string  $charlist   [default: null] defined characters to be trimmed
+     * @link    http://php.net/manual/en/function.trim.php
+     * @return  array   trimmed array
+     */
+    public function trimArray(array $array, $charlist = null) {
+        $newArray = array();
+        foreach ($array as $k => $v) {
+            if (is_array($v)) {
+                $array[$k][$v] = $this->trimArray($v);
+            } else {
+                $val = $this->trimString($v, $charlist);
+                if (empty($v)) {
+                    continue;
+                }
+                $newArray[$k] = $val;
+            }
+        }
+        sort($newArray);
+
+        return $newArray;
+    }
+
+    /**
+     * Trim string value
+     * @param   string  $string     source text
+     * @param   string  $charlist   defined characters to be trimmed
+     * @link    http://php.net/manual/en/function.trim.php
+     * @return  string  trimmed text
+     */
+    public function trimString($string, $charlist = null) {
+        $string = htmlentities($string);
+        // blame TinyMCE!
+        $string = preg_replace('/(&Acirc;|&nbsp;)+/i', '', $string);
+        if ($charlist === null) {
+            $string = trim($string);
+        } else {
+            $string = trim($string, $charlist);
+        }
+
+        if (empty($string)) {
+            return FALSE;
+        }
+
+        return $string;
     }
 
     /**
@@ -107,9 +240,9 @@ class FileDownload {
      * Existed description from the chunk of the &chkDesc parameter
      * @param array $contents
      */
-    private function _getDescription($contents) {
+    private function _getDescription(array $contents) {
         if (empty($contents)) {
-            return '';
+            return $contents;
         }
 
         if (empty($this->config['chkDesc'])) {
@@ -293,7 +426,7 @@ class FileDownload {
                 }
 
                 $fullPath = $rootRealPath . DIRECTORY_SEPARATOR . $file;
-                $fileType = filetype($fullPath);
+                $fileType = @filetype($fullPath);
 
                 if ($fileType == 'file') {
                     $fileInfo = $this->_fileInformation($fullPath);
@@ -972,6 +1105,7 @@ class FileDownload {
             $sort['dir'] = $sortType['dir'];
             // template
             $row = 1;
+            $this->_template['wrapper'] = !empty($this->_template['wrapper']) ? $this->_template['wrapper'] : '';
             foreach ($sort['dir'] as $k => $v) {
                 $v['class'] = $this->_cssDir($row);
                 $this->_template['wrapper'] .= $this->_tplDir($v);
@@ -1127,7 +1261,6 @@ class FileDownload {
         if (!$this->config['ajaxMode']) {
 
         }
-//        $tpl = $this->_getChunk($this->config['tplDir'], $phs);
         $tpl = $this->parseTpl($this->config['tplDir'], $phs);
 
         return $tpl;
@@ -1148,7 +1281,6 @@ class FileDownload {
         if (!$this->config['ajaxMode']) {
 
         }
-//        $tpl = $this->_getChunk($this->config['tplFile'], $phs);
         $tpl = $this->parseTpl($this->config['tplFile'], $phs);
 
         return $tpl;
@@ -1168,7 +1300,6 @@ class FileDownload {
         }
         $phs['fd.class'] = (!empty($this->config['cssGroupDir'])) ? ' class="' . $this->config['cssGroupDir'] . '"' : '';
         $phs['fd.groupDirectory'] = $this->_trimPath($path);
-//        $tpl = $this->_getChunk($this->config['tplGroupDir'], $phs);
         $tpl = $this->parseTpl($this->config['tplGroupDir'], $phs);
 
         return $tpl;
@@ -1182,8 +1313,8 @@ class FileDownload {
         $phs['fd.classPath'] = (!empty($this->config['cssPath'])) ? ' class="' . $this->config['cssPath'] . '"' : '';
         $path = $this->_breadcrumbs();
         $phs['fd.path'] = $path;
-        $phs['fd.rows'] = $this->_template['wrapper'];
-//        $tpl = $this->_getChunk($this->config['tplWrapper'], $phs);
+        $wrapper = !empty($this->_template['wrapper']) ? $this->_template['wrapper'] : '';
+        $phs['fd.rows'] = $wrapper;
         $tpl = $this->parseTpl($this->config['tplWrapper'], $phs);
 
         return $tpl;
@@ -1195,15 +1326,18 @@ class FileDownload {
      * @return  string  trimmed path
      */
     private function _trimPath($path) {
+        $xPath = @explode(DIRECTORY_SEPARATOR, $this->config['origDir'][0]);
+        array_pop($xPath);
+        $parentPath = @implode(DIRECTORY_SEPARATOR, $xPath);
+        $trimmedPath = '';
+        $trimmedPath = str_replace($parentPath, '', $path) . DIRECTORY_SEPARATOR;
         $modxCorePath = realpath(MODX_CORE_PATH) . DIRECTORY_SEPARATOR;
         $modxAssetsPath = realpath(MODX_ASSETS_PATH) . DIRECTORY_SEPARATOR;
-        $searchCorePath = stristr($path, $modxCorePath);
-
-        $trimmedPath = '';
+        $searchCorePath = stristr($trimmedPath, $modxCorePath);
         if (FALSE !== $searchCorePath) {
-            $trimmedPath = str_replace($modxCorePath, '', $path) . DIRECTORY_SEPARATOR;
+            $trimmedPath = str_replace($modxCorePath, '', $trimmedPath) . DIRECTORY_SEPARATOR;
         } else {
-            $trimmedPath = str_replace($modxAssetsPath, '', $path) . DIRECTORY_SEPARATOR;
+            $trimmedPath = str_replace($modxAssetsPath, '', $trimmedPath) . DIRECTORY_SEPARATOR;
         }
 
         return $trimmedPath;
@@ -1226,6 +1360,7 @@ class FileDownload {
         }
 
         $trimmedPath = trim($this->_trimPath($path), DIRECTORY_SEPARATOR);
+
         $basePath = str_replace($trimmedPath, '', $path);
         $trimmedPathX = @explode(DIRECTORY_SEPARATOR, $trimmedPath);
 
@@ -1240,7 +1375,16 @@ class FileDownload {
                 'filename' => $trailingPath
                     ));
             if (!$fdlObj) {
-                continue;
+                $cdb = array();
+                $cdb['ctx'] = $this->modx->context->key;
+                $cdb['filename'] = $trailingPath;
+                $checkedDb = $this->_checkDb($cdb);
+                if (!$checkedDb) {
+                    continue;
+                }
+                $fdlObj = $this->modx->getObject('FDL', array(
+                    'filename' => $trailingPath
+                        ));
             }
 
             $hash = $fdlObj->get('hash');

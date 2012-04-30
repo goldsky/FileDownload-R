@@ -644,10 +644,6 @@ if (!empty($_GET['fdldir'])) {
 
 $contents = $fdl->getContents();
 
-if (!$contents) {
-    return '';
-}
-
 if (!empty($toArray)) {
     $output = '<pre>' . print_r($contents, true) . '</pre>';
 } else {

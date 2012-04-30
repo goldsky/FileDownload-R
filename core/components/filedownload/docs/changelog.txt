@@ -1,10 +1,17 @@
 Changelog for FileDownload.
 
+FileDownload 1.0.0.rc-3
+====================================
++ Bugfixed fatal error caused by an empty folder
++ Added trim utility to overcome the TinyMCE's whitespace bug
++ Returned the empty result through template.
+
 FileDownload 1.0.0.rc-2
 ====================================
 + Refactored template parser
 + Added @BINDINGs to the tpl parameters
 + Added template for forbidden access
++ Bugfixed the multiple usage of fileCss parameter
 
 FileDownload 1.0.0.rc-1
 ====================================
