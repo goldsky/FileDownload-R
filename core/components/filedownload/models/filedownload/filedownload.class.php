@@ -1057,7 +1057,7 @@ class FileDownload {
                 $sortPath[$file['path']][$k] = $file;
             }
 
-            $this->_template['wrapper'] .= '';
+            $this->_template['wrapper'] = !empty($this->_template['wrapper']) ? $this->_template['wrapper'] : '';
             $sort = array();
             foreach ($sortPath as $k => $path) {
                 // path name for the &groupByDirectory template: tpl-group
@@ -1328,16 +1328,18 @@ class FileDownload {
     private function _trimPath($path) {
         $xPath = @explode(DIRECTORY_SEPARATOR, $this->config['origDir'][0]);
         array_pop($xPath);
-        $parentPath = @implode(DIRECTORY_SEPARATOR, $xPath);
-        $trimmedPath = '';
-        $trimmedPath = str_replace($parentPath, '', $path) . DIRECTORY_SEPARATOR;
+        $parentPath = @implode(DIRECTORY_SEPARATOR, $xPath) . DIRECTORY_SEPARATOR;
+        $trimmedPath = $path;
+        if (FALSE !== stristr($trimmedPath, $parentPath)) {
+            $trimmedPath = str_replace($parentPath, '', $trimmedPath);
+        }
+
         $modxCorePath = realpath(MODX_CORE_PATH) . DIRECTORY_SEPARATOR;
         $modxAssetsPath = realpath(MODX_ASSETS_PATH) . DIRECTORY_SEPARATOR;
-        $searchCorePath = stristr($trimmedPath, $modxCorePath);
-        if (FALSE !== $searchCorePath) {
-            $trimmedPath = str_replace($modxCorePath, '', $trimmedPath) . DIRECTORY_SEPARATOR;
-        } else {
-            $trimmedPath = str_replace($modxAssetsPath, '', $trimmedPath) . DIRECTORY_SEPARATOR;
+        if (FALSE !== stristr($trimmedPath, $modxCorePath)) {
+            $trimmedPath = str_replace($modxCorePath, '', $trimmedPath);
+        } elseif (FALSE !== stristr($trimmedPath, $modxAssetsPath)) {
+            $trimmedPath = str_replace($modxAssetsPath, '', $trimmedPath);
         }
 
         return $trimmedPath;
