@@ -195,7 +195,7 @@ $scriptProperties['imgTypes'] = $modx->getOption('imgTypes', $scriptProperties);
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['tpl'] = $modx->getOption('tpl', $scriptProperties, '@CODE: <a href="[[+link]]">[[+filename]]</a>');
+$scriptProperties['tpl'] = $modx->getOption('tpl', $scriptProperties, '@CODE: <a href="[[+link]]">[[+filename]]</a> ([[+count]] downloads)');
 if (!empty($scriptProperties['tplCode'])) {
     $scriptProperties['tpl'] = '@CODE: ' . $scriptProperties['tplCode'];
 }

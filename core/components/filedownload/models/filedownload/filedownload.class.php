@@ -1101,28 +1101,49 @@ class FileDownload {
         }
 
         $sort = array();
+        $tplWrapper = !empty($this->_template['wrapper']) ? $this->_template['wrapper'] : '';
+        $dirs = '';
         if ($this->config['browseDirectories'] && !empty($sortType['dir'])) {
             $sort['dir'] = $sortType['dir'];
             // template
             $row = 1;
-            $this->_template['wrapper'] = !empty($this->_template['wrapper']) ? $this->_template['wrapper'] : '';
             foreach ($sort['dir'] as $k => $v) {
                 $v['class'] = $this->_cssDir($row);
-                $this->_template['wrapper'] .= $this->_tplDir($v);
+                $dirs .= $this->_tplDir($v);
                 $row++;
             }
         }
+        $phs = array();
+        $phs['fd.classPath'] = (!empty($this->config['cssPath'])) ? ' class="' . $this->config['cssPath'] . '"' : '';
+        $phs['fd.path'] = $this->_breadcrumbs();
 
+        if (!empty($this->config['tplWrapperDir']) && !empty($dirs)) {
+            $phs['fd.dirRows'] = $dirs;
+            $tplWrapper .= $this->parseTpl($this->config['tplWrapperDir'], $phs);
+        } else {
+            $tplWrapper .= $dirs;
+        }
+
+        $files = '';
         if (!empty($sortType['file'])) {
             $sort['file'] = $sortType['file'];
             // template
             $row = 1;
             foreach ($sort['file'] as $k => $v) {
                 $v['class'] = $this->_cssFile($row, $v['ext']);
-                $this->_template['wrapper'] .= $this->_tplFile($v);
+                $files .= $this->_tplFile($v);
                 $row++;
             }
         }
+
+        if (!empty($this->config['tplWrapperFile']) && !empty($files)) {
+            $phs['fd.fileRows'] = $files;
+            $tplWrapper .= $this->parseTpl($this->config['tplWrapperFile'], $phs);
+        } else {
+            $tplWrapper .= $files;
+        }
+
+        $this->_template['wrapper'] = $tplWrapper;
 
         return $sort;
     }
@@ -1315,7 +1336,11 @@ class FileDownload {
         $phs['fd.path'] = $path;
         $wrapper = !empty($this->_template['wrapper']) ? $this->_template['wrapper'] : '';
         $phs['fd.rows'] = $wrapper;
-        $tpl = $this->parseTpl($this->config['tplWrapper'], $phs);
+        if (!empty($this->config['tplWrapper'])) {
+            $tpl = $this->parseTpl($this->config['tplWrapper'], $phs);
+        } else {
+            $tpl = $wrapper;
+        }
 
         return $tpl;
     }

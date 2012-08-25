@@ -31,3 +31,9 @@ table.fd-table tr td {
 .fd-xlsx {
     background-color: #E3D1E6;
 }
+
+table.fd-table.no-border,
+table.fd-table.no-border > tr,
+table.fd-table.no-border > tr > td {
+    border: none;
+}

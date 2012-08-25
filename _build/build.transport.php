@@ -34,25 +34,25 @@ set_time_limit(0);
 define('PKG_NAME', 'FileDownload');
 define('PKG_NAME_LOWER', 'filedownload');
 define('PKG_VERSION', '1.0.0');
-define('PKG_RELEASE', 'rc.3');
+define('PKG_RELEASE', 'rc.5');
 
 /* override with your own defines here (see build.config.sample.php) */
 require_once dirname(__FILE__) . '/build.config.php';
 require_once MODX_CORE_PATH . 'model/modx/modx.class.php';
 
-$root = dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR;
+$root = dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR;
 $sources = array(
     'root' => $root,
-    'build' => $root . '_build' . DIRECTORY_SEPARATOR,
-    'data' => realpath($root . '_build/data/') . DIRECTORY_SEPARATOR,
-    'properties' => realpath($root . '_build/data/properties/') . DIRECTORY_SEPARATOR,
-    'resolvers' => realpath($root . '_build/resolvers/') . DIRECTORY_SEPARATOR,
-    'validators' => realpath($root . '_build/validators/') . DIRECTORY_SEPARATOR,
-    'lexicon' => realpath($root . 'core/components/filedownload/lexicon/') . DIRECTORY_SEPARATOR,
-    'docs' => realpath($root . 'core/components/filedownload/docs/') . DIRECTORY_SEPARATOR,
-    'chunks' => realpath($root . 'core/components/filedownload/themes/default/chunks/') . DIRECTORY_SEPARATOR,
-    'source_assets' => realpath($root . 'www/assets/components/filedownload'),
-    'source_core' => realpath($root . 'core/components/filedownload'),
+    'build' => BUILD_PATH,
+    'data' => BUILD_PATH . 'data' . DIRECTORY_SEPARATOR,
+    'properties' => realpath(BUILD_PATH . 'data/properties/') . DIRECTORY_SEPARATOR,
+    'resolvers' => realpath(BUILD_PATH . 'resolvers/') . DIRECTORY_SEPARATOR,
+    'validators' => realpath(BUILD_PATH . 'validators/') . DIRECTORY_SEPARATOR,
+    'lexicon' => realpath(MODX_CORE_PATH . 'components/filedownload/lexicon/') . DIRECTORY_SEPARATOR,
+    'docs' => realpath(MODX_CORE_PATH . 'components/filedownload/docs/') . DIRECTORY_SEPARATOR,
+    'chunks' => realpath(MODX_CORE_PATH . 'components/filedownload/themes/default/chunks/') . DIRECTORY_SEPARATOR,
+    'source_assets' => realpath(MODX_ASSETS_PATH . 'components/filedownload'),
+    'source_core' => realpath(MODX_CORE_PATH . 'components/filedownload'),
 );
 unset($root);
 

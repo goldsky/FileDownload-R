@@ -338,6 +338,22 @@ $scriptProperties['tplGroupDir'] = $modx->getOption('tplGroupDir', $scriptProper
  */
 $scriptProperties['tplWrapper'] = $modx->getOption('tplWrapper', $scriptProperties, 'tpl-wrapper');
 /**
+ * This is the container template for folders
+ * @options: chunk's name, or empty to disable
+ * @default: tpl-wrapper-dir
+ * @var string
+ * @since ver 2.0.0
+ */
+$scriptProperties['tplWrapperDir'] = $modx->getOption('tplWrapperDir', $scriptProperties);
+/**
+ * This is the container template for files
+ * @options: chunk's name, or empty to disable
+ * @default: tpl-wrapper-dir
+ * @var string
+ * @since ver 2.0.0
+ */
+$scriptProperties['tplWrapperFile'] = $modx->getOption('tplWrapperFile', $scriptProperties);
+/**
  * index.html file/chunk to hide the download folders
  * @options: chunk's name
  * @default: tpl-index

@@ -1,5 +1,14 @@
 Changelog for FileDownload.
 
+FileDownload 1.0.0.rc-5
+====================================
++ Added &tplWrapperDir and &tplWrapperFile properties to provide separated
+  wrapper templates between folders and files.
+
+FileDownload 1.0.0.rc-4
+====================================
++ Work out with MODX's extra's submission cancellation.
+
 FileDownload 1.0.0.rc-3
 ====================================
 + Bugfixed fatal error caused by an empty folder
