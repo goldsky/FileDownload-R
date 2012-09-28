@@ -1,0 +1,5 @@
+<?php
+
+$plugin;
+$modx;
+$fileDownload;

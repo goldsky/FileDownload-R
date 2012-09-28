@@ -1,8 +1,5 @@
 <?php
 
-header('Content-Type: text/html; charset=utf-8');
-mb_internal_encoding("UTF-8");
-
 /**
  * The snippet for the FileDownload package for MODX Revolution
  * This is the conversion of the original FileDownload snippet for MODX
@@ -42,6 +39,12 @@ if (get_magic_quotes_gpc()) {
     array_walk_recursive($_REQUEST, 'stripslashes_gpc');
 }
 
+$configs = array();
+
+$configs['encoding'] = $modx->getOption('encoding', $scriptProperties, 'UTF-8');
+header('Content-Type: text/html; charset=' . $configs['encoding']);
+mb_internal_encoding($configs['encoding']);
+
 /////////////////////////////////////////////////////////////////////////////////
 //                               Main Parameters                               //
 /////////////////////////////////////////////////////////////////////////////////
@@ -55,17 +58,17 @@ if (get_magic_quotes_gpc()) {
  * @default: null
  * @var string
  */
-$scriptProperties['getFile'] = $modx->getOption('getFile', $scriptProperties);
+$configs['getFile'] = $modx->getOption('getFile', $scriptProperties);
 /**
  * for Output Filter Modifier
  * @link http://rtfm.modx.com/display/revolution20/Custom+Output+Filter+Examples#CustomOutputFilterExamples-CreatingaCustomOutputModifier
  */
-if (empty($scriptProperties['getFile']) && !empty($scriptProperties['input'])) {
-    $scriptProperties['getFile'] = $scriptProperties['input'];
-} elseif (empty($scriptProperties['getFile']) && empty($scriptProperties['input'])) {
+if (empty($configs['getFile']) && !empty($scriptProperties['input'])) {
+    $configs['getFile'] = $scriptProperties['input'];
+} elseif (empty($configs['getFile']) && empty($scriptProperties['input'])) {
     return '<!-- getFile parameter is empty -->';
 }
-$comma = stristr($scriptProperties['getFile'], ',');
+$comma = stristr($configs['getFile'], ',');
 if ($comma) {
     return '<!-- getFile parameter should be only one file -->';
 }
@@ -84,7 +87,7 @@ if ($comma) {
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['chkDesc'] = $modx->getOption('chkDesc', $scriptProperties);
+$configs['chkDesc'] = $modx->getOption('chkDesc', $scriptProperties);
 /**
  * The dateFormat parameter will change the format of the date displayed for
  * each file in the output.
@@ -94,7 +97,7 @@ $scriptProperties['chkDesc'] = $modx->getOption('chkDesc', $scriptProperties);
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['dateFormat'] = $modx->getOption('dateFormat', $scriptProperties, 'Y-m-d');
+$configs['dateFormat'] = $modx->getOption('dateFormat', $scriptProperties, 'Y-m-d');
 
 /////////////////////////////////////////////////////////////////////////////////
 //                                 Permissions                                 //
@@ -110,13 +113,13 @@ $scriptProperties['dateFormat'] = $modx->getOption('dateFormat', $scriptProperti
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'userGroups' instead.
  */
-$scriptProperties['downloadGroups'] = $modx->getOption('downloadGroups', $scriptProperties);
-if (!empty($scriptProperties['downloadGroups']) && empty($scriptProperties['userGroups'])) {
-    $scriptProperties['userGroups'] = $scriptProperties['downloadGroups'];
+$configs['downloadGroups'] = $modx->getOption('downloadGroups', $scriptProperties);
+if (!empty($configs['downloadGroups']) && empty($scriptProperties['userGroups'])) {
+    $configs['userGroups'] = $configs['downloadGroups'];
 } else {
-    $scriptProperties['userGroups'] = $modx->getOption('userGroups', $scriptProperties);
+    $configs['userGroups'] = $modx->getOption('userGroups', $scriptProperties);
 }
-unset($scriptProperties['downloadGroups']);
+unset($configs['downloadGroups']);
 /////////////////////////////////////////////////////////////////////////////////
 //                              Download Counting                              //
 /////////////////////////////////////////////////////////////////////////////////
@@ -128,7 +131,7 @@ unset($scriptProperties['downloadGroups']);
  * @var bool
  * @since ver 1.2.0
  */
-$scriptProperties['countDownloads'] = $modx->getOption('countDownloads', $scriptProperties, 1);
+$configs['countDownloads'] = $modx->getOption('countDownloads', $scriptProperties, 1);
 /////////////////////////////////////////////////////////////////////////////////
 //                                   Images                                    //
 /////////////////////////////////////////////////////////////////////////////////
@@ -141,7 +144,7 @@ $scriptProperties['countDownloads'] = $modx->getOption('countDownloads', $script
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['imgLocat'] = $modx->getOption('imgLocat', $scriptProperties, 'assets/components/filedownload/img/filetype');
+$configs['imgLocat'] = $modx->getOption('imgLocat', $scriptProperties, 'assets/components/filedownload/img/filetype');
 /**
  * This allows for associations between file extensions and an image.
  * The information on these associations should be put into a chunk similar to
@@ -183,7 +186,7 @@ $scriptProperties['imgLocat'] = $modx->getOption('imgLocat', $scriptProperties, 
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['imgTypes'] = $modx->getOption('imgTypes', $scriptProperties);
+$configs['imgTypes'] = $modx->getOption('imgTypes', $scriptProperties);
 
 /////////////////////////////////////////////////////////////////////////////////
 //                            Templates & Styles                               //
@@ -195,9 +198,9 @@ $scriptProperties['imgTypes'] = $modx->getOption('imgTypes', $scriptProperties);
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['tpl'] = $modx->getOption('tpl', $scriptProperties, '@CODE: <a href="[[+link]]">[[+filename]]</a> ([[+count]] downloads)');
+$configs['tpl'] = $modx->getOption('tpl', $scriptProperties, '@CODE: <a href="[[+link]]">[[+filename]]</a> ([[+count]] downloads)');
 if (!empty($scriptProperties['tplCode'])) {
-    $scriptProperties['tpl'] = '@CODE: ' . $scriptProperties['tplCode'];
+    $configs['tpl'] = '@CODE: ' . $scriptProperties['tplCode'];
 }
 
 /**
@@ -207,22 +210,75 @@ if (!empty($scriptProperties['tplCode'])) {
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['tplNotAllowed'] = $modx->getOption('tplNotAllowed', $scriptProperties, '@FILE: [[++core_path]]components/filedownload/elements/chunks/tpl-notallowed.chunk.tpl');
+$configs['tplNotAllowed'] = $modx->getOption('tplNotAllowed', $scriptProperties, '@FILE: [[++core_path]]components/filedownload/elements/chunks/tpl-notallowed.chunk.tpl');
 
+/**
+ * This property will make the list only displays files without their download links.
+ * @default: null
+ * @var string
+ * @since ver 1.2.0
+ */
+$configs['noDownload'] = $modx->getOption('noDownload', $scriptProperties);
+/**
+ * Turn on the ajax mode for the script.
+ * @options: 1 | 0
+ * @default: 0
+ * @var bool
+ * @since ver 2.0.0
+ */
+$configs['ajaxMode'] = $modx->getOption('ajaxMode', $scriptProperties);
+/**
+ * The MODX's resource page id as the Ajax processor file
+ * @var int
+ * @since ver 2.0.0
+ * @subpackage FileDownloadController
+ */
+$configs['ajaxControllerPage'] = $modx->getOption('ajaxControllerPage', $scriptProperties);
+/**
+ * The Ajax's element container id
+ * @default: file-download
+ * @example <div id="file-download"></div>
+ * @var string
+ * @since ver 2.0.0
+ */
+$configs['ajaxContainerId'] = $modx->getOption('ajaxContainerId', $scriptProperties, 'file-download');
+/**
+ * FileDownload's Javascript file for the page header
+ * @default: assets/components/filedownload/js/fd.js
+ * @var string
+ * @since ver 2.0.0
+ */
+$configs['fileJs'] = $modx->getOption('fileJs', $scriptProperties
+        , $modx->getOption('assets_url') . 'components/filedownload/js/fd.js');
+/**
+ * FileDownload's Cascading Style Sheet file for the page header
+ * @default: assets/components/filedownload/css/fd.css
+ * @var string
+ * @since ver 2.0.0
+ */
+$configs['fileCss'] = $modx->getOption('fileCss', $scriptProperties
+        , $modx->getOption('assets_url') . 'components/filedownload/css/fd.css');
 /**
  * This text will be added to the file's hashed link to disguise the direct path
  * @default: FileDownload
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['saltText'] = $modx->getOption('saltText', $scriptProperties);
+$configs['saltText'] = $modx->getOption('saltText', $scriptProperties);
 /**
  * This parameter provides the direct link
  * @default: 0
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['directLink'] = $modx->getOption('directLink', $scriptProperties, 0);
+$configs['directLink'] = $modx->getOption('directLink', $scriptProperties, 0);
+/**
+ * This is a given ID to the snippet to deal with multiple snippet calls and
+ * &browseDirectories altogether
+ * @default: null
+ * @var string
+ */
+$configs['plugins'] = $modx->getOption('plugins', $scriptProperties);
 
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
@@ -232,7 +288,7 @@ $scriptProperties['directLink'] = $modx->getOption('directLink', $scriptProperti
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
 
-array_walk($scriptProperties, create_function('&$val', 'if (!is_array($val)) $val = trim($val);'));
+array_walk($configs, create_function('&$val', 'if (!is_array($val)) $val = trim($val);'));
 
 $fdl = $modx->getService('fdl'
         , 'FileDownload'
@@ -242,44 +298,62 @@ $fdl = $modx->getService('fdl'
 if (!($fdl instanceof FileDownload))
     return 'instanceof error.';
 
-$fdl->setConfigs($scriptProperties);
+$fdl->setConfigs($configs);
 
 if (!$fdl->isAllowed()) {
-    return $fdl->parseTpl($scriptProperties['tplNotAllowed'], array());
+    return $fdl->parseTpl($configs['tplNotAllowed'], array());
 }
 
-if ($scriptProperties['fileCss'] !== 'disabled') {
-    $modx->regClientCSS($fdl->replacePropPhs($scriptProperties['fileCss']));
+if ($configs['fileCss'] !== 'disabled') {
+    $modx->regClientCSS($fdl->replacePropPhs($configs['fileCss']));
 }
 
-if ($scriptProperties['ajaxMode'] && !empty($scriptProperties['ajaxControllerPage'])) {
+if ($configs['ajaxMode'] && !empty($configs['ajaxControllerPage'])) {
     // require dojo
     if (!file_exists(realpath(MODX_BASE_PATH . 'assets/components/filedownload/js/dojo/dojo.js'))) {
         return 'dojo.js is required.';
     }
-    $modx->regClientStartupScript($fdl->config['jsUrl'] . 'dojo/dojo.js');
-    if ($scriptProperties['fileJs'] !== 'disabled') {
-        $modx->regClientStartupScript($fdl->replacePropPhs($scriptProperties['fileJs']));
+    $modx->regClientStartupScript($fdl->configs['jsUrl'] . 'dojo/dojo.js');
+    if ($configs['fileJs'] !== 'disabled') {
+        $modx->regClientStartupScript($fdl->replacePropPhs($configs['fileJs']));
     }
 }
 
-if (!empty($_GET)) {
+if (!empty($_GET['fdlfile'])) {
+    $ref = $_SERVER['HTTP_REFERER'];
+    // deal with multiple snippets which have &browseDirectories
+    $xRef = @explode('?', $ref);
+    $queries = array();
+    parse_str($xRef[1], $queries);
+    if (!empty($queries['id'])) {
+        // non FURL
+        $baseRef = $xRef[0] . '?id=' . $queries['id'];
+    } else {
+        $baseRef = $xRef[0];
+    }
+    $page = $modx->makeUrl($modx->resource->get('id'), '', '', 'full');
+    if ($baseRef !== $page) {
+        return $modx->sendUnauthorizedPage();
+    }
     $sanitizedGets = $modx->sanitize($_GET);
 }
-if (!empty($_GET['fdlfile'])) {
-    if (!$fdl->checkHash($modx->context->key, $sanitizedGets['fdlfile']))
-        return FALSE;
-    $downloadFile = $fdl->downloadFile($sanitizedGets['fdlfile']);
-    if (!$downloadFile) {
-        return '';
+
+if (empty($configs['downloadByOther'])) {
+    if (!empty($_GET['fdlfile'])) {
+        if (!$fdl->checkHash($modx->context->key, $sanitizedGets['fdlfile']))
+            return;
+        $downloadFile = $fdl->downloadFile($sanitizedGets['fdlfile']);
+        if (!$downloadFile) {
+            return;
+        }
+        return;
     }
-    return '';
 }
 
 $contents = $fdl->getContents();
 
 if (!$contents) {
-    return '';
+    return;
 }
 
 $output = '';
@@ -292,19 +366,19 @@ if (!empty($scriptProperties['input'])) {
     if (empty($output)
             && !is_numeric($output) // avoid 0 (zero) of the download counting.
     ) {
-        $output = $fdl->parseTpl($scriptProperties['tpl'], $contents['file'][0]);
+        $output = $fdl->parseTpl($configs['tpl'], $contents['file'][0]);
     }
 } elseif (!empty($toArray)) {
     $output = '<pre>';
     $output .= print_r($contents['file'][0], true);
     $output .= '</pre>';
 } else {
-    $output = $fdl->parseTpl($scriptProperties['tpl'], $contents['file'][0]);
+    $output = $fdl->parseTpl($configs['tpl'], $contents['file'][0]);
 }
 
 if (!empty($toPlaceholder)) {
     $modx->setPlaceholder($toPlaceholder, $output);
-    return '';
+    return;
 }
 
 return $output;

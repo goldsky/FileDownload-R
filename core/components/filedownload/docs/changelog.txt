@@ -1,5 +1,16 @@
 Changelog for FileDownload.
 
+FileDownload 1.0.0-pl
+====================================
++ Prevent direct hyperlink from different site or referrer
++ Add &fdlid for multiple snippet calls which are having &browseDirectories on
+  the same page
++ Add &encoding for internationalization
++ Add &tplBreadcrumb and &breadcrumbSeparator for breadcrumbs
++ Add [[+fd.hash]] for file
++ Add [[+fd.url]] to replace [[+fd.link]] (deprecated)
++ Add &downloadByOther (boolean) to avoid download and pass it for other script
+
 FileDownload 1.0.0.rc-5
 ====================================
 + Added &tplWrapperDir and &tplWrapperFile properties to provide separated

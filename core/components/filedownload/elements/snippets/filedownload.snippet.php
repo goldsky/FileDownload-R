@@ -1,8 +1,5 @@
 <?php
 
-header('Content-Type: text/html; charset=utf-8');
-mb_internal_encoding("UTF-8");
-
 /**
  * The snippet for the FileDownload package for MODX Revolution
  * This is the conversion of the original FileDownload snippet for MODX
@@ -43,6 +40,12 @@ if (get_magic_quotes_gpc()) {
     array_walk_recursive($_REQUEST, 'stripslashes_gpc');
 }
 
+$configs = array();
+
+$configs['encoding'] = $modx->getOption('encoding', $scriptProperties, 'UTF-8');
+header('Content-Type: text/html; charset=' . $configs['encoding']);
+mb_internal_encoding($configs['encoding']);
+
 /////////////////////////////////////////////////////////////////////////////////
 //                               Main Parameters                               //
 /////////////////////////////////////////////////////////////////////////////////
@@ -57,7 +60,7 @@ if (get_magic_quotes_gpc()) {
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['getDir'] = $modx->getOption('getDir', $scriptProperties);
+$configs['getDir'] = $modx->getOption('getDir', $scriptProperties);
 /**
  * The getFile parameter will make the snippet output only the file specified.
  * The getDir parameter is still required and getFile should be a file inside
@@ -70,9 +73,9 @@ $scriptProperties['getDir'] = $modx->getOption('getDir', $scriptProperties);
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['getFile'] = $modx->getOption('getFile', $scriptProperties);
+$configs['getFile'] = $modx->getOption('getFile', $scriptProperties);
 
-if (empty($scriptProperties['getDir']) && empty($scriptProperties['getFile'])) {
+if (empty($configs['getDir']) && empty($configs['getFile'])) {
     return '<!-- FileDownload parameters are empty -->';
 }
 
@@ -85,11 +88,11 @@ if (empty($scriptProperties['getDir']) && empty($scriptProperties['getFile'])) {
  * @var bool
  * @since ver 1.2.0
  */
-$scriptProperties['browseDirectories'] = $modx->getOption('browseDirectories', $scriptProperties, 0);
+$configs['browseDirectories'] = $modx->getOption('browseDirectories', $scriptProperties, 0);
 // typo fall back
-$scriptProperties['browseDirectory'] = !empty($scriptProperties['browseDirectory']) ?
+$configs['browseDirectory'] = !empty($scriptProperties['browseDirectory']) ?
         $scriptProperties['browseDirectory'] :
-        $scriptProperties['browseDirectories'];
+        $configs['browseDirectories'];
 /**
  * If multiple directories are specified in the getDir parameter, this property
  * will group the files by each directory.
@@ -100,11 +103,11 @@ $scriptProperties['browseDirectory'] = !empty($scriptProperties['browseDirectory
  * @var bool
  * @since ver 1.2.0
  */
-$scriptProperties['groupByDirectory'] = $modx->getOption('groupByDirectory', $scriptProperties, 0);
+$configs['groupByDirectory'] = $modx->getOption('groupByDirectory', $scriptProperties, 0);
 // typo fall back
-$scriptProperties['groupByDirectories'] = !empty($scriptProperties['groupByDirectories']) ?
+$configs['groupByDirectories'] = !empty($scriptProperties['groupByDirectories']) ?
         $scriptProperties['groupByDirectories'] :
-        $scriptProperties['groupByDirectory'];
+        $configs['groupByDirectory'];
 /**
  * This allows descriptions to be added to the file listing included in a chunk.
  * All of the files and descriptions should be listed in the chunk using the
@@ -119,7 +122,7 @@ $scriptProperties['groupByDirectories'] = !empty($scriptProperties['groupByDirec
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['chkDesc'] = $modx->getOption('chkDesc', $scriptProperties);
+$configs['chkDesc'] = $modx->getOption('chkDesc', $scriptProperties);
 /**
  * @var string
  * @since ver 1.2.0
@@ -142,7 +145,7 @@ $scriptProperties['chkDesc'] = $modx->getOption('chkDesc', $scriptProperties);
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['sortBy'] = $modx->getOption('sortBy', $scriptProperties, 'filename');
+$configs['sortBy'] = $modx->getOption('sortBy', $scriptProperties, 'filename');
 /**
  * Case sensitive option for sorting
  * @options: 1 | 0
@@ -150,7 +153,7 @@ $scriptProperties['sortBy'] = $modx->getOption('sortBy', $scriptProperties, 'fil
  * @var bool
  * @since ver 2.0.0
  */
-$scriptProperties['sortByCaseSensitive'] = $modx->getOption('sortByCaseSensitive', $scriptProperties);
+$configs['sortByCaseSensitive'] = $modx->getOption('sortByCaseSensitive', $scriptProperties);
 /**
  * Sort files in ascending or descending order.
  * @options: asc | desc
@@ -158,7 +161,7 @@ $scriptProperties['sortByCaseSensitive'] = $modx->getOption('sortByCaseSensitive
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['sortOrder'] = $modx->getOption('sortOrder', $scriptProperties);
+$configs['sortOrder'] = $modx->getOption('sortOrder', $scriptProperties);
 /**
  * Sort order option by a natural order
  * @options: 1 | 0
@@ -166,7 +169,7 @@ $scriptProperties['sortOrder'] = $modx->getOption('sortOrder', $scriptProperties
  * @var bool
  * @since ver 2.0.0
  */
-$scriptProperties['sortOrderNatural'] = $modx->getOption('sortOrderNatural', $scriptProperties);
+$configs['sortOrderNatural'] = $modx->getOption('sortOrderNatural', $scriptProperties);
 /**
  * This will limit the inclusion files displayed to files with a valid extension
  * from the list.
@@ -177,13 +180,13 @@ $scriptProperties['sortOrderNatural'] = $modx->getOption('sortOrderNatural', $sc
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'extShown' instead.
  */
-$scriptProperties['showExt'] = $modx->getOption('showExt', $scriptProperties);
-if (!empty($scriptProperties['showExt']) && empty($scriptProperties['extShown'])) {
-    $scriptProperties['extShown'] = $scriptProperties['showExt'];
+$configs['showExt'] = $modx->getOption('showExt', $scriptProperties);
+if (!empty($configs['showExt']) && empty($scriptProperties['extShown'])) {
+    $configs['extShown'] = $configs['showExt'];
 } else {
-    $scriptProperties['extShown'] = $modx->getOption('extShown', $scriptProperties);
+    $configs['extShown'] = $modx->getOption('extShown', $scriptProperties);
 }
-unset($scriptProperties['showExt']);
+unset($configs['showExt']);
 /**
  * This will exclude the files displayed to files with a valid extension from
  * the list.
@@ -194,13 +197,13 @@ unset($scriptProperties['showExt']);
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'extHidden' instead.
  */
-$scriptProperties['hideExt'] = $modx->getOption('hideExt', $scriptProperties);
-if (!empty($scriptProperties['hideExt']) && empty($scriptProperties['extHidden'])) {
-    $scriptProperties['extHidden'] = $scriptProperties['hideExt'];
+$configs['hideExt'] = $modx->getOption('hideExt', $scriptProperties);
+if (!empty($configs['hideExt']) && empty($scriptProperties['extHidden'])) {
+    $configs['extHidden'] = $configs['hideExt'];
 } else {
-    $scriptProperties['extHidden'] = $modx->getOption('extHidden', $scriptProperties);
+    $configs['extHidden'] = $modx->getOption('extHidden', $scriptProperties);
 }
-unset($scriptProperties['hideExt']);
+unset($configs['hideExt']);
 /**
  * The dateFormat parameter will change the format of the date displayed for
  * each file in the output.
@@ -210,7 +213,7 @@ unset($scriptProperties['hideExt']);
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['dateFormat'] = $modx->getOption('dateFormat', $scriptProperties, 'Y-m-d');
+$configs['dateFormat'] = $modx->getOption('dateFormat', $scriptProperties, 'Y-m-d');
 
 /////////////////////////////////////////////////////////////////////////////////
 //                                 Permissions                                 //
@@ -226,13 +229,13 @@ $scriptProperties['dateFormat'] = $modx->getOption('dateFormat', $scriptProperti
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'userGroups' instead.
  */
-$scriptProperties['downloadGroups'] = $modx->getOption('downloadGroups', $scriptProperties);
-if (!empty($scriptProperties['downloadGroups']) && empty($scriptProperties['userGroups'])) {
-    $scriptProperties['userGroups'] = $scriptProperties['downloadGroups'];
+$configs['downloadGroups'] = $modx->getOption('downloadGroups', $scriptProperties);
+if (!empty($configs['downloadGroups']) && empty($scriptProperties['userGroups'])) {
+    $configs['userGroups'] = $configs['downloadGroups'];
 } else {
-    $scriptProperties['userGroups'] = $modx->getOption('userGroups', $scriptProperties);
+    $configs['userGroups'] = $modx->getOption('userGroups', $scriptProperties);
 }
-unset($scriptProperties['downloadGroups']);
+unset($configs['downloadGroups']);
 /////////////////////////////////////////////////////////////////////////////////
 //                              Download Counting                              //
 /////////////////////////////////////////////////////////////////////////////////
@@ -244,7 +247,7 @@ unset($scriptProperties['downloadGroups']);
  * @var bool
  * @since ver 1.2.0
  */
-$scriptProperties['countDownloads'] = $modx->getOption('countDownloads', $scriptProperties, 1);
+$configs['countDownloads'] = $modx->getOption('countDownloads', $scriptProperties, 1);
 /////////////////////////////////////////////////////////////////////////////////
 //                                   Images                                    //
 /////////////////////////////////////////////////////////////////////////////////
@@ -257,7 +260,7 @@ $scriptProperties['countDownloads'] = $modx->getOption('countDownloads', $script
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['imgLocat'] = $modx->getOption('imgLocat', $scriptProperties, 'assets/components/filedownload/img/filetype');
+$configs['imgLocat'] = $modx->getOption('imgLocat', $scriptProperties, 'assets/components/filedownload/img/filetype');
 /**
  * This allows for associations between file extensions and an image.
  * The information on these associations should be put into a chunk similar to
@@ -300,7 +303,7 @@ $scriptProperties['imgLocat'] = $modx->getOption('imgLocat', $scriptProperties, 
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['imgTypes'] = $modx->getOption('imgTypes', $scriptProperties);
+$configs['imgTypes'] = $modx->getOption('imgTypes', $scriptProperties);
 
 /////////////////////////////////////////////////////////////////////////////////
 //                            Templates & Styles                               //
@@ -312,7 +315,7 @@ $scriptProperties['imgTypes'] = $modx->getOption('imgTypes', $scriptProperties);
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['tplDir'] = $modx->getOption('tplDir', $scriptProperties, 'tpl-row-dir');
+$configs['tplDir'] = $modx->getOption('tplDir', $scriptProperties, 'tpl-row-dir');
 /**
  * This is the file row template (chunk/file)
  * @options: chunk's name
@@ -320,7 +323,7 @@ $scriptProperties['tplDir'] = $modx->getOption('tplDir', $scriptProperties, 'tpl
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['tplFile'] = $modx->getOption('tplFile', $scriptProperties, 'tpl-row-file');
+$configs['tplFile'] = $modx->getOption('tplFile', $scriptProperties, 'tpl-row-file');
 /**
  * This is the file row template (chunk/file)
  * @options: chunk's name
@@ -328,7 +331,7 @@ $scriptProperties['tplFile'] = $modx->getOption('tplFile', $scriptProperties, 't
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['tplGroupDir'] = $modx->getOption('tplGroupDir', $scriptProperties, 'tpl-group-dir');
+$configs['tplGroupDir'] = $modx->getOption('tplGroupDir', $scriptProperties, 'tpl-group-dir');
 /**
  * This is the container template (chunk/file) of all of the snippet's results
  * @options: chunk's name
@@ -336,7 +339,7 @@ $scriptProperties['tplGroupDir'] = $modx->getOption('tplGroupDir', $scriptProper
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['tplWrapper'] = $modx->getOption('tplWrapper', $scriptProperties, 'tpl-wrapper');
+$configs['tplWrapper'] = $modx->getOption('tplWrapper', $scriptProperties, 'tpl-wrapper');
 /**
  * This is the container template for folders
  * @options: chunk's name, or empty to disable
@@ -344,7 +347,7 @@ $scriptProperties['tplWrapper'] = $modx->getOption('tplWrapper', $scriptProperti
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['tplWrapperDir'] = $modx->getOption('tplWrapperDir', $scriptProperties);
+$configs['tplWrapperDir'] = $modx->getOption('tplWrapperDir', $scriptProperties);
 /**
  * This is the container template for files
  * @options: chunk's name, or empty to disable
@@ -352,7 +355,7 @@ $scriptProperties['tplWrapperDir'] = $modx->getOption('tplWrapperDir', $scriptPr
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['tplWrapperFile'] = $modx->getOption('tplWrapperFile', $scriptProperties);
+$configs['tplWrapperFile'] = $modx->getOption('tplWrapperFile', $scriptProperties);
 /**
  * index.html file/chunk to hide the download folders
  * @options: chunk's name
@@ -360,7 +363,7 @@ $scriptProperties['tplWrapperFile'] = $modx->getOption('tplWrapperFile', $script
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['tplIndex'] = $modx->getOption('tplIndex', $scriptProperties, 'tpl-index');
+$configs['tplIndex'] = $modx->getOption('tplIndex', $scriptProperties, 'tpl-index');
 
 /**
  * Template for forbidden access
@@ -369,7 +372,7 @@ $scriptProperties['tplIndex'] = $modx->getOption('tplIndex', $scriptProperties, 
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['tplNotAllowed'] = $modx->getOption('tplNotAllowed', $scriptProperties, '@FILE: [[++core_path]]components/filedownload/elements/chunks/tpl-notallowed.chunk.tpl');
+$configs['tplNotAllowed'] = $modx->getOption('tplNotAllowed', $scriptProperties, '@FILE: [[++core_path]]components/filedownload/elements/chunks/tpl-notallowed.chunk.tpl');
 
 /**
  * This specifies the class that will be applied to every other file/directory so
@@ -380,13 +383,13 @@ $scriptProperties['tplNotAllowed'] = $modx->getOption('tplNotAllowed', $scriptPr
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'cssAltRow' instead.
  */
-$scriptProperties['altCss'] = $modx->getOption('altCss', $scriptProperties);
-if (!empty($scriptProperties['altCss']) && empty($scriptProperties['cssAltRow'])) {
-    $scriptProperties['cssAltRow'] = $scriptProperties['altCss'];
+$configs['altCss'] = $modx->getOption('altCss', $scriptProperties);
+if (!empty($configs['altCss']) && empty($scriptProperties['cssAltRow'])) {
+    $configs['cssAltRow'] = $configs['altCss'];
 } else {
-    $scriptProperties['cssAltRow'] = $modx->getOption('cssAltRow', $scriptProperties);
+    $configs['cssAltRow'] = $modx->getOption('cssAltRow', $scriptProperties);
 }
-unset($scriptProperties['altCss']);
+unset($configs['altCss']);
 
 /**
  * This specifies the class that will be applied to the first directory.
@@ -396,13 +399,13 @@ unset($scriptProperties['altCss']);
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'cssFirstDir' instead.
  */
-$scriptProperties['firstFolderCss'] = $modx->getOption('firstFolderCss', $scriptProperties);
-if (!empty($scriptProperties['firstFolderCss']) && empty($scriptProperties['cssFirstDir'])) {
-    $scriptProperties['cssFirstDir'] = $scriptProperties['firstFolderCss'];
+$configs['firstFolderCss'] = $modx->getOption('firstFolderCss', $scriptProperties);
+if (!empty($configs['firstFolderCss']) && empty($scriptProperties['cssFirstDir'])) {
+    $configs['cssFirstDir'] = $configs['firstFolderCss'];
 } else {
-    $scriptProperties['cssFirstDir'] = $modx->getOption('cssFirstDir', $scriptProperties);
+    $configs['cssFirstDir'] = $modx->getOption('cssFirstDir', $scriptProperties);
 }
-unset($scriptProperties['firstFolderCss']);
+unset($configs['firstFolderCss']);
 /**
  * This specified the class that will be applied to the last directory.
  * @options: css class name
@@ -411,13 +414,13 @@ unset($scriptProperties['firstFolderCss']);
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'cssLastDir' instead.
  */
-$scriptProperties['lastFolderCss'] = $modx->getOption('lastFolderCss', $scriptProperties);
-if (!empty($scriptProperties['lastFolderCss']) && empty($scriptProperties['cssLastDir'])) {
-    $scriptProperties['cssLastDir'] = $scriptProperties['lastFolderCss'];
+$configs['lastFolderCss'] = $modx->getOption('lastFolderCss', $scriptProperties);
+if (!empty($configs['lastFolderCss']) && empty($scriptProperties['cssLastDir'])) {
+    $configs['cssLastDir'] = $configs['lastFolderCss'];
 } else {
-    $scriptProperties['cssLastDir'] = $modx->getOption('cssLastDir', $scriptProperties);
+    $configs['cssLastDir'] = $modx->getOption('cssLastDir', $scriptProperties);
 }
-unset($scriptProperties['lastFolderCss']);
+unset($configs['lastFolderCss']);
 /**
  * This specified the class that will be applied to the first file.
  * @options: css class name
@@ -426,13 +429,13 @@ unset($scriptProperties['lastFolderCss']);
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'cssFirstFile' instead.
  */
-$scriptProperties['firstFileCss'] = $modx->getOption('firstFileCss', $scriptProperties);
-if (!empty($scriptProperties['firstFileCss']) && empty($scriptProperties['cssFirstFile'])) {
-    $scriptProperties['cssFirstFile'] = $scriptProperties['firstFileCss'];
+$configs['firstFileCss'] = $modx->getOption('firstFileCss', $scriptProperties);
+if (!empty($configs['firstFileCss']) && empty($scriptProperties['cssFirstFile'])) {
+    $configs['cssFirstFile'] = $configs['firstFileCss'];
 } else {
-    $scriptProperties['cssFirstFile'] = $modx->getOption('cssFirstFile', $scriptProperties);
+    $configs['cssFirstFile'] = $modx->getOption('cssFirstFile', $scriptProperties);
 }
-unset($scriptProperties['firstFileCss']);
+unset($configs['firstFileCss']);
 /**
  * This specifies the class that will be applied to the last file.
  * @options: css class name
@@ -441,13 +444,13 @@ unset($scriptProperties['firstFileCss']);
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'cssLastFile' instead.
  */
-$scriptProperties['lastFileCss'] = $modx->getOption('lastFileCss', $scriptProperties);
-if (!empty($scriptProperties['lastFileCss']) && empty($scriptProperties['cssLastFile'])) {
-    $scriptProperties['cssLastFile'] = $scriptProperties['lastFileCss'];
+$configs['lastFileCss'] = $modx->getOption('lastFileCss', $scriptProperties);
+if (!empty($configs['lastFileCss']) && empty($scriptProperties['cssLastFile'])) {
+    $configs['cssLastFile'] = $configs['lastFileCss'];
 } else {
-    $scriptProperties['cssLastFile'] = $modx->getOption('cssLastFile', $scriptProperties);
+    $configs['cssLastFile'] = $modx->getOption('cssLastFile', $scriptProperties);
 }
-unset($scriptProperties['lastFileCss']);
+unset($configs['lastFileCss']);
 /**
  * This specifies the class that will be applied to all folders.
  * @options: css class name
@@ -456,13 +459,13 @@ unset($scriptProperties['lastFileCss']);
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'cssDir' instead.
  */
-$scriptProperties['folderCss'] = $modx->getOption('folderCss', $scriptProperties);
-if (!empty($scriptProperties['folderCss']) && empty($scriptProperties['cssDir'])) {
-    $scriptProperties['cssDir'] = $scriptProperties['folderCss'];
+$configs['folderCss'] = $modx->getOption('folderCss', $scriptProperties);
+if (!empty($configs['folderCss']) && empty($scriptProperties['cssDir'])) {
+    $configs['cssDir'] = $configs['folderCss'];
 } else {
-    $scriptProperties['cssDir'] = $modx->getOption('cssDir', $scriptProperties);
+    $configs['cssDir'] = $modx->getOption('cssDir', $scriptProperties);
 }
-unset($scriptProperties['folderCss']);
+unset($configs['folderCss']);
 /**
  * Class name for all files
  * @options: css class name
@@ -471,7 +474,7 @@ unset($scriptProperties['folderCss']);
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'cssFile' instead.
  */
-$scriptProperties['cssFile'] = $modx->getOption('cssFile', $scriptProperties);
+$configs['cssFile'] = $modx->getOption('cssFile', $scriptProperties);
 /**
  * This specifies the class that will be applied to the directory for multi-
  * directory grouping.
@@ -481,13 +484,13 @@ $scriptProperties['cssFile'] = $modx->getOption('cssFile', $scriptProperties);
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'cssGroupDir' instead.
  */
-$scriptProperties['directoryCss'] = $modx->getOption('directoryCss', $scriptProperties);
-if (!empty($scriptProperties['directoryCss']) && empty($scriptProperties['cssGroupDir'])) {
-    $scriptProperties['cssGroupDir'] = $scriptProperties['directoryCss'];
+$configs['directoryCss'] = $modx->getOption('directoryCss', $scriptProperties);
+if (!empty($configs['directoryCss']) && empty($scriptProperties['cssGroupDir'])) {
+    $configs['cssGroupDir'] = $configs['directoryCss'];
 } else {
-    $scriptProperties['cssGroupDir'] = $modx->getOption('cssGroupDir', $scriptProperties);
+    $configs['cssGroupDir'] = $modx->getOption('cssGroupDir', $scriptProperties);
 }
-unset($scriptProperties['directoryCss']);
+unset($configs['directoryCss']);
 /**
  * This specifies the class that will be applied to the path when using
  * directory browsing.
@@ -497,13 +500,13 @@ unset($scriptProperties['directoryCss']);
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'cssPath' instead.
  */
-$scriptProperties['pathCss'] = $modx->getOption('pathCss', $scriptProperties);
-if (!empty($scriptProperties['pathCss']) && empty($scriptProperties['cssPath'])) {
-    $scriptProperties['cssPath'] = $scriptProperties['pathCss'];
+$configs['pathCss'] = $modx->getOption('pathCss', $scriptProperties);
+if (!empty($configs['pathCss']) && empty($scriptProperties['cssPath'])) {
+    $configs['cssPath'] = $configs['pathCss'];
 } else {
-    $scriptProperties['cssPath'] = $modx->getOption('cssPath', $scriptProperties);
+    $configs['cssPath'] = $modx->getOption('cssPath', $scriptProperties);
 }
-unset($scriptProperties['pathCss']);
+unset($configs['pathCss']);
 /**
  * With this parameter set to 1, a class will be added to each file according
  * to the file's extension.
@@ -514,13 +517,13 @@ unset($scriptProperties['pathCss']);
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'cssExtension' instead.
  */
-$scriptProperties['extCss'] = $modx->getOption('extCss', $scriptProperties);
-if (!empty($scriptProperties['extCss']) && empty($scriptProperties['cssExtension'])) {
-    $scriptProperties['cssExtension'] = $scriptProperties['extCss'];
+$configs['extCss'] = $modx->getOption('extCss', $scriptProperties);
+if (!empty($configs['extCss']) && empty($scriptProperties['cssExtension'])) {
+    $configs['cssExtension'] = $configs['extCss'];
 } else {
-    $scriptProperties['cssExtension'] = $modx->getOption('cssExtension', $scriptProperties);
+    $configs['cssExtension'] = $modx->getOption('cssExtension', $scriptProperties);
 }
-unset($scriptProperties['extCss']);
+unset($configs['extCss']);
 /**
  * Prefix to the above cssExtension class name
  * @default: fd-
@@ -528,7 +531,7 @@ unset($scriptProperties['extCss']);
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['cssExtensionPrefix'] = $modx->getOption('cssExtensionPrefix', $scriptProperties, 'fd-');
+$configs['cssExtensionPrefix'] = $modx->getOption('cssExtensionPrefix', $scriptProperties, 'fd-');
 /**
  * Suffix to the above cssExtension class name
  * @default: null
@@ -536,15 +539,24 @@ $scriptProperties['cssExtensionPrefix'] = $modx->getOption('cssExtensionPrefix',
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['cssExtensionSuffix'] = $modx->getOption('cssExtensionSuffix', $scriptProperties);
+$configs['cssExtensionSuffix'] = $modx->getOption('cssExtensionSuffix', $scriptProperties);
 /**
  * This property will make the list only displays files without their download links.
  * @default: null
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['noDownload'] = $modx->getOption('noDownload', $scriptProperties);
-
+$configs['noDownload'] = $modx->getOption('noDownload', $scriptProperties);
+/**
+ * Pass the downloading job to the plugin. This provides flexibility to do
+ * conditional statements inside the plugins, or initiate the downloading using
+ * AJAX
+ * @options: 1 | 0
+ * @default: 0
+ * @var bool
+ * @since ver 2.0.0
+ */
+$configs['downloadByOther'] = $modx->getOption('downloadByOther', $scriptProperties);
 /**
  * Turn on the ajax mode for the script.
  * @options: 1 | 0
@@ -552,14 +564,14 @@ $scriptProperties['noDownload'] = $modx->getOption('noDownload', $scriptProperti
  * @var bool
  * @since ver 2.0.0
  */
-$scriptProperties['ajaxMode'] = $modx->getOption('ajaxMode', $scriptProperties);
+$configs['ajaxMode'] = $modx->getOption('ajaxMode', $scriptProperties);
 /**
  * The MODX's resource page id as the Ajax processor file
  * @var int
  * @since ver 2.0.0
  * @subpackage FileDownloadController
  */
-$scriptProperties['ajaxControllerPage'] = $modx->getOption('ajaxControllerPage', $scriptProperties);
+$configs['ajaxControllerPage'] = $modx->getOption('ajaxControllerPage', $scriptProperties);
 /**
  * The Ajax's element container id
  * @default: file-download
@@ -567,14 +579,14 @@ $scriptProperties['ajaxControllerPage'] = $modx->getOption('ajaxControllerPage',
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['ajaxContainerId'] = $modx->getOption('ajaxContainerId', $scriptProperties);
+$configs['ajaxContainerId'] = $modx->getOption('ajaxContainerId', $scriptProperties, 'file-download');
 /**
  * FileDownload's Javascript file for the page header
  * @default: assets/components/filedownload/js/fd.js
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['fileJs'] = $modx->getOption('fileJs', $scriptProperties
+$configs['fileJs'] = $modx->getOption('fileJs', $scriptProperties
         , $modx->getOption('assets_url') . 'components/filedownload/js/fd.js');
 /**
  * FileDownload's Cascading Style Sheet file for the page header
@@ -582,22 +594,52 @@ $scriptProperties['fileJs'] = $modx->getOption('fileJs', $scriptProperties
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['fileCss'] = $modx->getOption('fileCss', $scriptProperties
+$configs['fileCss'] = $modx->getOption('fileCss', $scriptProperties
         , $modx->getOption('assets_url') . 'components/filedownload/css/fd.css');
+
 /**
  * This text will be added to the file's hashed link to disguise the direct path
  * @default: FileDownload
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['saltText'] = $modx->getOption('saltText', $scriptProperties);
+$configs['saltText'] = $modx->getOption('saltText', $scriptProperties);
 /**
  * This parameter provides the direct link
  * @default: 0
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['directLink'] = $modx->getOption('directLink', $scriptProperties, 0);
+$configs['directLink'] = $modx->getOption('directLink', $scriptProperties, 0);
+/**
+ * This is a given ID to the snippet to deal with multiple snippet calls and
+ * &browseDirectories altogether
+ * @default: null
+ * @var string
+ */
+$configs['fdlid'] = $modx->getOption('fdlid', $scriptProperties);
+/**
+ * This is a given ID to the snippet to deal with multiple snippet calls and
+ * &browseDirectories altogether
+ * @default: null
+ * @var string
+ */
+$configs['plugins'] = $modx->getOption('plugins', $scriptProperties);
+/**
+ * This is the breadcrumb's link template (chunk/file)
+ * @options: chunk's name
+ * @default: tpl-breadcrumb
+ * @var string
+ * @since ver 2.0.0
+ */
+$configs['tplBreadcrumb'] = $modx->getOption('tplBreadcrumb', $scriptProperties, 'tpl-breadcrumb');
+/**
+ * This is a given ID to the snippet to deal with multiple snippet calls and
+ * &browseDirectories altogether
+ * @default: null
+ * @var string
+ */
+$configs['breadcrumbSeparator'] = $modx->getOption('breadcrumbSeparator', $scriptProperties, ' / ');
 
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
@@ -607,58 +649,98 @@ $scriptProperties['directLink'] = $modx->getOption('directLink', $scriptProperti
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
 
-array_walk($scriptProperties, create_function('&$val', 'if (!is_array($val)) $val = trim($val);'));
+array_walk($configs, create_function('&$val', 'if (!is_array($val)) $val = trim($val);'));
 
 $fdl = $modx->getService('fdl'
         , 'FileDownload'
         , $modx->getOption('core_path') . 'components/filedownload/models/filedownload/'
-        );
+);
 
 if (!($fdl instanceof FileDownload))
     return 'instanceof error.';
 
-$fdl->setConfigs($scriptProperties);
+$fdl->setConfigs($configs);
 
 if (!$fdl->isAllowed()) {
-    return $fdl->parseTpl($scriptProperties['tplNotAllowed'], array());
+    return $fdl->parseTpl($configs['tplNotAllowed'], array());
 }
 
-if ($scriptProperties['fileCss'] !== 'disabled') {
-    $modx->regClientCSS($fdl->replacePropPhs($scriptProperties['fileCss']));
+if ($configs['fileCss'] !== 'disabled') {
+    $modx->regClientCSS($fdl->replacePropPhs($configs['fileCss']));
 }
 
-if ($scriptProperties['ajaxMode'] && !empty($scriptProperties['ajaxControllerPage'])) {
+if ($configs['ajaxMode'] && !empty($configs['ajaxControllerPage'])) {
     // require dojo
     if (!file_exists(realpath(MODX_BASE_PATH . 'assets/components/filedownload/js/dojo/dojo.js'))) {
         return 'dojo.js is required.';
     }
-    $modx->regClientStartupScript($fdl->config['jsUrl'] . 'dojo/dojo.js');
-    if ($scriptProperties['fileJs'] !== 'disabled') {
-        $modx->regClientStartupScript($fdl->replacePropPhs($scriptProperties['fileJs']));
+    $modx->regClientStartupScript($fdl->configs['jsUrl'] . 'dojo/dojo.js');
+    if ($configs['fileJs'] !== 'disabled') {
+        $modx->regClientStartupScript($fdl->replacePropPhs($configs['fileJs']));
     }
 }
 
-if (!empty($_GET)) {
+/**
+ * do sanitizing first
+ */
+if (!empty($_GET['fdldir']) || !empty($_GET['fdlfile'])) {
+    $ref = $_SERVER['HTTP_REFERER'];
+    // deal with multiple snippets which have &browseDirectories
+    $xRef = @explode('?', $ref);
+    $queries = array();
+    parse_str($xRef[1], $queries);
+    if (!empty($queries['id'])) {
+        // non FURL
+        $baseRef = $xRef[0] . '?id=' . $queries['id'];
+    } else {
+        $baseRef = $xRef[0];
+    }
+    $page = $modx->makeUrl($modx->resource->get('id'), '', '', 'full');
+    /**
+     * check referrer and the page
+     */
+    if ($baseRef !== $page) {
+        return $modx->sendUnauthorizedPage();
+    }
     $sanitizedGets = $modx->sanitize($_GET);
 }
-if (!empty($_GET['fdldir'])) {
-    if (!$fdl->checkHash($modx->context->key, $sanitizedGets['fdldir']))
-        return FALSE;
-    $setDir = $fdl->setDirProp($sanitizedGets['fdldir']);
-    if (!$setDir) {
-        return '';
+
+if (empty($configs['downloadByOther'])) {
+    if (!empty($sanitizedGets['fdldir'])) {
+        $checkHash = $fdl->checkHash($modx->context->key, $sanitizedGets['fdldir']);
+        if (!$checkHash) {
+            return;
+        }
+        if ((!empty($sanitizedGets['fdlid']) && !empty($configs['fdlid'])) &&
+                ($sanitizedGets['fdlid'] != $configs['fdlid'])) {
+            $selected = FALSE;
+        } else {
+            $selected = TRUE;
+        }
+        if ($selected) {
+            $setDir = $fdl->setDirProp($sanitizedGets['fdldir'], $selected);
+            if (!$setDir) {
+                return;
+            }
+        }
+    } elseif (!empty($sanitizedGets['fdlfile'])) {
+        $checkHash = $fdl->checkHash($modx->context->key, $sanitizedGets['fdlfile']);
+        if (!$checkHash) {
+            return;
+        }
+        $downloadFile = $fdl->downloadFile($sanitizedGets['fdlfile']);
+        if (!$downloadFile) {
+            return;
+        }
+        // simply terminate, because this is a downloading state
+        die();
     }
-} elseif (!empty($_GET['fdlfile'])) {
-    if (!$fdl->checkHash($modx->context->key, $sanitizedGets['fdlfile']))
-        return FALSE;
-    $downloadFile = $fdl->downloadFile($sanitizedGets['fdlfile']);
-    if (!$downloadFile) {
-        return '';
-    }
-    return '';
 }
 
 $contents = $fdl->getContents();
+if (empty($contents)) {
+    return;
+}
 
 if (!empty($toArray)) {
     $output = '<pre>' . print_r($contents, true) . '</pre>';
