@@ -6,8 +6,7 @@ class FileDownloadPlugin {
     public $configs;
     public $fileDownload;
     public $event;
-    public $events = array();
-    public $placeholders = array();
+    public $appliedEvents = array();
     public $errors = array();
 
     public function __construct(FileDownload $fileDownload) {
@@ -17,37 +16,19 @@ class FileDownloadPlugin {
         $this->allEvents = include $this->configs['basePath'] . 'plugins/filedownloadplugin.events.php';
     }
 
-    public function addPlaceholder($key, $value) {
-        $this->placeholders[$key] = $value;
-    }
-
-    public function addPlaceholders(array $phs) {
-        foreach ($phs as $key => $value) {
-            $this->addPlaceholder($key, $value);
-        }
-    }
-
-    /**
-     * @todo redirect page after downloading
-     * @param type $url
-     */
-    public function redirect($url) {
-
-    }
-
     /**
      * Arrange the $scriptProperties, plugins and events correlation, then fill
-     * the $events property
-     * @return void $this->events
+     * the $appliedEvents property
+     * @return void $this->appliedEvents
      */
     public function preparePlugins() {
         $jPlugins = json_decode($this->configs['plugins'], 1);
         foreach ($jPlugins as $v) {
-            $this->events[$v['event']][] = $v;
+            $this->appliedEvents[$v['event']][] = $v;
         }
         foreach ($this->allEvents as $i => $event) {
-            if (isset($this->events[$i]))
-                $this->allEvents[$i] = $this->events[$i];
+            if (isset($this->appliedEvents[$i]))
+                $this->allEvents[$i] = $this->appliedEvents[$i];
         }
     }
 
@@ -55,8 +36,8 @@ class FileDownloadPlugin {
         return $this->allEvents;
     }
 
-    public function getEvents() {
-        return $this->events;
+    public function getAppliedEvents() {
+        return $this->appliedEvents;
     }
 
     public function getEvent() {
@@ -72,7 +53,7 @@ class FileDownloadPlugin {
     public function getPlugins($eventName, $toString=FALSE) {
         $this->event = $eventName;
         $output = array();
-        foreach ($this->events[$eventName] as $plugin) {
+        foreach ($this->appliedEvents[$eventName] as $plugin) {
             $loaded = $this->_loadPlugin($plugin);
             if (!$loaded) {
                 if (!empty($plugin['strict'])) {

@@ -1,15 +1,49 @@
 <?php
 
 $events = array(
-    'BeforeDirOpen' => array(),
-    'AfterDirOpen' => array(),
-    'BeforeFileDownload' => array(),
-    'AfterFileDownload' => array(),
-    'BeforeDataInsert' => array(),
-    'AfterDataInsert' => array(),
-    'BeforeCountUpdate' => array(),
-    'AfterCountUpdate' => array(),
-    'OnLoad' => array(),
-    'OnError' => array(),
+    'BeforeDirOpen' => array(
+        'properties' => array(
+            'dirPath'
+        ),
+        'returnType' => array(
+            NULL,
+            FALSE,
+            'continue'
+        )
+    ),
+    'AfterDirOpen' => array(
+        'properties' => array(
+            'dirPath',
+            'contents'
+        ),
+        'returnType' => array(
+            NULL,
+            FALSE,
+            'continue'
+        )
+    ),
+    'BeforeFileDownload' => array(
+        'properties' => array(
+            'hash',
+            'ctx',
+            'filePath',
+            'count'
+        ),
+        'returnType' => array(
+            NULL,
+            FALSE
+        )
+    ),
+    'AfterFileDownload' => array(
+        'properties' => array(
+            'hash',
+            'ctx',
+            'filePath',
+            'count'
+        ),
+        'returnType' => array(
+            NULL
+        )
+    ),
 );
 return $events;

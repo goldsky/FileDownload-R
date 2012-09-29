@@ -433,9 +433,19 @@ class FileDownload {
             if (!is_dir($rootPath)) {
                 // @todo: lexicon
                 $this->modx->log(
-                        modX::LOG_LEVEL_ERROR, '&getDir parameter expects a correct dir path. ' . $rootPath . ' is given.'
+                        modX::LOG_LEVEL_ERROR, '&getDir parameter expects a correct dir path. <b>"' . $rootPath . '"</b> is given.'
                 );
                 return FALSE;
+            }
+
+            $plugins = $this->getPlugins('BeforeDirOpen', array(
+                'dirPath' => $rootPath,
+                ));
+
+            if ($plugins === FALSE) { // strict detection
+                return FALSE;
+            } elseif ($plugins === 'continue') {
+                continue;
             }
 
             $scanDir = scandir($rootPath);
@@ -504,6 +514,18 @@ class FileDownload {
                     $contents[] = $dir;
                 }
             }
+
+            $plugins = $this->getPlugins('AfterDirOpen', array(
+                'dirPath' => $rootPath,
+                'contents' => $contents,
+                ));
+
+            if ($plugins === FALSE) { // strict detection
+                return FALSE;
+            } elseif ($plugins === 'continue') {
+                continue;
+            }
+
         }
 
         return $contents;
@@ -865,7 +887,7 @@ class FileDownload {
         $plugins = $this->getPlugins('BeforeFileDownload', array(
             'hash' => $hash,
             'ctx' => $ctx,
-            'filename' => $filePath,
+            'filePath' => $filePath,
             'count' => $count,
             ));
 
@@ -934,7 +956,7 @@ class FileDownload {
             $this->getPlugins('AfterFileDownload', array(
                 'hash' => $hash,
                 'ctx' => $ctx,
-                'filename' => $filePath,
+                'filePath' => $filePath,
                 'count' => $newCount,
                     ));
 
@@ -1543,6 +1565,13 @@ class FileDownload {
         return TRUE;
     }
 
+    /**
+     * Get applied plugins and set custom properties by event's provider
+     * @param type $eventName
+     * @param type $customProperties
+     * @param type $toString
+     * @return type
+     */
     public function getPlugins($eventName, $customProperties = array(), $toString = false) {
         if (empty($this->plugins)) {
             return;
