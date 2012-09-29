@@ -1461,15 +1461,25 @@ class FileDownload {
                     'filename' => $trailingPath
                         ));
             }
-
             $hash = $fdlObj->get('hash');
             $link = $this->_linkDirOpen($hash, $this->modx->context->key);
-            $trail[$k] = array(
-                'fd.title' => $title,
-                'fd.link' => $link['url'], // fallback
-                'fd.url' => $link['url'],
-                'fd.hash' => $hash,
-            );
+
+            if ($k === 0) {
+                $pageUrl = $this->modx->makeUrl($this->modx->resource->get('id'));
+                $trail[$k] = array(
+                    'fd.title' => $this->modx->lexicon('fd.breadcrumb.home'),
+                    'fd.link' => $pageUrl,
+                    'fd.url' => $pageUrl,
+                    'fd.hash' => '',
+                );
+            } else {
+                $trail[$k] = array(
+                    'fd.title' => $title,
+                    'fd.link' => $link['url'], // fallback
+                    'fd.url' => $link['url'],
+                    'fd.hash' => $hash,
+                );
+            }
             if ($k < ($countTrimmedPathX - 1)) {
                 $trailingLink[] = $this->parseTpl($this->configs['tplBreadcrumb'], $trail[$k]);
             } else {
@@ -1477,6 +1487,7 @@ class FileDownload {
             }
         }
         $breadcrumb = @implode($this->configs['breadcrumbSeparator'], $trailingLink);
+
         return $breadcrumb;
     }
 

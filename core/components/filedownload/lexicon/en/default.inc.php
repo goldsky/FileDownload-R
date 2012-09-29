@@ -8,3 +8,4 @@
  * @subpackage lexicon
  */
 $_lang['fd.err_save_counter'] = 'Could not save the download counting.';
+$_lang['fd.breadcrumb.home'] = 'back';

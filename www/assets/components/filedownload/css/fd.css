@@ -1,22 +1,25 @@
+table.fd-table {
+    width: 100%;
+}
 
-.fd-header{
+table.fd-table .fd-header{
     background-color: firebrick;
     color: white;
 }
 
-.fd-firstDir{}
-.fd-lastDir{}
-.fd-firstFile{}
-.fd-lastFile{}
-.fd-dir{}
-.fd-file{}
-.fd-path{}
+table.fd-table .fd-firstDir{}
+table.fd-table .fd-lastDir{}
+table.fd-table .fd-firstFile{}
+table.fd-table .fd-lastFile{}
+table.fd-table .fd-dir{}
+table.fd-table .fd-file{}
+table.fd-table .fd-path{}
 
-.fd-altRow{
+table.fd-table .fd-altRow{
     background-color: #efefef;
 }
 
-.fd-group-dir{
+table.fd-table .fd-group-dir{
     background-color: #ddd;
 }
 
@@ -28,7 +31,7 @@ table.fd-table tr td {
      padding:5px;
 }
 
-.fd-xlsx {
+table.fd-table .fd-xlsx {
     background-color: #E3D1E6;
 }
 
@@ -36,4 +39,9 @@ table.fd-table.no-border,
 table.fd-table.no-border > tr,
 table.fd-table.no-border > tr > td {
     border: none;
+}
+
+table.fd-table .fd-icon{
+    display: inline-block;
+    width: 16px;
 }
