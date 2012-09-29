@@ -1,6 +1,12 @@
 <?php
 
 $events = array(
+    'OnLoad' => array(
+        'properties' => array(),
+        'returnType' => array(
+            NULL
+        )
+    ),
     'BeforeDirOpen' => array(
         'properties' => array(
             'dirPath'

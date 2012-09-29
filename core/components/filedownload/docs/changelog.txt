@@ -10,6 +10,8 @@ FileDownload 1.0.0-pl
 + Add [[+fd.hash]] for file
 + Add [[+fd.url]] to replace [[+fd.link]] (deprecated)
 + Add &downloadByOther (boolean) to avoid download and pass it for other script
++ Replace the first breadcrumb's link to be 'home' or any lexicon's string
+  provided
 
 FileDownload 1.0.0.rc-5
 ====================================

@@ -9,12 +9,13 @@ class FileDownloadPlugin {
     private $_event;
     private $_appliedEvents = array();
     private $_allEvents = array();
+    private $_properties = array();
 
     public function __construct(FileDownload &$fileDownload) {
         $this->modx = &$fileDownload->modx;
         $this->configs = $fileDownload->configs;
         $this->fileDownload = $fileDownload;
-        $this->_allEvents = include $this->configs['basePath'] . 'plugins/filedownloadplugin.events.php';
+        $this->preparePlugins();
     }
 
     /**
@@ -23,6 +24,7 @@ class FileDownloadPlugin {
      * @return void $this->_appliedEvents
      */
     public function preparePlugins() {
+        $this->_allEvents = include $this->configs['basePath'] . 'plugins/filedownloadplugin.events.php';
         $jPlugins = json_decode($this->configs['plugins'], 1);
         foreach ($jPlugins as $v) {
             $this->_appliedEvents[$v['event']][] = $v;
@@ -40,7 +42,7 @@ class FileDownloadPlugin {
      * @return  void
      */
     public function setProperty($key, $val) {
-        $this->configs = array_merge($this->configs, array($key => $val));
+        $this->_properties[$key] = $val;
     }
 
     /**
@@ -49,19 +51,47 @@ class FileDownloadPlugin {
      * @param   array   $array  array of the properties
      * @return  void
      */
-    public function setProperties($array = array()) {
-        if (is_array($array)) {
-            foreach ($array as $key => $val) {
-                $this->setProperty($key, $val);
-            }
+    public function setProperties(array $array = array()) {
+        foreach ($array as $key => $val) {
+            $this->setProperty($key, $val);
         }
     }
 
     public function getProperty($key) {
-        return $this->configs[$key];
+        return $this->_properties[$key];
     }
 
     public function getProperties() {
+        return $this->_properties;
+    }
+
+    /**
+     * Set custom config for the class in the run time
+     * @param   string  $key    key
+     * @param   string  $val    value
+     * @return  void
+     */
+    public function setConfig($key, $val) {
+        $this->configs = array_merge($this->configs, array($key => $val));
+    }
+
+    /**
+     * Set custom config for the class in the run time in an array of
+     * key => value pairings
+     * @param   array   $array  array of the properties
+     * @return  void
+     */
+    public function setConfigs(array $array = array()) {
+        foreach ($array as $key => $val) {
+            $this->setConfig($key, $val);
+        }
+    }
+
+    public function getConfig($key) {
+        return $this->configs[$key];
+    }
+
+    public function getConfigs() {
         return $this->configs;
     }
 
@@ -94,6 +124,7 @@ class FileDownloadPlugin {
             $loaded = $this->_loadPlugin($plugin);
             if (!$loaded) {
                 if (!empty($plugin['strict'])) {
+                    $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadPlugin]: ' . $eventName . ' returns FALSE.');
                     return FALSE;
                 } else {
                     continue;
@@ -129,7 +160,7 @@ class FileDownloadPlugin {
                 $success = $this->_loadFileBasedPlugin($pluginName);
             } else {
                 /* no plugin found */
-                $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownload] Could not find plugin "' . $pluginName . '".');
+                $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadPlugin] Could not find plugin "' . $pluginName . '".');
                 $success = FALSE;
             }
         }
@@ -144,11 +175,10 @@ class FileDownloadPlugin {
      * @return boolean True if the plugin succeeded
      */
     private function _loadFileBasedPlugin($path) {
-        $scriptProperties = $this->configs;
+        $modx = &$this->modx;
         $fileDownload = &$this->fileDownload;
         $plugin = &$this;
         $errors = &$this->errors;
-        $modx = &$this->modx;
         $success = false;
         try {
             $success = include $path;

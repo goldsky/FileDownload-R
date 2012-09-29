@@ -17,7 +17,6 @@ class FileDownload {
     private $_template = array();
     private $_count = array();
     private $_imgType = array();
-    public $plugins = array();
 
     public function __construct(modX &$modx) {
         $this->modx = &$modx;
@@ -57,21 +56,6 @@ class FileDownload {
 
         $this->_imgType = $this->_imgTypeProp();
         mb_internal_encoding($this->configs['encoding']);
-
-        if (!empty($configs['plugins'])) {
-            if (!$this->modx->loadClass('filedownload.FileDownloadPlugin',$this->configs['modelPath'],true,true)) {
-                $this->modx->log(modX::LOG_LEVEL_ERROR,'[filedownload] Could not load plugin class.');
-                return false;
-            }
-            $this->plugins = new FileDownloadPlugin($this);
-            $this->plugins->preparePlugins();
-        }
-
-        $plugins = $this->getPlugins('OnLoad', $this->configs);
-        if ($plugins === FALSE) { // strict detection
-            return FALSE;
-        }
-
     }
 
     /**
@@ -245,6 +229,11 @@ class FileDownload {
      * @return  array   All contents in an array
      */
     public function getContents() {
+        $plugins = $this->getPlugins('OnLoad', $this->configs);
+        if ($plugins === FALSE) { // strict detection
+            return FALSE;
+        }
+
         $dirContents = array();
         if (!empty($this->configs['getDir'])) {
             $dirContents = $this->_getDirContents($this->configs['getDir']);
@@ -1584,11 +1573,15 @@ class FileDownload {
      * @return type
      */
     public function getPlugins($eventName, $customProperties = array(), $toString = false) {
-        if (empty($this->plugins)) {
-            return;
+        if (!$this->modx->loadClass('filedownload.FileDownloadPlugin',$this->configs['modelPath'],true,true)) {
+            $this->modx->log(modX::LOG_LEVEL_ERROR,'[filedownload] Could not load plugin class.');
+            return false;
         }
+        $plugins = new FileDownloadPlugin($this);
+        if (!is_array($customProperties))
+            $customProperties = array();
 
-        $this->plugins->setProperties($customProperties);
-        return $this->plugins->getPlugins($eventName, $toString);
+        $plugins->setProperties($customProperties);
+        return $plugins->getPlugins($eventName, $toString);
     }
 }
