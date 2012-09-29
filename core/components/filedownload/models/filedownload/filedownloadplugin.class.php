@@ -53,6 +53,10 @@ class FileDownloadPlugin {
     public function getPlugins($eventName, $toString=FALSE) {
         $this->event = $eventName;
         $output = array();
+        if (empty($this->appliedEvents[$eventName]) ||
+                !is_array($this->appliedEvents[$eventName])) {
+            return;
+        }
         foreach ($this->appliedEvents[$eventName] as $plugin) {
             $loaded = $this->_loadPlugin($plugin);
             if (!$loaded) {
