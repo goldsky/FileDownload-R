@@ -1574,7 +1574,7 @@ class FileDownload {
      */
     public function getPlugins($eventName, $customProperties = array(), $toString = false) {
         if (!$this->modx->loadClass('filedownload.FileDownloadPlugin',$this->configs['modelPath'],true,true)) {
-            $this->modx->log(modX::LOG_LEVEL_ERROR,'[filedownload] Could not load plugin class.');
+            $this->modx->log(modX::LOG_LEVEL_ERROR,'[FileDownload] could not load plugin class.');
             return false;
         }
         $plugins = new FileDownloadPlugin($this);

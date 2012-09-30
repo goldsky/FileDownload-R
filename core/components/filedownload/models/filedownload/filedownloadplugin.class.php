@@ -124,7 +124,7 @@ class FileDownloadPlugin {
             $loaded = $this->_loadPlugin($plugin);
             if (!$loaded) {
                 if (!empty($plugin['strict'])) {
-                    $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadPlugin]: ' . $eventName . ' returns FALSE.');
+                    $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadPlugin] ' . $eventName . ' of <b>' . $plugin . '</b> returned FALSE.');
                     return FALSE;
                 } else {
                     continue;
@@ -150,17 +150,13 @@ class FileDownloadPlugin {
             $properties['errors'] = &$this->errors;
             $success = $snippet->process($properties);
         } else {
-            $plugin = &$this;
-            $modx = $this->modx;
-            $fileDownload = $this->fileDownload;
-
             /* search for a file-based plugin */
             $this->modx->parser->processElementTags('', $pluginName, true, true);
             if (file_exists($pluginName)) {
                 $success = $this->_loadFileBasedPlugin($pluginName);
             } else {
                 /* no plugin found */
-                $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadPlugin] Could not find plugin "' . $pluginName . '".');
+                $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadPlugin] could not find plugin "' . $pluginName . '".');
                 $success = FALSE;
             }
         }
@@ -183,7 +179,7 @@ class FileDownloadPlugin {
         try {
             $success = include $path;
         } catch (Exception $e) {
-            $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownload] ' . $e->getMessage());
+            $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadPlugin] ' . $e->getMessage());
         }
         return $success;
     }

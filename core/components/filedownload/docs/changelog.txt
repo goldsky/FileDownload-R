@@ -12,6 +12,7 @@ FileDownload 1.0.0-pl
 + Add &downloadByOther (boolean) to avoid download and pass it for other script
 + Replace the first breadcrumb's link to be 'home' or any lexicon's string
   provided
++ Add plugin examples: FormSave and Email, both require FormIt
 
 FileDownload 1.0.0.rc-5
 ====================================
