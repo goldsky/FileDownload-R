@@ -24,6 +24,7 @@ switch ($e) {
         );
         $_REQUEST = $_POST;
         $emailProps = $fileDownload->getConfig('emailProps');
+        $emailProps = json_decode($emailProps, 1);
         $formitProps = array_merge(array('hooks' => 'email'), $emailProps);
         $runFormit = $modx->runSnippet('FormIt', $formitProps);
         if ($runFormit === FALSE) {
