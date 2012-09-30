@@ -23,17 +23,11 @@ switch ($e) {
             'filePath' => $props['filePath'],
         );
         $_REQUEST = $_POST;
-        $runFormit = $modx->runSnippet('FormIt', array(
-            'hooks' => 'email',
-            'emailTpl' => 'FileDownloadEmailChunk',
-            'emailSubject' => 'New Downloader',
-            'emailTo' => 'goldsky@virtudraft.com',
-            'emailCC' => 'goldsky.milis@gmail.com',
-            'emailBCC' => 'goldsky@fastmail.fm',
-            'emailBCCName' => 'goldsky',
-                ));
+        $emailProps = $fileDownload->getConfig('emailProps');
+        $formitProps = array_merge(array('hooks' => 'email'), $emailProps);
+        $runFormit = $modx->runSnippet('FormIt', $formitProps);
         if ($runFormit === FALSE) {
-            $errMsg = '[FileDownloadPlugin FormSave] unabled to save the downloader into FormSave';
+            $errMsg = '[FileDownloadPlugin Email] unabled to send email.';
             $modx->setPlaceholder('fd.error_message', $errMsg);
             $modx->log(modX::LOG_LEVEL_ERROR, __LINE__ . ': ' . $errMsg);
             return FALSE;

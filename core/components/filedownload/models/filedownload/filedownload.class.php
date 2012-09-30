@@ -58,6 +58,14 @@ class FileDownload {
         mb_internal_encoding($this->configs['encoding']);
     }
 
+    public function getConfig($key) {
+        return $this->configs[$key];
+    }
+
+    public function getConfigs() {
+        return $this->configs;
+    }
+
     /**
      * Get the clean path array and clean up some duplicate slashes
      * @param   string  $paths  multiple paths with comma separated
