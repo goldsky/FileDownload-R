@@ -26,6 +26,9 @@ class FileDownloadPlugin {
     public function preparePlugins() {
         $this->_allEvents = include $this->configs['basePath'] . 'plugins/filedownloadplugin.events.php';
         $jPlugins = json_decode($this->configs['plugins'], 1);
+        if (empty($jPlugins))
+            return;
+        
         foreach ($jPlugins as $v) {
             $this->_appliedEvents[$v['event']][] = $v;
         }

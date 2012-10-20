@@ -29,9 +29,13 @@ if ($modx = & $object->xpdo) {
     switch ($options[xPDOTransport::PACKAGE_ACTION]) {
         case xPDOTransport::ACTION_INSTALL:
             $modelPath = $modx->getOption('core_path') . 'components/filedownload/models/';
-            $modx->addPackage('filedownload', realpath($modelPath) . DIRECTORY_SEPARATOR);
+            $modelPath = realpath($modelPath) . DIRECTORY_SEPARATOR;
+            $modx->addPackage('filedownload', $modelPath);
             $manager = $modx->getManager();
-            $manager->createObjectContainer('FDL');
+            if (!$manager->createObjectContainer('FDL')) {
+                $modx->log(modX::LOG_LEVEL_ERROR, '[FileDownload] table was unable to be created');
+                return false;
+            }
             break;
         case xPDOTransport::ACTION_UPGRADE:
         case xPDOTransport::ACTION_UNINSTALL:

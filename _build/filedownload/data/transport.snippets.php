@@ -61,4 +61,12 @@ $properties = include $sources['properties'] . 'filedownloadlink.properties.php'
 $snippets[1]->setProperties($properties);
 unset($properties);
 
+$snippets[2] = $modx->newObject('modSnippet');
+$snippets[2]->fromArray(array(
+    'id' => 2,
+    'name' => 'FileDownloadEmailPlugin',
+    'description' => 'Snippet as a plugin for FileDownload R\'s.',
+    'snippet' => getSnippetContent($sources['source_core'].'/plugins/filedownload.formit.email.plugin.php'),
+        ), '', true, true);
+
 return $snippets;

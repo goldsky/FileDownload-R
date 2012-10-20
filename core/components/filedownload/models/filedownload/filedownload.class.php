@@ -14,6 +14,7 @@ class FileDownload {
 
     public $modx;
     public $configs = array();
+    public $plugins;
     private $_template = array();
     private $_count = array();
     private $_imgType = array();
@@ -56,6 +57,14 @@ class FileDownload {
 
         $this->_imgType = $this->_imgTypeProp();
         mb_internal_encoding($this->configs['encoding']);
+
+        if (!empty($this->configs['plugins'])) {
+            if (!$this->modx->loadClass('filedownload.FileDownloadPlugin',$this->configs['modelPath'],true,true)) {
+                $this->modx->log(modX::LOG_LEVEL_ERROR,'[FileDownload] could not load plugin class.');
+                return false;
+            }
+            $this->plugins = new FileDownloadPlugin($this);
+        }
     }
 
     public function getConfig($key) {
@@ -1581,15 +1590,13 @@ class FileDownload {
      * @return type
      */
     public function getPlugins($eventName, $customProperties = array(), $toString = false) {
-        if (!$this->modx->loadClass('filedownload.FileDownloadPlugin',$this->configs['modelPath'],true,true)) {
-            $this->modx->log(modX::LOG_LEVEL_ERROR,'[FileDownload] could not load plugin class.');
-            return false;
+        if (empty($this->plugins)) {
+            return;
         }
-        $plugins = new FileDownloadPlugin($this);
         if (!is_array($customProperties))
             $customProperties = array();
 
-        $plugins->setProperties($customProperties);
-        return $plugins->getPlugins($eventName, $toString);
+        $this->plugins->setProperties($customProperties);
+        return $this->plugins->getPlugins($eventName, $toString);
     }
 }

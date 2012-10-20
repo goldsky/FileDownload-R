@@ -32,8 +32,8 @@ $tstart = $mtime;
 set_time_limit(0);
 
 define('PKG_NAME', 'FileDownload');
-define('PKG_NAME_LOWER', 'filedownload');
-define('PKG_VERSION', '1.0.0');
+define('PKG_NAME_LOWER', 'filedownloadr'); // work around the extra's namespace
+define('PKG_VERSION', '1.1.0');
 define('PKG_RELEASE', 'pl');
 
 /* override with your own defines here (see build.config.sample.php) */
@@ -116,11 +116,11 @@ $modx->log(modX::LOG_LEVEL_INFO, 'Adding file resolvers to category...');
 flush();
 $vehicle->resolve('file', array(
     'source' => $sources['source_assets'],
-    'target' => "return MODX_ASSETS_PATH . 'components' . DIRECTORY_SEPARATOR;",
+    'target' => "return MODX_ASSETS_PATH . 'components/';",
 ));
 $vehicle->resolve('file', array(
     'source' => $sources['source_core'],
-    'target' => "return MODX_CORE_PATH . 'components' . DIRECTORY_SEPARATOR;",
+    'target' => "return MODX_CORE_PATH . 'components/';",
 ));
 $builder->putVehicle($vehicle);
 
@@ -137,7 +137,6 @@ $vehicle->validate('php', array(
     'source' => $sources['validators'] . 'options.validator.php',
 ));
 $builder->putVehicle($vehicle);
-unset($vehicle);
 
 /* now pack in the license file, readme and setup options */
 $modx->log(modX::LOG_LEVEL_INFO, 'Adding package attributes and setup options...');
@@ -150,6 +149,8 @@ $builder->setPackageAttributes(array(
         'source' => $sources['build'] . 'setup.options.php'
     )
 ));
+
+unset($vehicle);
 
 /* zip up package */
 $modx->log(modX::LOG_LEVEL_INFO, 'Packing up transport package zip...');

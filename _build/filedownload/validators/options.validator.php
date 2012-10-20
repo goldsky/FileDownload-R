@@ -32,12 +32,12 @@ if ($modx = & $object->xpdo) {
             break;
         case xPDOTransport::ACTION_UNINSTALL:
             $modelPath = $modx->getOption('core_path') . 'components/filedownload/models/';
+            $modelPath = realpath($modelPath) . DIRECTORY_SEPARATOR;
             if (!empty($options['fdl_keep_db'])) {
-                $modx->addPackage('filedownload', realpath($modelPath) . DIRECTORY_SEPARATOR);
+                $modx->addPackage('filedownload', $modelPath);
                 $manager = $modx->getManager();
-
                 if (!$manager->removeObjectContainer('FDL')) {
-                    $modx->log(modX::LOG_LEVEL_ERROR, '[FileDownload] table was unable to delete');
+                    $modx->log(modX::LOG_LEVEL_ERROR, '[FileDownload] table was unable to be deleted');
                     return false;
                 }
                 $modx->log(modX::LOG_LEVEL_INFO, '[FileDownload] table was deleted successfully');

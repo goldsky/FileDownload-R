@@ -2,7 +2,7 @@
     <tr[[+fd.class]]>
         <td>
             <span class="fd-icon">
-                <img src="[[+fd.image]]" alt="[[+fd.image]]" />
+                <img src="[[+fd.image]]" alt="" />
             </span>
             <a href="[[+fd.url]]">[[+fd.filename]]</a>
             <span style="font-size:80%">([[+fd.count]] downloads)</span>

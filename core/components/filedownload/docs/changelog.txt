@@ -1,5 +1,10 @@
 Changelog for FileDownload.
 
+FileDownload 1.1.0-pl
+====================================
++ Rename the package's name to fix miscommunication with extra's naming style
++ Fix the fatal error caused by the invalid package building
+
 FileDownload 1.0.0-pl
 ====================================
 + Prevent direct hyperlink from different site or referrer

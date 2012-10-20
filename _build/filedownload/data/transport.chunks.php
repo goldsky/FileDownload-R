@@ -46,4 +46,12 @@ $chunks[1]->fromArray(array(
     'properties' => '',
         ), '', true, true);
 
+$chunks[2] = $modx->newObject('modChunk');
+$chunks[2]->fromArray(array(
+    'id' => 2,
+    'name' => 'FileDownloadEmailChunk',
+    'description' => 'Email chunk for FileDownload\'s plugin',
+    'snippet' => file_get_contents($sources['source_core'] . '/elements/chunks/filedownload.formit.email.chunk.tpl'),
+    'properties' => '',
+        ), '', true, true);
 return $chunks;
