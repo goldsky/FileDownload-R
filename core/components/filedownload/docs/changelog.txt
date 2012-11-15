@@ -1,5 +1,9 @@
 Changelog for FileDownload.
 
+FileDownload 1.1.1-pl
+====================================
++ #4 fix breadcrumb
+
 FileDownload 1.1.0-pl
 ====================================
 + Rename the package's name to fix miscommunication with extra's naming style

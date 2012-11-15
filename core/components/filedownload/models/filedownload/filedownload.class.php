@@ -51,9 +51,7 @@ class FileDownload {
         $this->modx->addPackage('filedownload', $this->configs['modelPath']);
 
         $this->modx->getService('lexicon', 'modLexicon');
-        if ($this->modx->lexicon) {
-            $this->modx->lexicon->load('filedownload:default');
-        }
+        $this->modx->lexicon->load('filedownloadr:default');
 
         $this->_imgType = $this->_imgTypeProp();
         mb_internal_encoding($this->configs['encoding']);
@@ -327,7 +325,12 @@ class FileDownload {
      * @return  void
      */
     private function _checkDb(array $file) {
-        if (empty($file) || !realpath($file['filename'])) {
+        if (empty($file)) {
+            return FALSE;
+        }
+
+        $realPath = realpath($file['filename']);
+        if (empty($realPath)) {
             return FALSE;
         }
 
@@ -501,10 +504,10 @@ class FileDownload {
                     $imgType = $this->_imgType('dir');
                     $dir = array(
                         'ctx' => $checkedDb['ctx'],
-                        'fullPath' => $fullPath,
-                        'path' => $rootRealPath,
-                        'filename' => $file,
-                        'alias' => $alias,
+                        'fullPath' => utf8_encode($fullPath),
+                        'path' => utf8_encode($rootRealPath),
+                        'filename' => utf8_encode($file),
+                        'alias' => utf8_encode($alias),
                         'type' => $fileType,
                         'ext' => '',
                         'size' => '',
@@ -1374,7 +1377,8 @@ class FileDownload {
             return '';
         }
         $phs['fd.class'] = (!empty($this->configs['cssGroupDir'])) ? ' class="' . $this->configs['cssGroupDir'] . '"' : '';
-        $phs['fd.groupDirectory'] = $this->_trimPath($path);
+        $groupPath = str_replace(DIRECTORY_SEPARATOR, $this->configs['breadcrumbSeparator'], $this->_trimPath($path));
+        $phs['fd.groupDirectory'] = $groupPath;
         $tpl = $this->parseTpl($this->configs['tplGroupDir'], $phs);
 
         return $tpl;
@@ -1450,8 +1454,7 @@ class FileDownload {
         $trailingLink = array();
         $countTrimmedPathX = count($trimmedPathX);
         foreach ($trimmedPathX as $k => $title) {
-            $trailingPath = trim($trailingPath, DIRECTORY_SEPARATOR);
-            $trailingPath .= DIRECTORY_SEPARATOR . $title;
+            $trailingPath .= $title . DIRECTORY_SEPARATOR;
             $fdlObj = $this->modx->getObject('FDL', array(
                 'filename' => $trailingPath
                     ));
@@ -1459,6 +1462,7 @@ class FileDownload {
                 $cdb = array();
                 $cdb['ctx'] = $this->modx->context->key;
                 $cdb['filename'] = $trailingPath;
+
                 $checkedDb = $this->_checkDb($cdb);
                 if (!$checkedDb) {
                     continue;

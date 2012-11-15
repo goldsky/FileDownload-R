@@ -33,7 +33,7 @@ set_time_limit(0);
 
 define('PKG_NAME', 'FileDownload');
 define('PKG_NAME_LOWER', 'filedownloadr'); // work around the extra's namespace
-define('PKG_VERSION', '1.1.0');
+define('PKG_VERSION', '1.1.1');
 define('PKG_RELEASE', 'pl');
 
 /* override with your own defines here (see build.config.sample.php) */
