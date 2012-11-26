@@ -256,6 +256,15 @@ $scriptProperties['fileJs'] = $modx->getOption('fileJs', $scriptProperties
  */
 $scriptProperties['fileCss'] = $modx->getOption('fileCss', $scriptProperties
         , $modx->getOption('assets_url') . 'components/filedownload/css/fd.css');
+
+/////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
+////                                                                         ////
+////                   Here goes the MODX Revolution's part                  ////
+////                                                                         ////
+/////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
+
 /**
  * This text will be added to the file's hashed link to disguise the direct path
  * @default: FileDownload
@@ -278,13 +287,13 @@ $scriptProperties['directLink'] = $modx->getOption('directLink', $scriptProperti
  */
 $scriptProperties['plugins'] = $modx->getOption('plugins', $scriptProperties);
 
-/////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
-////                                                                         ////
-////                   Here goes the MODX Revolution's part                  ////
-////                                                                         ////
-/////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
+/**
+ * This is a given ID to the snippet to deal with multiple snippet calls and
+ * &browseDirectories altogether
+ * @default: null
+ * @var string
+ */
+$scriptProperties['prefix'] = $modx->getOption('prefix', $scriptProperties, 'fd.');
 
 array_walk($scriptProperties, create_function('&$val', 'if (!is_array($val)) $val = trim($val);'));
 
@@ -355,23 +364,32 @@ if (!$contents) {
 }
 
 $output = '';
+
+$fileInfos = $contents['file'][0];
+$filePhs = array();
+foreach ($fileInfos as $k => $v) {
+    $filePhs[$scriptProperties['prefix'] . $k] = $v;
+}
+// fallback without prefix
+$fileInfos = array_merge($fileInfos, $filePhs);
+
 /**
  * for Output Filter Modifier
  * @link http://rtfm.modx.com/display/revolution20/Custom+Output+Filter+Examples#CustomOutputFilterExamples-CreatingaCustomOutputModifier
  */
 if (!empty($scriptProperties['input'])) {
-    $output = $contents['file'][0][$scriptProperties['options']];
+    $output = $fileInfos[$scriptProperties['options']];
     if (empty($output)
             && !is_numeric($output) // avoid 0 (zero) of the download counting.
     ) {
-        $output = $fdl->parseTpl($scriptProperties['tpl'], $contents['file'][0]);
+        $output = $fdl->parseTpl($scriptProperties['tpl'], $fileInfos);
     }
 } elseif (!empty($toArray)) {
     $output = '<pre>';
-    $output .= print_r($contents['file'][0], true);
+    $output .= print_r($fileInfos, true);
     $output .= '</pre>';
 } else {
-    $output = $fdl->parseTpl($scriptProperties['tpl'], $contents['file'][0]);
+    $output = $fdl->parseTpl($scriptProperties['tpl'], $fileInfos);
 }
 
 if (!empty($toPlaceholder)) {

@@ -15,7 +15,7 @@ class FileDownload {
     public $modx;
     public $configs = array();
     public $plugins;
-    private $_template = array();
+    private $_output = array();
     private $_count = array();
     private $_imgType = array();
 
@@ -33,7 +33,11 @@ class FileDownload {
         $basePath = $corePath . 'components/filedownload/';
         $assetsUrl = $this->modx->getOption('assets_url') . 'components/filedownload/';
         $this->configs = array();
-        $this->_template = array();
+        $this->_output = array(
+            'rows' => '',
+            'dirRows' => '',
+            'fileRows' => ''
+        );
         $this->configs = array_merge(array(
             'corePath' => $corePath,
             'basePath' => $basePath,
@@ -57,8 +61,8 @@ class FileDownload {
         mb_internal_encoding($this->configs['encoding']);
 
         if (!empty($this->configs['plugins'])) {
-            if (!$this->modx->loadClass('filedownload.FileDownloadPlugin',$this->configs['modelPath'],true,true)) {
-                $this->modx->log(modX::LOG_LEVEL_ERROR,'[FileDownload] could not load plugin class.');
+            if (!$this->modx->loadClass('filedownload.FileDownloadPlugin', $this->configs['modelPath'], true, true)) {
+                $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownload] could not load plugin class.');
                 return false;
             }
             $this->plugins = new FileDownloadPlugin($this);
@@ -449,7 +453,7 @@ class FileDownload {
 
             $plugins = $this->getPlugins('BeforeDirOpen', array(
                 'dirPath' => $rootPath,
-                ));
+                    ));
 
             if ($plugins === FALSE) { // strict detection
                 return FALSE;
@@ -527,14 +531,13 @@ class FileDownload {
             $plugins = $this->getPlugins('AfterDirOpen', array(
                 'dirPath' => $rootPath,
                 'contents' => $contents,
-                ));
+                    ));
 
             if ($plugins === FALSE) { // strict detection
                 return FALSE;
             } elseif ($plugins === 'continue') {
                 continue;
             }
-
         }
 
         return $contents;
@@ -864,7 +867,7 @@ class FileDownload {
         $fdlObj->set('count', $newCount);
         if ($fdlObj->save() === false) {
             // @todo setDirProp: lexicon string
-            return $this->modx->error->failure($this->modx->lexicon('fd.err_save_counter'));
+            return $this->modx->error->failure($this->modx->lexicon($this->configs['prefix'] . 'err_save_counter'));
         }
 
         return TRUE;
@@ -898,7 +901,7 @@ class FileDownload {
             'ctx' => $ctx,
             'filePath' => $filePath,
             'count' => $count,
-            ));
+                ));
 
         if ($plugins === FALSE) { // strict detection
             return FALSE;
@@ -967,7 +970,7 @@ class FileDownload {
                 'ctx' => $ctx,
                 'filePath' => $filePath,
                 'count' => $newCount,
-                    ));
+            ));
 
             exit;
         }
@@ -1123,11 +1126,10 @@ class FileDownload {
                 $sortPath[$file['path']][$k] = $file;
             }
 
-            $this->_template['wrapper'] = !empty($this->_template['wrapper']) ? $this->_template['wrapper'] : '';
             $sort = array();
             foreach ($sortPath as $k => $path) {
                 // path name for the &groupByDirectory template: tpl-group
-                $this->_template['wrapper'] .= $this->_tplDirectory($k);
+                $this->_output['rows'] .= $this->_tplDirectory($k);
 
                 $sort['path'][$k] = $this->_groupByType($path);
             }
@@ -1167,7 +1169,6 @@ class FileDownload {
         }
 
         $sort = array();
-        $tplWrapper = !empty($this->_template['wrapper']) ? $this->_template['wrapper'] : '';
         $dirs = '';
         if ($this->configs['browseDirectories'] && !empty($sortType['dir'])) {
             $sort['dir'] = $sortType['dir'];
@@ -1180,14 +1181,14 @@ class FileDownload {
             }
         }
         $phs = array();
-        $phs['fd.classPath'] = (!empty($this->configs['cssPath'])) ? ' class="' . $this->configs['cssPath'] . '"' : '';
-        $phs['fd.path'] = $this->_breadcrumbs();
+        $phs[$this->configs['prefix'] . 'classPath'] = (!empty($this->configs['cssPath'])) ? ' class="' . $this->configs['cssPath'] . '"' : '';
+        $phs[$this->configs['prefix'] . 'path'] = $this->_breadcrumbs();
 
         if (!empty($this->configs['tplWrapperDir']) && !empty($dirs)) {
-            $phs['fd.dirRows'] = $dirs;
-            $tplWrapper .= $this->parseTpl($this->configs['tplWrapperDir'], $phs);
+            $phs[$this->configs['prefix'] . 'dirRows'] = $dirs;
+            $this->_output['dirRows'] .= $this->parseTpl($this->configs['tplWrapperDir'], $phs);
         } else {
-            $tplWrapper .= $dirs;
+            $this->_output['dirRows'] .= $dirs;
         }
 
         $files = '';
@@ -1203,13 +1204,14 @@ class FileDownload {
         }
 
         if (!empty($this->configs['tplWrapperFile']) && !empty($files)) {
-            $phs['fd.fileRows'] = $files;
-            $tplWrapper .= $this->parseTpl($this->configs['tplWrapperFile'], $phs);
+            $phs[$this->configs['prefix'] . 'fileRows'] = $files;
+            $this->_output['fileRows'] .= $this->parseTpl($this->configs['tplWrapperFile'], $phs);
         } else {
-            $tplWrapper .= $files;
+            $this->_output['fileRows'] .= $files;
         }
 
-        $this->_template['wrapper'] = $tplWrapper;
+        $this->_output['rows'] .= $this->_output['dirRows'];
+        $this->_output['rows'] .= $this->_output['fileRows'];
 
         return $sort;
     }
@@ -1343,7 +1345,7 @@ class FileDownload {
             return '';
         }
         foreach ($contents as $k => $v) {
-            $phs['fd.' . $k] = $v;
+            $phs[$this->configs['prefix'] . $k] = $v;
         }
         $tpl = $this->parseTpl($this->configs['tplDir'], $phs);
 
@@ -1360,7 +1362,7 @@ class FileDownload {
             return '';
         }
         foreach ($fileInfo as $k => $v) {
-            $phs['fd.' . $k] = $v;
+            $phs[$this->configs['prefix'] . $k] = $v;
         }
         $tpl = $this->parseTpl($this->configs['tplFile'], $phs);
 
@@ -1376,9 +1378,9 @@ class FileDownload {
         if (empty($path) || is_array($path)) {
             return '';
         }
-        $phs['fd.class'] = (!empty($this->configs['cssGroupDir'])) ? ' class="' . $this->configs['cssGroupDir'] . '"' : '';
+        $phs[$this->configs['prefix'] . 'class'] = (!empty($this->configs['cssGroupDir'])) ? ' class="' . $this->configs['cssGroupDir'] . '"' : '';
         $groupPath = str_replace(DIRECTORY_SEPARATOR, $this->configs['breadcrumbSeparator'], $this->_trimPath($path));
-        $phs['fd.groupDirectory'] = $groupPath;
+        $phs[$this->configs['prefix'] . 'groupDirectory'] = $groupPath;
         $tpl = $this->parseTpl($this->configs['tplGroupDir'], $phs);
 
         return $tpl;
@@ -1389,15 +1391,16 @@ class FileDownload {
      * @return  string  rendered template
      */
     private function _tplWrapper() {
-        $phs['fd.classPath'] = (!empty($this->configs['cssPath'])) ? ' class="' . $this->configs['cssPath'] . '"' : '';
-        $path = $this->_breadcrumbs();
-        $phs['fd.path'] = $path;
-        $wrapper = !empty($this->_template['wrapper']) ? $this->_template['wrapper'] : '';
-        $phs['fd.rows'] = $wrapper;
+        $phs[$this->configs['prefix'] . 'classPath'] = (!empty($this->configs['cssPath'])) ? ' class="' . $this->configs['cssPath'] . '"' : '';
+        $phs[$this->configs['prefix'] . 'path'] = $this->_breadcrumbs();
+        $rows = !empty($this->_output['rows']) ? $this->_output['rows'] : '';
+        $phs[$this->configs['prefix'] . 'rows'] = $rows;
+        $phs[$this->configs['prefix'] . 'dirRows'] = $this->_output['dirRows'];
+        $phs[$this->configs['prefix'] . 'fileRows'] = $this->_output['fileRows'];
         if (!empty($this->configs['tplWrapper'])) {
             $tpl = $this->parseTpl($this->configs['tplWrapper'], $phs);
         } else {
-            $tpl = $wrapper;
+            $tpl = $rows;
         }
 
         return $tpl;
@@ -1477,17 +1480,17 @@ class FileDownload {
             if ($k === 0) {
                 $pageUrl = $this->modx->makeUrl($this->modx->resource->get('id'));
                 $trail[$k] = array(
-                    'fd.title' => $this->modx->lexicon('fd.breadcrumb.home'),
-                    'fd.link' => $pageUrl,
-                    'fd.url' => $pageUrl,
-                    'fd.hash' => '',
+                    $this->configs['prefix'] . 'title' => $this->modx->lexicon($this->configs['prefix'] . 'breadcrumb.home'),
+                    $this->configs['prefix'] . 'link' => $pageUrl,
+                    $this->configs['prefix'] . 'url' => $pageUrl,
+                    $this->configs['prefix'] . 'hash' => '',
                 );
             } else {
                 $trail[$k] = array(
-                    'fd.title' => $title,
-                    'fd.link' => $link['url'], // fallback
-                    'fd.url' => $link['url'],
-                    'fd.hash' => $hash,
+                    $this->configs['prefix'] . 'title' => $title,
+                    $this->configs['prefix'] . 'link' => $link['url'], // fallback
+                    $this->configs['prefix'] . 'url' => $link['url'],
+                    $this->configs['prefix'] . 'hash' => $hash,
                 );
             }
             if ($k < ($countTrimmedPathX - 1)) {
@@ -1603,4 +1606,5 @@ class FileDownload {
         $this->plugins->setProperties($customProperties);
         return $this->plugins->getPlugins($eventName, $toString);
     }
+
 }

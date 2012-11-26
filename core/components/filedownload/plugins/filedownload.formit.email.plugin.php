@@ -29,7 +29,7 @@ switch ($e) {
         $runFormit = $modx->runSnippet('FormIt', $formitProps);
         if ($runFormit === FALSE) {
             $errMsg = '[FileDownloadPlugin Email] unabled to send email.';
-            $modx->setPlaceholder('fd.error_message', $errMsg);
+            $modx->setPlaceholder($fileDownload->getConfig('prefix') . 'error_message', $errMsg);
             $modx->log(modX::LOG_LEVEL_ERROR, __LINE__ . ': ' . $errMsg);
             return FALSE;
         }

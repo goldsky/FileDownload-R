@@ -595,6 +595,14 @@ $scriptProperties['fileJs'] = $modx->getOption('fileJs', $scriptProperties
 $scriptProperties['fileCss'] = $modx->getOption('fileCss', $scriptProperties
         , $modx->getOption('assets_url') . 'components/filedownload/css/fd.css');
 
+/////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
+////                                                                         ////
+////                   Here goes the MODX Revolution's part                  ////
+////                                                                         ////
+/////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
+
 /**
  * This text will be added to the file's hashed link to disguise the direct path
  * @default: FileDownload
@@ -639,13 +647,13 @@ $scriptProperties['tplBreadcrumb'] = $modx->getOption('tplBreadcrumb', $scriptPr
  */
 $scriptProperties['breadcrumbSeparator'] = $modx->getOption('breadcrumbSeparator', $scriptProperties, ' / ');
 
-/////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
-////                                                                         ////
-////                   Here goes the MODX Revolution's part                  ////
-////                                                                         ////
-/////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
+/**
+ * This is a given ID to the snippet to deal with multiple snippet calls and
+ * &browseDirectories altogether
+ * @default: null
+ * @var string
+ */
+$scriptProperties['prefix'] = $modx->getOption('prefix', $scriptProperties, 'fd.');
 
 array_walk($scriptProperties, create_function('&$val', 'if (!is_array($val)) $val = trim($val);'));
 
