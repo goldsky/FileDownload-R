@@ -25,20 +25,6 @@
  * @package     filedownload
  * @subpackage  filedownloadlink snippet
  */
-if (get_magic_quotes_gpc()) {
-    if (!function_exists('stripslashes_gpc')) {
-
-        function stripslashes_gpc(&$value) {
-            $value = stripslashes($value);
-        }
-
-    }
-    array_walk_recursive($_GET, 'stripslashes_gpc');
-    array_walk_recursive($_POST, 'stripslashes_gpc');
-    array_walk_recursive($_COOKIE, 'stripslashes_gpc');
-    array_walk_recursive($_REQUEST, 'stripslashes_gpc');
-}
-
 $scriptProperties['encoding'] = $modx->getOption('encoding', $scriptProperties, 'UTF-8');
 header('Content-Type: text/html; charset=' . $scriptProperties['encoding']);
 mb_internal_encoding($scriptProperties['encoding']);

@@ -1,5 +1,9 @@
 Changelog for FileDownload.
 
+FileDownload 1.1.3-pl
+====================================
++ #11 adjustments for PHP 5.4
+
 FileDownload 1.1.2-pl
 ====================================
 + #10 create placeholders for dir rows and file rows

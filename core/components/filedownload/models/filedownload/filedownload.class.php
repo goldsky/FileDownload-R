@@ -24,9 +24,9 @@ class FileDownload {
     }
 
     public function setConfigs($configs = array()) {
-        $configs['getDir'] = $this->_checkPath($configs['getDir']);
-        $configs['origDir'] = $configs['getDir']; // getDir will be overridden by setDirProp()
-        $configs['getFile'] = $this->_checkPath($configs['getFile']);
+        $configs['getDir'] = !empty($configs['getDir']) ? $this->_checkPath($configs['getDir']) : '';
+        $configs['origDir'] = !empty($configs['getDir']) ? $configs['getDir'] : ''; // getDir will be overridden by setDirProp()
+        $configs['getFile'] = !empty($configs['getFile']) ? $this->_checkPath($configs['getFile']) : '';
 
         $configs = $this->replacePropPhs($configs);
         $corePath = $this->modx->getOption('core_path');
@@ -580,7 +580,9 @@ class FileDownload {
         }
 
         $baseName = basename($fileRealPath);
-        $ext = strtolower(end(explode('.', $baseName)));
+        $xBaseName = explode('.', $baseName);
+        $tempExt = end($xBaseName);
+        $ext = strtolower($tempExt);
         $size = filesize($fileRealPath);
         $imgType = $this->_imgType($ext);
 
@@ -1115,7 +1117,7 @@ class FileDownload {
             $sort = $contents;
         }
 
-        if (!$this->configs['groupByDirectory']) {
+        if (empty($this->configs['groupByDirectory'])) {
             $sort = $this->_groupByType($contents);
         } else {
             $sortPath = array();
@@ -1150,7 +1152,7 @@ class FileDownload {
 
         $sortType = array();
         foreach ($contents as $k => $file) {
-            if (!$this->configs['browseDirectories'] && $file['type'] === 'dir') {
+            if (empty($this->configs['browseDirectories']) && $file['type'] === 'dir') {
                 continue;
             }
             $sortType[$file['type']][$k] = $file;
@@ -1158,19 +1160,16 @@ class FileDownload {
         if (empty($sortType)) {
             return FALSE;
         }
+
         foreach ($sortType as $k => $file) {
-            $sortType[$k] = $this->_sortMultiOrders(
-                    $file
-                    , $this->configs['sortBy']
-                    , $this->configs['sortOrder']
-                    , $this->configs['sortOrderNatural']
-                    , $this->configs['sortByCaseSensitive']
-            );
+            if (count($file) > 1) {
+                $sortType[$k] = $this->_sortMultiOrders($file);
+            }
         }
 
         $sort = array();
         $dirs = '';
-        if ($this->configs['browseDirectories'] && !empty($sortType['dir'])) {
+        if (!empty($this->configs['browseDirectories']) && !empty($sortType['dir'])) {
             $sort['dir'] = $sortType['dir'];
             // template
             $row = 1;
@@ -1226,29 +1225,29 @@ class FileDownload {
      * @return  array   the sorted array
      * @link    modified from http://www.php.net/manual/en/function.sort.php#104464
      */
-    private function _sortMultiOrders($array, $index, $order, $natSort = FALSE, $caseSensitive = FALSE) {
+    private function _sortMultiOrders($array) {
         if (!is_array($array) || count($array) < 1) {
             return $array;
         }
 
         $temp = array();
         foreach (array_keys($array) as $key) {
-            $temp[$key] = $array[$key][$index];
+            $temp[$key] = $array[$key][$this->configs['sortBy']];
         }
 
-        if (!$natSort) {
-            if (strtolower($order) == 'asc') {
+        if ($this->configs['sortOrderNatural'] != 1) {
+            if (strtolower($this->configs['sortOrder']) == 'asc') {
                 asort($temp);
             } else {
                 arsort($temp);
             }
         } else {
-            if (!$caseSensitive) {
+            if ($this->configs['sortByCaseSensitive'] != 1) {
                 natcasesort($temp);
             } else {
                 natsort($temp);
             }
-            if (strtolower($order) != 'asc') {
+            if (strtolower($this->configs['sortOrder']) != 'asc') {
                 $temp = array_reverse($temp, TRUE);
             }
         }
@@ -1316,7 +1315,7 @@ class FileDownload {
         } elseif (!empty($this->configs['cssLastFile']) && $row === $totalRow) {
             $cssName[] = $this->configs['cssLastFile'];
         }
-        if ($this->configs['cssExtension']) {
+        if (!empty($this->configs['cssExtension'])) {
             $cssNameExt = '';
             if (!empty($this->configs['cssExtensionPrefix'])) {
                 $cssNameExt .= $this->configs['cssExtensionPrefix'];
@@ -1358,7 +1357,7 @@ class FileDownload {
      * @return  string  rendered HTML
      */
     private function _tplFile(array $fileInfo) {
-        if (empty($fileInfo)) {
+        if (empty($fileInfo) || empty($this->configs['tplFile'])) {
             return '';
         }
         foreach ($fileInfo as $k => $v) {
@@ -1437,7 +1436,7 @@ class FileDownload {
      * @return  string  a breadcrumbs link
      */
     private function _breadcrumbs() {
-        if (!$this->configs['browseDirectories']) {
+        if (empty($this->configs['browseDirectories'])) {
             return '';
         }
         $dirs = $this->configs['getDir'];

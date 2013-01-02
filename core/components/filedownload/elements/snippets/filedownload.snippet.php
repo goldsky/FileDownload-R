@@ -1,5 +1,4 @@
 <?php
-
 /**
  * The snippet for the FileDownload package for MODX Revolution
  * This is the conversion of the original FileDownload snippet for MODX
@@ -26,19 +25,6 @@
  * @package     filedownload
  * @subpackage  filedownload snippet
  */
-if (get_magic_quotes_gpc()) {
-    if (!function_exists('stripslashes_gpc')) {
-
-        function stripslashes_gpc(&$value) {
-            $value = stripslashes($value);
-        }
-
-    }
-    array_walk_recursive($_GET, 'stripslashes_gpc');
-    array_walk_recursive($_POST, 'stripslashes_gpc');
-    array_walk_recursive($_COOKIE, 'stripslashes_gpc');
-    array_walk_recursive($_REQUEST, 'stripslashes_gpc');
-}
 
 $scriptProperties['encoding'] = $modx->getOption('encoding', $scriptProperties, 'UTF-8');
 header('Content-Type: text/html; charset=' . $scriptProperties['encoding']);
@@ -151,7 +137,7 @@ $scriptProperties['sortBy'] = $modx->getOption('sortBy', $scriptProperties, 'fil
  * @var bool
  * @since ver 2.0.0
  */
-$scriptProperties['sortByCaseSensitive'] = $modx->getOption('sortByCaseSensitive', $scriptProperties);
+$scriptProperties['sortByCaseSensitive'] = $modx->getOption('sortByCaseSensitive', $scriptProperties, 0);
 /**
  * Sort files in ascending or descending order.
  * @options: asc | desc
@@ -159,7 +145,7 @@ $scriptProperties['sortByCaseSensitive'] = $modx->getOption('sortByCaseSensitive
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['sortOrder'] = $modx->getOption('sortOrder', $scriptProperties);
+$scriptProperties['sortOrder'] = $modx->getOption('sortOrder', $scriptProperties, 'asc');
 /**
  * Sort order option by a natural order
  * @options: 1 | 0
@@ -167,7 +153,7 @@ $scriptProperties['sortOrder'] = $modx->getOption('sortOrder', $scriptProperties
  * @var bool
  * @since ver 2.0.0
  */
-$scriptProperties['sortOrderNatural'] = $modx->getOption('sortOrderNatural', $scriptProperties);
+$scriptProperties['sortOrderNatural'] = $modx->getOption('sortOrderNatural', $scriptProperties, 1);
 /**
  * This will limit the inclusion files displayed to files with a valid extension
  * from the list.
@@ -625,8 +611,7 @@ $scriptProperties['directLink'] = $modx->getOption('directLink', $scriptProperti
  */
 $scriptProperties['fdlid'] = $modx->getOption('fdlid', $scriptProperties);
 /**
- * This is a given ID to the snippet to deal with multiple snippet calls and
- * &browseDirectories altogether
+ * Attach plugin to the output
  * @default: null
  * @var string
  */
@@ -640,17 +625,15 @@ $scriptProperties['plugins'] = $modx->getOption('plugins', $scriptProperties);
  */
 $scriptProperties['tplBreadcrumb'] = $modx->getOption('tplBreadcrumb', $scriptProperties, 'tpl-breadcrumb');
 /**
- * This is a given ID to the snippet to deal with multiple snippet calls and
- * &browseDirectories altogether
- * @default: null
+ * This is the separator character for the breadcrumb
+ * @default: /
  * @var string
  */
 $scriptProperties['breadcrumbSeparator'] = $modx->getOption('breadcrumbSeparator', $scriptProperties, ' / ');
 
 /**
- * This is a given ID to the snippet to deal with multiple snippet calls and
- * &browseDirectories altogether
- * @default: null
+ * prefix for the placeholders
+ * @default: fd.
  * @var string
  */
 $scriptProperties['prefix'] = $modx->getOption('prefix', $scriptProperties, 'fd.');
