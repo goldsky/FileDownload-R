@@ -1,0 +1,83 @@
+Changelog for FileDownload.
+
+FileDownload-R 1.1.4-pl
+====================================
++ Rename folders to follow the namespace
++ #12 Date sorting with dateFormat parameter
+
+FileDownload 1.1.3-pl
+====================================
++ #11 adjustments for PHP 5.4
+
+FileDownload 1.1.2-pl
+====================================
++ #10 create placeholders for dir rows and file rows
++ add &prefix property for placeholders
+
+FileDownload 1.1.1-pl
+====================================
++ #4 fix breadcrumb
+
+FileDownload 1.1.0-pl
+====================================
++ Rename the package's name to fix miscommunication with extra's naming style
++ Fix the fatal error caused by the invalid package building
+
+FileDownload 1.0.0-pl
+====================================
++ Prevent direct hyperlink from different site or referrer
++ Add &fdlid for multiple snippet calls which are having &browseDirectories on
+  the same page
++ Add &encoding for internationalization
++ Add &tplBreadcrumb and &breadcrumbSeparator for breadcrumbs
++ Add [[+fd.hash]] for file
++ Add [[+fd.url]] to replace [[+fd.link]] (deprecated)
++ Add &downloadByOther (boolean) to avoid download and pass it for other script
++ Replace the first breadcrumb's link to be 'home' or any lexicon's string
+  provided
++ Add plugin examples: FormSave and Email, both require FormIt
+
+FileDownload 1.0.0.rc-5
+====================================
++ Added &tplWrapperDir and &tplWrapperFile properties to provide separated
+  wrapper templates between folders and files.
+
+FileDownload 1.0.0.rc-4
+====================================
++ Work out with MODX's extra's submission cancellation.
+
+FileDownload 1.0.0.rc-3
+====================================
++ Bugfixed fatal error caused by an empty folder
++ Added trim utility to overcome the TinyMCE's whitespace bug
++ Returned the empty result through template.
+
+FileDownload 1.0.0.rc-2
+====================================
++ Refactored template parser
++ Added @BINDINGs to the tpl parameters
++ Added template for forbidden access
++ Bugfixed the multiple usage of fileCss parameter
+
+FileDownload 1.0.0.rc-1
+====================================
++ Fixed the correct realpath
+
+FileDownload 1.0.0.beta-4
+====================================
++ Added &directLink property to give a direct path for big files
+
+FileDownload 1.0.0.beta-3
+====================================
++ Fixed the multicall snippets by adding individual setConfigs method
++ Added &toPlaceholder property
+
+FileDownload 1.0.0.beta-2
+====================================
++ Added FileDownloadLink snippet for a single file download
++ Added parse template code for FileDownloadLink
++ Added &toArray parameter for both snippets
+
+FileDownload 1.0.0.beta-1
+====================================
+- Initial release
