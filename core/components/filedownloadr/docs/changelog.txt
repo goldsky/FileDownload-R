@@ -1,5 +1,11 @@
 Changelog for FileDownload.
 
+FileDownload-R 1.1.5-pl
+====================================
++ Fixed build script
++ Modified the class's construct
++ Updated the template parser
+
 FileDownload-R 1.1.4-pl
 ====================================
 + Rename folders to follow the namespace
