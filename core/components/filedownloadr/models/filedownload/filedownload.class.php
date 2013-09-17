@@ -12,25 +12,59 @@
  */
 class FileDownload {
 
+    /**
+     * modX object
+     * @var object
+     */
     public $modx;
-    public $configs = array();
-    public $plugins;
+    /**
+     * $scriptProperties
+     * @var array
+     */
+    public $config = array();
+    /**
+     * To hold error message
+     * @var string
+     */
+    private $_error = '';
+    /**
+     * To hold output message
+     * @var string
+     */
     private $_output = array();
+    /**
+     * To hold placeholder array, flatten array with prefixable
+     * @var array
+     */
+    private $_placeholders = array();
+    /**
+     * To hold plugin
+     * @var array
+     */
+    public $plugins;
+    /**
+     * To hold counting
+     * @var array
+     */
     private $_count = array();
+    /**
+     * To hold image type
+     * @var array
+     */
     private $_imgType = array();
 
     /**
      * constructor
      * @param   modX    $modx
-     * @param   array   $configs    parameters
+     * @param   array   $config    parameters
      */
-    public function __construct(modX $modx, $configs = array()) {
+    public function __construct(modX $modx, $config = array()) {
         $this->modx = &$modx;
 
-        $configs['getDir'] = !empty($configs['getDir']) ? $this->_checkPath($configs['getDir']) : '';
-        $configs['origDir'] = !empty($configs['getDir']) ? $configs['getDir'] : ''; // getDir will be overridden by setDirProp()
-        $configs['getFile'] = !empty($configs['getFile']) ? $this->_checkPath($configs['getFile']) : '';
-        $configs = $this->replacePropPhs($configs);
+        $config['getDir'] = !empty($config['getDir']) ? $this->_checkPath($config['getDir']) : '';
+        $config['origDir'] = !empty($config['getDir']) ? $config['getDir'] : ''; // getDir will be overridden by setDirProp()
+        $config['getFile'] = !empty($config['getFile']) ? $this->_checkPath($config['getFile']) : '';
+        $config = $this->replacePropPhs($config);
 
         $corePath = $this->modx->getOption('core_path');
         $basePath = $corePath . 'components/filedownloadr/';
@@ -41,7 +75,7 @@ class FileDownload {
             'dirRows' => '',
             'fileRows' => ''
         );
-        $this->configs = array_merge(array(
+        $this->config = array_merge(array(
             'corePath' => $corePath,
             'basePath' => $basePath,
             'modelPath' => $basePath . 'models/',
@@ -51,21 +85,24 @@ class FileDownload {
             'jsUrl' => $assetsUrl . 'js/',
             'cssUrl' => $assetsUrl . 'css/',
             'imgTypeUrl' => $assetsUrl . 'img/filetypes/',
+            'imgLocat' => $assetsUrl . 'img/filetypes/',
             'assetsUrl' => $assetsUrl,
             'encoding' => 'utf-8'
-                ), $configs);
+                ), $config);
 
-        $this->modx->addPackage('filedownload', $this->configs['modelPath']);
+        $this->modx->addPackage('filedownload', $this->config['modelPath']);
 
-        $this->modx->getService('lexicon', 'modLexicon');
+        if (!$this->modx->lexicon) {
+            $this->modx->getService('lexicon', 'modLexicon');
+        }
         $this->modx->lexicon->load('filedownloadr:default');
 
         $this->_imgType = $this->_imgTypeProp();
-        if (!empty($this->configs['encoding']))
-            mb_internal_encoding($this->configs['encoding']);
+        if (!empty($this->config['encoding']))
+            mb_internal_encoding($this->config['encoding']);
 
-        if (!empty($this->configs['plugins'])) {
-            if (!$this->modx->loadClass('filedownload.FileDownloadPlugin', $this->configs['modelPath'], true, true)) {
+        if (!empty($this->config['plugins'])) {
+            if (!$this->modx->loadClass('filedownload.FileDownloadPlugin', $this->config['modelPath'], true, true)) {
                 $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownload] could not load plugin class.');
                 return false;
             }
@@ -73,22 +110,335 @@ class FileDownload {
         }
     }
 
-    public function setConfigs($configs = array()) {
-        $configs['getDir'] = !empty($configs['getDir']) ? $this->_checkPath($configs['getDir']) : '';
-        $configs['origDir'] = !empty($configs['getDir']) ? $configs['getDir'] : ''; // getDir will be overridden by setDirProp()
-        $configs['getFile'] = !empty($configs['getFile']) ? $this->_checkPath($configs['getFile']) : '';
+    /**
+     * Set class configuration exclusively for multiple snippet calls
+     * @param   array   $config     snippet's parameters
+     */
+    public function setConfigs($config = array()) {
+        $config['getDir'] = !empty($config['getDir']) ? $this->_checkPath($config['getDir']) : '';
+        $config['origDir'] = !empty($config['getDir']) ? $config['getDir'] : ''; // getDir will be overridden by setDirProp()
+        $config['getFile'] = !empty($config['getFile']) ? $this->_checkPath($config['getFile']) : '';
 
-        $configs = $this->replacePropPhs($configs);
+        $config = $this->replacePropPhs($config);
 
-        $this->configs = array_merge($this->configs, $configs);
+        $this->config = array_merge($this->config, $config);
+    }
+
+    /**
+     * Define individual config for the class
+     * @param   string  $key    array's key
+     * @param   string  $val    array's value
+     */
+    public function setConfig($key, $val) {
+        $this->config[$key] = $val;
     }
 
     public function getConfig($key) {
-        return $this->configs[$key];
+        return $this->config[$key];
     }
 
     public function getConfigs() {
-        return $this->configs;
+        return $this->config;
+    }
+
+    /**
+     * Set string error for boolean returned methods
+     * @return  void
+     */
+    public function setError($msg) {
+        $this->_error = $msg;
+    }
+
+    /**
+     * Get string error for boolean returned methods
+     * @return  string  output
+     */
+    public function getError() {
+        return $this->_error;
+    }
+
+    /**
+     * Set string output for boolean returned methods
+     * @return  void
+     */
+    public function setOutput($msg) {
+        $this->_output = $msg;
+    }
+
+    /**
+     * Get string output for boolean returned methods
+     * @return  string  output
+     */
+    public function getOutput() {
+        return $this->_output;
+    }
+
+    /**
+     * Set internal placeholder
+     * @param   string  $key    key
+     * @param   string  $value  value
+     * @param   string  $prefix add prefix if it's required
+     */
+    public function setPlaceholder($key, $value, $prefix = '') {
+        $prefix = !empty($prefix) ? $prefix : (isset($this->config['phsPrefix']) ? $this->config['phsPrefix'] : '');
+        $this->_placeholders[$prefix . $key] = $this->trimString($value);
+    }
+
+    /**
+     * Set internal placeholders
+     * @param   array   $placeholders   placeholders in an associative array
+     * @param   string  $prefix         add prefix if it's required
+     * @return  mixed   boolean|array of placeholders
+     */
+    public function setPlaceholders($placeholders, $prefix = '') {
+        if (empty($placeholders)) {
+            return FALSE;
+        }
+        $prefix = !empty($prefix) ? $prefix : (isset($this->config['phsPrefix']) ? $this->config['phsPrefix'] : '');
+        $placeholders = $this->trimArray($placeholders);
+        $placeholders = $this->implodePhs($placeholders, rtrim($prefix, '.'));
+        // enclosed private scope
+        $this->_placeholders = array_merge($this->_placeholders, $placeholders);
+        // return only for this scope
+        return $placeholders;
+    }
+
+    /**
+     * Get internal placeholders in an associative array
+     * @return array
+     */
+    public function getPlaceholders() {
+        return $this->_placeholders;
+    }
+
+    /**
+     * Get an internal placeholder
+     * @param   string  $key    key
+     * @return  string  value
+     */
+    public function getPlaceholder($key) {
+        return $this->_placeholders[$key];
+    }
+
+    /**
+     * Merge multi dimensional associative arrays with separator
+     * @param   array   $array      raw associative array
+     * @param   string  $keyName    parent key of this array
+     * @param   string  $separator  separator between the merged keys
+     * @param   array   $holder     to hold temporary array results
+     * @return  array   one level array
+     */
+    public function implodePhs(array $array, $keyName = null, $separator = '.', array $holder = array()) {
+        $phs = !empty($holder) ? $holder : array();
+        foreach ($array as $k => $v) {
+            $key = !empty($keyName) ? $keyName . $separator . $k : $k;
+            if (is_array($v)) {
+                $phs = $this->implodePhs($v, $key, $separator, $phs);
+            } else {
+                $phs[$key] = $v;
+            }
+        }
+        return $phs;
+    }
+
+    /**
+     * Trim string value
+     * @param   string  $string     source text
+     * @param   string  $charlist   defined characters to be trimmed
+     * @link http://php.net/manual/en/function.trim.php
+     * @return  string  trimmed text
+     */
+    public function trimString($string, $charlist = null) {
+        if (empty($string) && !is_numeric($string)) {
+            return '';
+        }
+        $string = htmlentities($string);
+        // blame TinyMCE!
+        $string = preg_replace('/(&Acirc;|&nbsp;)+/i', '', $string);
+        $string = trim($string, $charlist);
+        $string = trim(preg_replace('/\s+^(\r|\n|\r\n)/', ' ', $string));
+        $string = html_entity_decode($string);
+        return $string;
+    }
+
+    /**
+     * Trim array values
+     * @param   array   $array          array contents
+     * @param   string  $charlist       [default: null] defined characters to be trimmed
+     * @link http://php.net/manual/en/function.trim.php
+     * @return  array   trimmed array
+     */
+    public function trimArray($input, $charlist = null) {
+        if (is_array($input)) {
+            $output = array_map(array($this, 'trimArray'), $input);
+        } else {
+            $output = $this->trimString($input, $charlist);
+        }
+
+        return $output;
+    }
+
+    /**
+     * Parsing template
+     * @param   string  $tpl    @BINDINGs options
+     * @param   array   $phs    placeholders
+     * @return  string  parsed output
+     * @link    http://forums.modx.com/thread/74071/help-with-getchunk-and-modx-speed-please?page=2#dis-post-413789
+     */
+    public function parseTpl($tpl, array $phs = array()) {
+        $output = '';
+        if (preg_match('/^(@CODE|@INLINE)/i', $tpl)) {
+            $tplString = preg_replace('/^(@CODE|@INLINE)/i', '', $tpl);
+            // tricks @CODE: / @INLINE:
+            $tplString = ltrim($tplString, ':');
+            $tplString = trim($tplString);
+            $output = $this->parseTplCode($tplString, $phs);
+        } elseif (preg_match('/^@FILE/i', $tpl)) {
+            $tplFile = preg_replace('/^@FILE/i', '', $tpl);
+            // tricks @FILE:
+            $tplFile = ltrim($tplFile, ':');
+            $tplFile = trim($tplFile);
+            $tplFile = $this->replacePropPhs($tplFile);
+            try {
+                $output = $this->parseTplFile($tplFile, $phs);
+            } catch (Exception $e) {
+                return $e->getMessage();
+            }
+        }
+        // ignore @CHUNK / @CHUNK: / empty @BINDING
+        else {
+            $tplChunk = preg_replace('/^@CHUNK/i', '', $tpl);
+            // tricks @CHUNK:
+            $tplChunk = ltrim($tpl, ':');
+            $tplChunk = trim($tpl);
+
+            $chunk = $this->modx->getObject('modChunk', array('name' => $tplChunk), true);
+            if (empty($chunk)) {
+                // try to use @splittingred's fallback
+                $f = $this->config['chunksPath'] . strtolower($tplChunk) . '.chunk.tpl';
+                try {
+                    $output = $this->parseTplFile($f, $phs);
+                } catch (Exception $e) {
+                    $output = $e->getMessage();
+                    return 'Chunk: ' . $tplChunk . ' is not found, neither the file ' . $output;
+                }
+            } else {
+//                $output = $this->modx->getChunk($tplChunk, $phs);
+                /**
+                 * @link    http://forums.modx.com/thread/74071/help-with-getchunk-and-modx-speed-please?page=4#dis-post-464137
+                 */
+                $chunk = $this->modx->getParser()->getElement('modChunk', $tplChunk);
+                $chunk->setCacheable(false);
+                $chunk->_processed = false;
+                $output = $chunk->process($phs);
+            }
+        }
+
+        return $output;
+    }
+
+    /**
+     * Parsing inline template code
+     * @param   string  $code   HTML with tags
+     * @param   array   $phs    placeholders
+     * @return  string  parsed output
+     */
+    public function parseTplCode($code, array $phs = array()) {
+        $chunk = $this->modx->newObject('modChunk');
+        $chunk->setContent($code);
+        $chunk->setCacheable(false);
+        $phs = $this->replacePropPhs($phs);
+        $chunk->_processed = false;
+        return $chunk->process($phs);
+    }
+
+    /**
+     * Parsing file based template
+     * @param   string  $file   file path
+     * @param   array   $phs    placeholders
+     * @return  string  parsed output
+     * @throws  Exception if file is not found
+     */
+    public function parseTplFile($file, array $phs = array()) {
+        if (!file_exists($file)) {
+            throw new Exception('File: ' . $file . ' is not found.');
+        }
+        $o = file_get_contents($file);
+        $chunk = $this->modx->newObject('modChunk');
+
+        // just to create a name for the modChunk object.
+        $name = strtolower(basename($file));
+        $name = rtrim($name, '.tpl');
+        $name = rtrim($name, '.chunk');
+        $chunk->set('name', $name);
+
+        $chunk->setCacheable(false);
+        $chunk->setContent($o);
+        $chunk->_processed = false;
+        $output = $chunk->process($phs);
+
+        return $output;
+    }
+
+    /**
+     * If the chunk is called by AJAX processor, it needs to be parsed for the
+     * other elements to work, like snippet and output filters.
+     *
+     * Example:
+     * <pre><code>
+     * <?php
+     * $content = $myObject->parseTpl('tplName', $placeholders);
+     * $content = $myObject->processElementTags($content);
+     * </code></pre>
+     *
+     * @param   string  $content    the chunk output
+     * @param   array   $options    option for iteration
+     * @return  string  parsed content
+     */
+    public function processElementTags($content, array $options = array()) {
+        $maxIterations = intval($this->modx->getOption('parser_max_iterations', $options, 10));
+        if (!$this->modx->parser) {
+            $this->modx->getParser();
+        }
+        $this->modx->parser->processElementTags('', $content, true, false, '[[', ']]', array(), $maxIterations);
+        $this->modx->parser->processElementTags('', $content, true, true, '[[', ']]', array(), $maxIterations);
+        return $content;
+    }
+
+    /**
+     * Replace the property's placeholders
+     * @param   string|array    $subject    Property
+     * @return  array           The replaced results
+     */
+    public function replacePropPhs($subject) {
+        $pattern = array(
+            '/\{core_path\}/',
+            '/\{base_path\}/',
+            '/\{assets_url\}/',
+            '/\{filemanager_path\}/',
+            '/\[\[\+\+core_path\]\]/',
+            '/\[\[\+\+base_path\]\]/'
+        );
+        $replacement = array(
+            $this->modx->getOption('core_path'),
+            $this->modx->getOption('base_path'),
+            $this->modx->getOption('assets_url'),
+            $this->modx->getOption('filemanager_path'),
+            $this->modx->getOption('core_path'),
+            $this->modx->getOption('base_path')
+        );
+        if (is_array($subject)) {
+            $parsedString = array();
+            foreach ($subject as $k => $s) {
+                if (is_array($s)) {
+                    $s = $this->replacePropPhs($s);
+                }
+                $parsedString[$k] = preg_replace($pattern, $replacement, $s);
+            }
+            return $parsedString;
+        } else {
+            return preg_replace($pattern, $replacement, $subject);
+        }
     }
 
     /**
@@ -208,74 +558,25 @@ class FileDownload {
     }
 
     /**
-     * Trim array values
-     * @param   array   $array      array contents
-     * @param   string  $charlist   [default: null] defined characters to be trimmed
-     * @link    http://php.net/manual/en/function.trim.php
-     * @return  array   trimmed array
-     */
-    public function trimArray(array $array, $charlist = null) {
-        $newArray = array();
-        foreach ($array as $k => $v) {
-            if (is_array($v)) {
-                $array[$k][$v] = $this->trimArray($v);
-            } else {
-                $val = $this->trimString($v, $charlist);
-                if (empty($v)) {
-                    continue;
-                }
-                $newArray[$k] = $val;
-            }
-        }
-        sort($newArray);
-
-        return $newArray;
-    }
-
-    /**
-     * Trim string value
-     * @param   string  $string     source text
-     * @param   string  $charlist   defined characters to be trimmed
-     * @link    http://php.net/manual/en/function.trim.php
-     * @return  string  trimmed text
-     */
-    public function trimString($string, $charlist = null) {
-        $string = htmlentities($string);
-        // blame TinyMCE!
-        $string = preg_replace('/(&Acirc;|&nbsp;)+/i', '', $string);
-        if ($charlist === null) {
-            $string = trim($string);
-        } else {
-            $string = trim($string, $charlist);
-        }
-
-        if (empty($string)) {
-            return FALSE;
-        }
-
-        return $string;
-    }
-
-    /**
      * Retrieve the content of the given path
      * @param   mixed   $root   The specified root path
      * @return  array   All contents in an array
      */
     public function getContents() {
-        $plugins = $this->getPlugins('OnLoad', $this->configs);
+        $plugins = $this->getPlugins('OnLoad', $this->config);
         if ($plugins === FALSE) { // strict detection
             return FALSE;
         }
 
         $dirContents = array();
-        if (!empty($this->configs['getDir'])) {
-            $dirContents = $this->_getDirContents($this->configs['getDir']);
+        if (!empty($this->config['getDir'])) {
+            $dirContents = $this->_getDirContents($this->config['getDir']);
             if (!$dirContents)
                 $dirContents = array();
         }
         $fileContents = array();
-        if (!empty($this->configs['getFile'])) {
-            $fileContents = $this->_getFileContents($this->configs['getFile']);
+        if (!empty($this->config['getFile'])) {
+            $fileContents = $this->_getFileContents($this->config['getFile']);
             if (!$fileContents)
                 $fileContents = array();
         }
@@ -297,14 +598,14 @@ class FileDownload {
             return $contents;
         }
 
-        if (empty($this->configs['chkDesc'])) {
+        if (empty($this->config['chkDesc'])) {
             foreach ($contents as $key => $file) {
                 $contents[$key]['description'] = '';
             }
             return $contents;
         }
 
-        $chunkContent = $this->modx->getChunk($this->configs['chkDesc']);
+        $chunkContent = $this->modx->getChunk($this->config['chkDesc']);
 
         $linesX = @explode('||', $chunkContent);
         array_walk($linesX, create_function('&$val', '$val = trim($val);'));
@@ -497,7 +798,7 @@ class FileDownload {
                         continue;
                     }
                     $contents[] = $fileInfo;
-                } elseif ($this->configs['browseDirectories']) {
+                } elseif ($this->config['browseDirectories']) {
                     // a directory
                     $cdb['ctx'] = $this->modx->context->key;
                     $cdb['filename'] = $fullPath;
@@ -513,7 +814,7 @@ class FileDownload {
                     $alias = $notation[1];
 
                     $unixDate = filemtime($fullPath);
-                    $date = date($this->configs['dateFormat'], $unixDate);
+                    $date = date($this->config['dateFormat'], $unixDate);
                     $link = $this->_linkDirOpen($checkedDb['hash'], $checkedDb['ctx']);
 
                     $imgType = $this->_imgType('dir');
@@ -529,7 +830,7 @@ class FileDownload {
                         'sizeText' => '',
                         'unixdate' => $unixDate,
                         'date' => $date,
-                        'image' => $this->configs['imgTypeUrl'] . $imgType,
+                        'image' => $this->config['imgTypeUrl'] . $imgType,
                         'count' => $checkedDb['count'],
                         'link' => $link['url'], // fallback
                         'url' => $link['url'],
@@ -615,7 +916,7 @@ class FileDownload {
             return FALSE;
         }
 
-        if ($this->configs['directLink']) {
+        if ($this->config['directLink']) {
             $link = $this->_directLinkFileDownload(utf8_decode($checkedDb['filename']));
             if (!$link)
                 return FALSE;
@@ -624,7 +925,7 @@ class FileDownload {
         }
 
         $unixDate = filemtime($fileRealPath);
-        $date = date($this->configs['dateFormat'], $unixDate);
+        $date = date($this->config['dateFormat'], $unixDate);
         $info = array(
             'ctx' => $checkedDb['ctx'],
             'fullPath' => $fileRealPath,
@@ -637,7 +938,7 @@ class FileDownload {
             'sizeText' => $this->_fileSizeText($size),
             'unixdate' => $unixDate,
             'date' => $date,
-            'image' => $this->configs['imgTypeUrl'] . $imgType,
+            'image' => $this->config['imgTypeUrl'] . $imgType,
             'count' => $checkedDb['count'],
             'link' => $link['url'], // fallback
             'url' => $link['url'],
@@ -662,180 +963,13 @@ class FileDownload {
     }
 
     /**
-     * Parsing template
-     * @param   string  $tpl    @BINDINGs options
-     * @param   array   $phs    placeholders
-     * @return  string  parsed output
-     * @link    http://forums.modx.com/thread/74071/help-with-getchunk-and-modx-speed-please?page=2#dis-post-413789
-     */
-    public function parseTpl($tpl, array $phs = array()) {
-        $output = '';
-        if (preg_match('/^(@CODE|@INLINE)/i', $tpl)) {
-            $tplString = preg_replace('/^(@CODE|@INLINE)/i', '', $tpl);
-            // tricks @CODE: / @INLINE:
-            $tplString = ltrim($tplString, ':');
-            $tplString = trim($tplString);
-            $output = $this->parseTplCode($tplString, $phs);
-        } elseif (preg_match('/^@FILE/i', $tpl)) {
-            $tplFile = preg_replace('/^@FILE/i', '', $tpl);
-            // tricks @FILE:
-            $tplFile = ltrim($tplFile, ':');
-            $tplFile = trim($tplFile);
-            $tplFile = $this->replacePropPhs($tplFile);
-            try {
-                $output = $this->parseTplFile($tplFile, $phs);
-            } catch (Exception $e) {
-                return $e->getMessage();
-            }
-        }
-        // ignore @CHUNK / @CHUNK: / empty @BINDING
-        else {
-            $tplChunk = preg_replace('/^@CHUNK/i', '', $tpl);
-            // tricks @CHUNK:
-            $tplChunk = ltrim($tpl, ':');
-            $tplChunk = trim($tpl);
-
-            $chunk = $this->modx->getObject('modChunk', array('name' => $tplChunk), true);
-            if (empty($chunk)) {
-                // try to use @splittingred's fallback
-                $f = $this->configs['chunksPath'] . strtolower($tplChunk) . '.chunk.tpl';
-                try {
-                    $output = $this->parseTplFile($f, $phs);
-                } catch (Exception $e) {
-                    $output = $e->getMessage();
-                    return 'Chunk: ' . $tplChunk . ' is not found, neither the file ' . $output;
-                }
-            } else {
-//                $output = $this->modx->getChunk($tplChunk, $phs);
-                /**
-                 * @link    http://forums.modx.com/thread/74071/help-with-getchunk-and-modx-speed-please?page=4#dis-post-464137
-                 */
-                $chunk = $this->modx->getParser()->getElement('modChunk', $tplChunk);
-                $chunk->setCacheable(false);
-                $chunk->_processed = false;
-                $output = $chunk->process($phs);
-            }
-        }
-        $output = $this->processElementTags($output);
-
-        return $output;
-    }
-
-    /**
-     * Parsing inline template code
-     * @param   string  $code   HTML with tags
-     * @param   array   $phs    placeholders
-     * @return  string  parsed output
-     */
-    public function parseTplCode($code, array $phs = array()) {
-        $chunk = $this->modx->newObject('modChunk');
-        $chunk->setContent($code);
-        $chunk->setCacheable(false);
-        $phs = $this->replacePropPhs($phs);
-        $chunk->_processed = false;
-        return $chunk->process($phs);
-    }
-
-    /**
-     * Parsing file based template
-     * @param   string  $file   file path
-     * @param   array   $phs    placeholders
-     * @return  string  parsed output
-     * @throws  Exception if file is not found
-     */
-    public function parseTplFile($file, array $phs = array()) {
-        if (!file_exists($file)) {
-            throw new Exception('File: ' . $file . ' is not found.');
-        }
-        $o = file_get_contents($file);
-        $chunk = $this->modx->newObject('modChunk');
-
-        // just to create a name for the modChunk object.
-        $name = strtolower(basename($file));
-        $name = rtrim($name, '.tpl');
-        $name = rtrim($name, '.chunk');
-        $chunk->set('name', $name);
-
-        $chunk->setCacheable(false);
-        $chunk->setContent($o);
-        $chunk->_processed = false;
-        $output = $chunk->process($phs);
-
-        return $output;
-    }
-
-    /**
-     * If the chunk is called by AJAX processor, it needs to be parsed for the
-     * other elements to work, like snippet and output filters.
-     *
-     * Example:
-     * <pre><code>
-     * <?php
-     * $content = $myObject->parseTpl('tplName', $placeholders);
-     * $content = $myObject->processElementTags($content);
-     * </code></pre>
-     *
-     * @param   string  $content    the chunk output
-     * @param   array   $options    option for iteration
-     * @return  string  parsed content
-     */
-    public function processElementTags($content, array $options = array()) {
-        $maxIterations = intval($this->modx->getOption('parser_max_iterations', $options, 10));
-        if (!$this->modx->parser) {
-            $this->modx->getParser();
-        }
-        $this->modx->parser->processElementTags('', $content, true, false, '[[', ']]', array(), $maxIterations);
-        $this->modx->parser->processElementTags('', $content, true, true, '[[', ']]', array(), $maxIterations);
-        return $content;
-    }
-
-    /**
-     * Replace the property's placeholders
-     * @param   string|array    $subject    Property
-     * @return  array           The replaced results
-     */
-    public function replacePropPhs($subject) {
-        $pattern = array(
-            '/\{core_path\}/',
-            '/\{base_path\}/',
-            '/\{assets_url\}/',
-            '/\{filemanager_path\}/',
-            '/\[\[\+\+core_path\]\]/',
-            '/\[\[\+\+base_path\]\]/'
-        );
-        $replacement = array(
-            $this->modx->getOption('core_path'),
-            $this->modx->getOption('base_path'),
-            $this->modx->getOption('assets_url'),
-            $this->modx->getOption('filemanager_path'),
-            $this->modx->getOption('core_path'),
-            $this->modx->getOption('base_path')
-        );
-        if (is_array($subject)) {
-            $parsedString = array();
-            foreach ($subject as $k => $s) {
-                if (is_array($s)) {
-                    $s = $this->replacePropPhs($s);
-                }
-                $parsedString[$k] = preg_replace($pattern, $replacement, $s);
-            }
-            return $parsedString;
-        } else {
-            return preg_replace($pattern, $replacement, $subject);
-        }
-    }
-
-    /**
      * Get the right image type to the specified file's extension, or fall back
      * to the default image.
      * @param string $ext
      * @return type
      */
     private function _imgType($ext) {
-        $imgType = $this->_imgType[$ext];
-        if (!$imgType)
-            $ext = 'default';
-        return $this->_imgType[$ext];
+        return isset($this->_imgType[$ext]) ? $this->_imgType[$ext] : (isset($this->_imgType['default']) ? $this->_imgType['default'] : FALSE);
     }
 
     /**
@@ -843,10 +977,10 @@ class FileDownload {
      * @return  array   file type's images
      */
     private function _imgTypeProp() {
-        if (empty($this->configs['imgLocat'])) {
+        if (empty($this->config['imgLocat'])) {
             return FALSE;
         }
-        $fdImagesChunk = $this->modx->getChunk($this->configs['imgTypes']);
+        $fdImagesChunk = $this->parseTpl($this->config['imgTypes']);
         $fdImagesChunkX = @explode(',', $fdImagesChunk);
         $imgType = array();
         foreach ($fdImagesChunkX as $v) {
@@ -866,7 +1000,7 @@ class FileDownload {
      */
     private function _linkFileDownload($filePath, $hash, $ctx = 'web') {
         $link = array();
-        if ($this->configs['noDownload']) {
+        if ($this->config['noDownload']) {
             $link['url'] = $filePath;
         } else {
             $args = 'fdlfile=' . $hash;
@@ -884,7 +1018,7 @@ class FileDownload {
      */
     private function _directLinkFileDownload($filePath) {
         $link = array();
-        if ($this->configs['noDownload']) {
+        if ($this->config['noDownload']) {
             $link['url'] = $filePath;
         } else {
             // to use this method, the file should always be placed on the web root
@@ -910,13 +1044,13 @@ class FileDownload {
      * @return  array   the open directory link and the javascript's attribute
      */
     private function _linkDirOpen($hash, $ctx = 'web') {
-        if (!$this->configs['browseDirectories']) {
+        if (!$this->config['browseDirectories']) {
             return FALSE;
         }
         $link = array();
         $args = 'fdldir=' . $hash;
-        if (!empty($this->configs['fdlid'])) {
-            $args .= '&fdlid=' . $this->configs['fdlid'];
+        if (!empty($this->config['fdlid'])) {
+            $args .= '&fdlid=' . $this->config['fdlid'];
         }
         $url = $this->modx->makeUrl($this->modx->resource->get('id'), $ctx, $args);
         $link['url'] = $url;
@@ -948,15 +1082,15 @@ class FileDownload {
             return FALSE;
         }
 
-        $this->configs['getDir'] = array($path);
-        $this->configs['getFile'] = array();
+        $this->config['getDir'] = array($path);
+        $this->config['getFile'] = array();
 
         // save the new count
         $newCount = $count + 1;
         $fdlObj->set('count', $newCount);
         if ($fdlObj->save() === false) {
             // @todo setDirProp: lexicon string
-            return $this->modx->error->failure($this->modx->lexicon($this->configs['prefix'] . 'err_save_counter'));
+            return $this->modx->error->failure($this->modx->lexicon($this->config['prefix'] . 'err_save_counter'));
         }
 
         return TRUE;
@@ -1043,7 +1177,7 @@ class FileDownload {
             }
             fclose($handle);
 
-            if ($this->configs['countDownloads']) {
+            if ($this->config['countDownloads']) {
                 // save the new count
                 $newCount = $count + 1;
                 $fdlObj->set('count', $newCount);
@@ -1090,10 +1224,10 @@ class FileDownload {
      * @return  bool    TRUE | FALSE
      */
     private function _isExtHidden($ext) {
-        if (empty($this->configs['extHidden'])) {
+        if (empty($this->config['extHidden'])) {
             return FALSE;
         }
-        $extHiddenX = @explode(',', $this->configs['extHidden']);
+        $extHiddenX = @explode(',', $this->config['extHidden']);
         array_walk($extHiddenX, create_function('&$val', '$val = strtolower(trim($val));'));
         if (!in_array($ext, $extHiddenX)) {
             return TRUE;
@@ -1108,10 +1242,10 @@ class FileDownload {
      * @return  bool    TRUE | FALSE
      */
     private function _isExtShown($ext) {
-        if (empty($this->configs['extShown'])) {
+        if (empty($this->config['extShown'])) {
             return TRUE;
         }
-        $extShownX = @explode(',', $this->configs['extShown']);
+        $extShownX = @explode(',', $this->config['extShown']);
         array_walk($extShownX, create_function('&$val', '$val = strtolower(trim($val));'));
         if (in_array($ext, $extShownX)) {
             return TRUE;
@@ -1126,10 +1260,10 @@ class FileDownload {
      * @return  bool    TRUE | FALSE
      */
     public function isAllowed() {
-        if (empty($this->configs['userGroups'])) {
+        if (empty($this->config['userGroups'])) {
             return TRUE;
         } else {
-            $userGroupsX = @explode(',', $this->configs['userGroups']);
+            $userGroupsX = @explode(',', $this->config['userGroups']);
             array_walk($userGroupsX, create_function('&$val', '$val = trim($val);'));
             $userAccessGroupNames = $this->_userAccessGroupNames();
 
@@ -1204,12 +1338,12 @@ class FileDownload {
             $sort = $contents;
         }
 
-        if (empty($this->configs['groupByDirectory'])) {
+        if (empty($this->config['groupByDirectory'])) {
             $sort = $this->_groupByType($contents);
         } else {
             $sortPath = array();
             foreach ($contents as $k => $file) {
-                if (!$this->configs['browseDirectories'] && $file['type'] === 'dir') {
+                if (!$this->config['browseDirectories'] && $file['type'] === 'dir') {
                     continue;
                 }
                 $sortPath[$file['path']][$k] = $file;
@@ -1239,7 +1373,7 @@ class FileDownload {
 
         $sortType = array();
         foreach ($contents as $k => $file) {
-            if (empty($this->configs['browseDirectories']) && $file['type'] === 'dir') {
+            if (empty($this->config['browseDirectories']) && $file['type'] === 'dir') {
                 continue;
             }
             $sortType[$file['type']][$k] = $file;
@@ -1256,7 +1390,7 @@ class FileDownload {
 
         $sort = array();
         $dirs = '';
-        if (!empty($this->configs['browseDirectories']) && !empty($sortType['dir'])) {
+        if (!empty($this->config['browseDirectories']) && !empty($sortType['dir'])) {
             $sort['dir'] = $sortType['dir'];
             // template
             $row = 1;
@@ -1267,12 +1401,12 @@ class FileDownload {
             }
         }
         $phs = array();
-        $phs[$this->configs['prefix'] . 'classPath'] = (!empty($this->configs['cssPath'])) ? ' class="' . $this->configs['cssPath'] . '"' : '';
-        $phs[$this->configs['prefix'] . 'path'] = $this->_breadcrumbs();
+        $phs[$this->config['prefix'] . 'classPath'] = (!empty($this->config['cssPath'])) ? ' class="' . $this->config['cssPath'] . '"' : '';
+        $phs[$this->config['prefix'] . 'path'] = $this->_breadcrumbs();
 
-        if (!empty($this->configs['tplWrapperDir']) && !empty($dirs)) {
-            $phs[$this->configs['prefix'] . 'dirRows'] = $dirs;
-            $this->_output['dirRows'] .= $this->parseTpl($this->configs['tplWrapperDir'], $phs);
+        if (!empty($this->config['tplWrapperDir']) && !empty($dirs)) {
+            $phs[$this->config['prefix'] . 'dirRows'] = $dirs;
+            $this->_output['dirRows'] .= $this->parseTpl($this->config['tplWrapperDir'], $phs);
         } else {
             $this->_output['dirRows'] .= $dirs;
         }
@@ -1289,9 +1423,9 @@ class FileDownload {
             }
         }
 
-        if (!empty($this->configs['tplWrapperFile']) && !empty($files)) {
-            $phs[$this->configs['prefix'] . 'fileRows'] = $files;
-            $this->_output['fileRows'] .= $this->parseTpl($this->configs['tplWrapperFile'], $phs);
+        if (!empty($this->config['tplWrapperFile']) && !empty($files)) {
+            $phs[$this->config['prefix'] . 'fileRows'] = $files;
+            $this->_output['fileRows'] .= $this->parseTpl($this->config['tplWrapperFile'], $phs);
         } else {
             $this->_output['fileRows'] .= $files;
         }
@@ -1319,22 +1453,22 @@ class FileDownload {
 
         $temp = array();
         foreach (array_keys($array) as $key) {
-            $temp[$key] = $array[$key][$this->configs['sortBy']];
+            $temp[$key] = $array[$key][$this->config['sortBy']];
         }
 
-        if ($this->configs['sortOrderNatural'] != 1) {
-            if (strtolower($this->configs['sortOrder']) == 'asc') {
+        if ($this->config['sortOrderNatural'] != 1) {
+            if (strtolower($this->config['sortOrder']) == 'asc') {
                 asort($temp);
             } else {
                 arsort($temp);
             }
         } else {
-            if ($this->configs['sortByCaseSensitive'] != 1) {
+            if ($this->config['sortByCaseSensitive'] != 1) {
                 natcasesort($temp);
             } else {
                 natsort($temp);
             }
-            if (strtolower($this->configs['sortOrder']) != 'asc') {
+            if (strtolower($this->config['sortOrder']) != 'asc') {
                 $temp = array_reverse($temp, TRUE);
             }
         }
@@ -1359,16 +1493,16 @@ class FileDownload {
     private function _cssDir($row) {
         $totalRow = $this->_count['dirs'];
         $cssName = array();
-        if (!empty($this->configs['cssDir'])) {
-            $cssName[] = $this->configs['cssDir'];
+        if (!empty($this->config['cssDir'])) {
+            $cssName[] = $this->config['cssDir'];
         }
-        if (!empty($this->configs['cssAltRow']) && $row % 2 === 1) {
-            $cssName[] = $this->configs['cssAltRow'];
+        if (!empty($this->config['cssAltRow']) && $row % 2 === 1) {
+            $cssName[] = $this->config['cssAltRow'];
         }
-        if (!empty($this->configs['cssFirstDir']) && $row === 1) {
-            $cssName[] = $this->configs['cssFirstDir'];
-        } elseif (!empty($this->configs['cssLastDir']) && $row === $totalRow) {
-            $cssName[] = $this->configs['cssLastDir'];
+        if (!empty($this->config['cssFirstDir']) && $row === 1) {
+            $cssName[] = $this->config['cssFirstDir'];
+        } elseif (!empty($this->config['cssLastDir']) && $row === $totalRow) {
+            $cssName[] = $this->config['cssLastDir'];
         }
 
         $o = '';
@@ -1389,27 +1523,27 @@ class FileDownload {
     private function _cssFile($row, $ext) {
         $totalRow = $this->_count['files'];
         $cssName = array();
-        if (!empty($this->configs['cssFile'])) {
-            $cssName[] = $this->configs['cssFile'];
+        if (!empty($this->config['cssFile'])) {
+            $cssName[] = $this->config['cssFile'];
         }
-        if (!empty($this->configs['cssAltRow']) && $row % 2 === 1) {
+        if (!empty($this->config['cssAltRow']) && $row % 2 === 1) {
             if ($this->_count['dirs'] % 2 === 0) {
-                $cssName[] = $this->configs['cssAltRow'];
+                $cssName[] = $this->config['cssAltRow'];
             }
         }
-        if (!empty($this->configs['cssFirstFile']) && $row === 1) {
-            $cssName[] = $this->configs['cssFirstFile'];
-        } elseif (!empty($this->configs['cssLastFile']) && $row === $totalRow) {
-            $cssName[] = $this->configs['cssLastFile'];
+        if (!empty($this->config['cssFirstFile']) && $row === 1) {
+            $cssName[] = $this->config['cssFirstFile'];
+        } elseif (!empty($this->config['cssLastFile']) && $row === $totalRow) {
+            $cssName[] = $this->config['cssLastFile'];
         }
-        if (!empty($this->configs['cssExtension'])) {
+        if (!empty($this->config['cssExtension'])) {
             $cssNameExt = '';
-            if (!empty($this->configs['cssExtensionPrefix'])) {
-                $cssNameExt .= $this->configs['cssExtensionPrefix'];
+            if (!empty($this->config['cssExtensionPrefix'])) {
+                $cssNameExt .= $this->config['cssExtensionPrefix'];
             }
             $cssNameExt .= $ext;
-            if (!empty($this->configs['cssExtensionSuffix'])) {
-                $cssNameExt .= $this->configs['cssExtensionSuffix'];
+            if (!empty($this->config['cssExtensionSuffix'])) {
+                $cssNameExt .= $this->config['cssExtensionSuffix'];
             }
             $cssName[] = $cssNameExt;
         }
@@ -1431,9 +1565,9 @@ class FileDownload {
             return '';
         }
         foreach ($contents as $k => $v) {
-            $phs[$this->configs['prefix'] . $k] = $v;
+            $phs[$this->config['prefix'] . $k] = $v;
         }
-        $tpl = $this->parseTpl($this->configs['tplDir'], $phs);
+        $tpl = $this->parseTpl($this->config['tplDir'], $phs);
 
         return $tpl;
     }
@@ -1444,13 +1578,13 @@ class FileDownload {
      * @return  string  rendered HTML
      */
     private function _tplFile(array $fileInfo) {
-        if (empty($fileInfo) || empty($this->configs['tplFile'])) {
+        if (empty($fileInfo) || empty($this->config['tplFile'])) {
             return '';
         }
         foreach ($fileInfo as $k => $v) {
-            $phs[$this->configs['prefix'] . $k] = $v;
+            $phs[$this->config['prefix'] . $k] = $v;
         }
-        $tpl = $this->parseTpl($this->configs['tplFile'], $phs);
+        $tpl = $this->parseTpl($this->config['tplFile'], $phs);
 
         return $tpl;
     }
@@ -1464,10 +1598,10 @@ class FileDownload {
         if (empty($path) || is_array($path)) {
             return '';
         }
-        $phs[$this->configs['prefix'] . 'class'] = (!empty($this->configs['cssGroupDir'])) ? ' class="' . $this->configs['cssGroupDir'] . '"' : '';
-        $groupPath = str_replace(DIRECTORY_SEPARATOR, $this->configs['breadcrumbSeparator'], $this->_trimPath($path));
-        $phs[$this->configs['prefix'] . 'groupDirectory'] = $groupPath;
-        $tpl = $this->parseTpl($this->configs['tplGroupDir'], $phs);
+        $phs[$this->config['prefix'] . 'class'] = (!empty($this->config['cssGroupDir'])) ? ' class="' . $this->config['cssGroupDir'] . '"' : '';
+        $groupPath = str_replace(DIRECTORY_SEPARATOR, $this->config['breadcrumbSeparator'], $this->_trimPath($path));
+        $phs[$this->config['prefix'] . 'groupDirectory'] = $groupPath;
+        $tpl = $this->parseTpl($this->config['tplGroupDir'], $phs);
 
         return $tpl;
     }
@@ -1477,14 +1611,14 @@ class FileDownload {
      * @return  string  rendered template
      */
     private function _tplWrapper() {
-        $phs[$this->configs['prefix'] . 'classPath'] = (!empty($this->configs['cssPath'])) ? ' class="' . $this->configs['cssPath'] . '"' : '';
-        $phs[$this->configs['prefix'] . 'path'] = $this->_breadcrumbs();
+        $phs[$this->config['prefix'] . 'classPath'] = (!empty($this->config['cssPath'])) ? ' class="' . $this->config['cssPath'] . '"' : '';
+        $phs[$this->config['prefix'] . 'path'] = $this->_breadcrumbs();
         $rows = !empty($this->_output['rows']) ? $this->_output['rows'] : '';
-        $phs[$this->configs['prefix'] . 'rows'] = $rows;
-        $phs[$this->configs['prefix'] . 'dirRows'] = $this->_output['dirRows'];
-        $phs[$this->configs['prefix'] . 'fileRows'] = $this->_output['fileRows'];
-        if (!empty($this->configs['tplWrapper'])) {
-            $tpl = $this->parseTpl($this->configs['tplWrapper'], $phs);
+        $phs[$this->config['prefix'] . 'rows'] = $rows;
+        $phs[$this->config['prefix'] . 'dirRows'] = $this->_output['dirRows'];
+        $phs[$this->config['prefix'] . 'fileRows'] = $this->_output['fileRows'];
+        if (!empty($this->config['tplWrapper'])) {
+            $tpl = $this->parseTpl($this->config['tplWrapper'], $phs);
         } else {
             $tpl = $rows;
         }
@@ -1498,7 +1632,7 @@ class FileDownload {
      * @return  string  trimmed path
      */
     private function _trimPath($path) {
-        $xPath = @explode(DIRECTORY_SEPARATOR, $this->configs['origDir'][0]);
+        $xPath = @explode(DIRECTORY_SEPARATOR, $this->config['origDir'][0]);
         array_pop($xPath);
         $parentPath = @implode(DIRECTORY_SEPARATOR, $xPath) . DIRECTORY_SEPARATOR;
         $trimmedPath = $path;
@@ -1523,10 +1657,10 @@ class FileDownload {
      * @return  string  a breadcrumbs link
      */
     private function _breadcrumbs() {
-        if (empty($this->configs['browseDirectories'])) {
+        if (empty($this->config['browseDirectories'])) {
             return '';
         }
-        $dirs = $this->configs['getDir'];
+        $dirs = $this->config['getDir'];
         if (count($dirs) > 1) {
             return '';
         } else {
@@ -1566,26 +1700,26 @@ class FileDownload {
             if ($k === 0) {
                 $pageUrl = $this->modx->makeUrl($this->modx->resource->get('id'));
                 $trail[$k] = array(
-                    $this->configs['prefix'] . 'title' => $this->modx->lexicon($this->configs['prefix'] . 'breadcrumb.home'),
-                    $this->configs['prefix'] . 'link' => $pageUrl,
-                    $this->configs['prefix'] . 'url' => $pageUrl,
-                    $this->configs['prefix'] . 'hash' => '',
+                    $this->config['prefix'] . 'title' => $this->modx->lexicon($this->config['prefix'] . 'breadcrumb.home'),
+                    $this->config['prefix'] . 'link' => $pageUrl,
+                    $this->config['prefix'] . 'url' => $pageUrl,
+                    $this->config['prefix'] . 'hash' => '',
                 );
             } else {
                 $trail[$k] = array(
-                    $this->configs['prefix'] . 'title' => $title,
-                    $this->configs['prefix'] . 'link' => $link['url'], // fallback
-                    $this->configs['prefix'] . 'url' => $link['url'],
-                    $this->configs['prefix'] . 'hash' => $hash,
+                    $this->config['prefix'] . 'title' => $title,
+                    $this->config['prefix'] . 'link' => $link['url'], // fallback
+                    $this->config['prefix'] . 'url' => $link['url'],
+                    $this->config['prefix'] . 'hash' => $hash,
                 );
             }
             if ($k < ($countTrimmedPathX - 1)) {
-                $trailingLink[] = $this->parseTpl($this->configs['tplBreadcrumb'], $trail[$k]);
+                $trailingLink[] = $this->parseTpl($this->config['tplBreadcrumb'], $trail[$k]);
             } else {
                 $trailingLink[] = $title;
             }
         }
-        $breadcrumb = @implode($this->configs['breadcrumbSeparator'], $trailingLink);
+        $breadcrumb = @implode($this->config['breadcrumbSeparator'], $trailingLink);
 
         return $breadcrumb;
     }
@@ -1602,7 +1736,7 @@ class FileDownload {
      * @return  string  hashed parameter
      */
     private function _setHashedParam($ctx, $filename) {
-        $input = $this->configs['saltText'] . $ctx . $filename;
+        $input = $this->config['saltText'] . $ctx . $filename;
         return str_rot13(base64_encode(hash('sha512', $input)));
     }
 

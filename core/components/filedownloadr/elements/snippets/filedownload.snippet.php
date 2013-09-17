@@ -287,7 +287,7 @@ $scriptProperties['imgLocat'] = $modx->getOption('imgLocat', $scriptProperties, 
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['imgTypes'] = $modx->getOption('imgTypes', $scriptProperties);
+$scriptProperties['imgTypes'] = $modx->getOption('imgTypes', $scriptProperties, 'fdimages');
 
 /////////////////////////////////////////////////////////////////////////////////
 //                            Templates & Styles                               //
@@ -643,6 +643,7 @@ array_walk($scriptProperties, create_function('&$val', 'if (!is_array($val)) $va
 $fdl = $modx->getService('fdl'
         , 'FileDownload'
         , $modx->getOption('core_path') . 'components/filedownloadr/models/filedownload/'
+        , $scriptProperties
 );
 
 if (!($fdl instanceof FileDownload))
