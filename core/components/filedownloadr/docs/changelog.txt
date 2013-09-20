@@ -1,5 +1,9 @@
 Changelog for FileDownload.
 
+FileDownload-R 1.1.7-pl (September 20, 2013)
+============================================
++ #21 fixed [[+fd.image]] only outputs the path to "assets/components/filedownloadr/img/filetypes/" without any file of the folder
+
 FileDownload-R 1.1.6-pl
 ====================================
 + #18 bugfix @CHUNK's tpl variable
