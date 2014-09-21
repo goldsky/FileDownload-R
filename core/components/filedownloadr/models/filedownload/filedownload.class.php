@@ -469,6 +469,8 @@ class FileDownload {
                         || $file === 'Thumbs.db'
                         || $file === '.htaccess'
                         || $file === '.htpasswd'
+			|| $file === '.ftpquota'
+			|| $file === '.DS_Store'
                 ) {
                     continue;
                 }
