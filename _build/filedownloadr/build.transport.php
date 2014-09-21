@@ -33,7 +33,7 @@ set_time_limit(0);
 
 define('PKG_NAME', 'FileDownloadR');
 define('PKG_NAME_LOWER', 'filedownloadr'); // work around the extra's namespace
-define('PKG_VERSION', '1.1.4');
+define('PKG_VERSION', '1.1.7');
 define('PKG_RELEASE', 'pl');
 
 /* override with your own defines here (see build.config.sample.php) */
@@ -76,20 +76,25 @@ $category->set('id', 1);
 $category->set('category', PKG_NAME);
 
 /* add snippets */
-$modx->log(modX::LOG_LEVEL_INFO, 'Packaging in snippets...');
-flush();
+$modx->log(modX::LOG_LEVEL_INFO, 'Adding in snippets.');
 $snippets = include $sources['data'] . 'transport.snippets.php';
-if (empty($snippets))
-    $modx->log(modX::LOG_LEVEL_ERROR, 'Could not package in snippets.');
-$category->addMany($snippets);
+if (is_array($snippets)) {
+	$category->addMany($snippets);
+    $modx->log(modX::LOG_LEVEL_INFO, 'Adding in ' . count($snippets) . ' snippets done.');
+} else {
+	$modx->log(modX::LOG_LEVEL_FATAL, 'Adding snippets failed.');
+}
 
 /* add chunks */
-$modx->log(modX::LOG_LEVEL_INFO, 'Packaging in chunks...');
+$modx->log(modX::LOG_LEVEL_INFO, 'Adding in chunks...');
 flush();
 $chunks = include $sources['data'] . 'transport.chunks.php';
-if (empty($chunks))
-    $modx->log(modX::LOG_LEVEL_ERROR, 'Could not pack in chunks.');
-$category->addMany($chunks);
+if (is_array($chunks)) {
+	$category->addMany($chunks);
+    $modx->log(modX::LOG_LEVEL_INFO, 'Adding in ' . count($chunks) . ' chunks done.');
+} else {
+	$modx->log(modX::LOG_LEVEL_FATAL, 'Adding chunks failed.');
+}
 
 /* create category vehicle */
 $attr = array(
@@ -113,7 +118,6 @@ $attr = array(
 $vehicle = $builder->createVehicle($category, $attr);
 
 $modx->log(modX::LOG_LEVEL_INFO, 'Adding file resolvers to category...');
-flush();
 $vehicle->resolve('file', array(
     'source' => $sources['source_assets'],
     'target' => "return MODX_ASSETS_PATH . 'components/';",
@@ -122,21 +126,16 @@ $vehicle->resolve('file', array(
     'source' => $sources['source_core'],
     'target' => "return MODX_CORE_PATH . 'components/';",
 ));
-$builder->putVehicle($vehicle);
-
 $modx->log(modX::LOG_LEVEL_INFO, 'Adding in PHP resolvers...');
-flush();
 $vehicle->resolve('php', array(
     'source' => $sources['resolvers'] . 'tables.resolver.php',
 ));
-$builder->putVehicle($vehicle);
-
 $modx->log(modX::LOG_LEVEL_INFO, 'Adding in PHP validators...');
-flush();
 $vehicle->validate('php', array(
     'source' => $sources['validators'] . 'options.validator.php',
 ));
 $builder->putVehicle($vehicle);
+unset($vehicle);
 
 /* now pack in the license file, readme and setup options */
 $modx->log(modX::LOG_LEVEL_INFO, 'Adding package attributes and setup options...');
@@ -150,7 +149,6 @@ $builder->setPackageAttributes(array(
     )
 ));
 
-unset($vehicle);
 
 /* zip up package */
 $modx->log(modX::LOG_LEVEL_INFO, 'Packing up transport package zip...');

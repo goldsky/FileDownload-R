@@ -286,6 +286,7 @@ array_walk($scriptProperties, create_function('&$val', 'if (!is_array($val)) $va
 $fdl = $modx->getService('fdl'
         , 'FileDownload'
         , $modx->getOption('core_path') . 'components/filedownloadr/models/filedownload/'
+        , $scriptProperties
 );
 
 if (!($fdl instanceof FileDownload))
