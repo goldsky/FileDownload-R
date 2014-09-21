@@ -32,7 +32,6 @@ class FileDownload {
         $corePath = $this->modx->getOption('core_path');
         $basePath = $corePath . 'components/filedownloadr/';
         $assetsUrl = $this->modx->getOption('assets_url') . 'components/filedownloadr/';
-        $configs['imgTypeUrl'] = !empty($configs['imgLocat']) ? $configs['imgLocat'] : $assetsUrl . 'img/filetypes/';
         $this->configs = array();
         $this->_output = array(
             'rows' => '',
@@ -48,6 +47,7 @@ class FileDownload {
             'chunksPath' => $basePath . 'elements/chunks/',
             'jsUrl' => $assetsUrl . 'js/',
             'cssUrl' => $assetsUrl . 'css/',
+            'imgTypeUrl' => $assetsUrl . 'img/filetypes/',
             'assetsUrl' => $assetsUrl,
             'encoding' => 'utf-8'
                 ), $configs);
