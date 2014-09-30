@@ -115,6 +115,12 @@ class FileDownload {
      * @param   array   $config     snippet's parameters
      */
     public function setConfigs($config = array()) {
+        // Clear previous output for subsequent snippet calls
+	$this->_output = array(
+            'rows' => '',
+            'dirRows' => '',
+            'fileRows' => ''
+        );
         $config['getDir'] = !empty($config['getDir']) ? $this->_checkPath($config['getDir']) : '';
         $config['origDir'] = !empty($config['getDir']) ? $config['getDir'] : ''; // getDir will be overridden by setDirProp()
         $config['getFile'] = !empty($config['getFile']) ? $this->_checkPath($config['getFile']) : '';
