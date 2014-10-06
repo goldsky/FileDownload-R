@@ -33,7 +33,7 @@ set_time_limit(0);
 
 define('PKG_NAME', 'FileDownloadR');
 define('PKG_NAME_LOWER', 'filedownloadr'); // work around the extra's namespace
-define('PKG_VERSION', '1.1.7');
+define('PKG_VERSION', '1.1.8');
 define('PKG_RELEASE', 'pl');
 
 /* override with your own defines here (see build.config.sample.php) */
@@ -68,7 +68,28 @@ $builder = new modPackageBuilder($modx);
 $builder->createPackage(PKG_NAME_LOWER, PKG_VERSION, PKG_RELEASE);
 $builder->registerNamespace(PKG_NAME_LOWER, false, true, '{core_path}components/filedownloadr/');
 $modx->getService('lexicon', 'modLexicon');
-$modx->lexicon->load('filedownload:properties');
+$modx->lexicon->load('filedownloadr:properties');
+
+/**
+ * SYSTEM SETTINGS
+ */
+$settings = include $sources['data'] . 'transport.settings.php';
+if (!is_array($settings)) {
+    $modx->log(modX::LOG_LEVEL_ERROR, 'Could not package in settings.');
+} else {
+    $modx->log(modX::LOG_LEVEL_INFO, 'Packaging in System Settings...');
+    $settingAttributes = array(
+        xPDOTransport::UNIQUE_KEY => 'key',
+        xPDOTransport::PRESERVE_KEYS => true,
+        xPDOTransport::UPDATE_OBJECT => false,
+    );
+    foreach ($settings as $setting) {
+        $settingVehicle = $builder->createVehicle($setting, $settingAttributes);
+        $builder->putVehicle($settingVehicle);
+    }
+    $modx->log(modX::LOG_LEVEL_INFO, 'Packaged in ' . count($settings) . ' System Settings done.');
+    unset($settingVehicle, $settings, $setting, $settingAttributes);
+}
 
 /* create category */
 $category = $modx->newObject('modCategory');
