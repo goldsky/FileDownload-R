@@ -17,42 +17,55 @@ class FileDownload {
      * @var object
      */
     public $modx;
+
     /**
      * $scriptProperties
      * @var array
      */
     public $config = array();
+
     /**
      * To hold error message
      * @var string
      */
     private $_error = '';
+
     /**
      * To hold output message
      * @var string
      */
     private $_output = array();
+
     /**
      * To hold placeholder array, flatten array with prefixable
      * @var array
      */
     private $_placeholders = array();
+
     /**
      * To hold plugin
      * @var array
      */
     public $plugins;
+
     /**
      * To hold counting
      * @var array
      */
     private $_count = array();
+
     /**
      * To hold image type
      * @var array
      */
     private $_imgType = array();
 
+    /**
+     * store the chunk's HTML to property to save memory of loop rendering
+     * @var array
+     */
+    private $_chunks = array();
+    
     /**
      * constructor
      * @param   modX    $modx
@@ -116,7 +129,7 @@ class FileDownload {
      */
     public function setConfigs($config = array()) {
         // Clear previous output for subsequent snippet calls
-	$this->_output = array(
+        $this->_output = array(
             'rows' => '',
             'dirRows' => '',
             'fileRows' => ''
@@ -293,11 +306,17 @@ class FileDownload {
      */
     public function parseTpl($tpl, array $phs = array()) {
         $output = '';
+
+        if (isset($this->_chunks[$tpl]) && !empty($this->_chunks[$tpl])) {
+            return $this->parseTplCode($this->_chunks[$tpl], $phs);
+        }
+
         if (preg_match('/^(@CODE|@INLINE)/i', $tpl)) {
             $tplString = preg_replace('/^(@CODE|@INLINE)/i', '', $tpl);
             // tricks @CODE: / @INLINE:
             $tplString = ltrim($tplString, ':');
             $tplString = trim($tplString);
+            $this->_chunks[$tpl] = $tplString;
             $output = $this->parseTplCode($tplString, $phs);
         } elseif (preg_match('/^@FILE/i', $tpl)) {
             $tplFile = preg_replace('/^@FILE/i', '', $tpl);
@@ -334,6 +353,7 @@ class FileDownload {
                  * @link    http://forums.modx.com/thread/74071/help-with-getchunk-and-modx-speed-please?page=4#dis-post-464137
                  */
                 $chunk = $this->modx->getParser()->getElement('modChunk', $tplChunk);
+                $this->_chunks[$tpl] = $chunk->get('content');
                 $chunk->setCacheable(false);
                 $chunk->_processed = false;
                 $output = $chunk->process($phs);
@@ -370,6 +390,7 @@ class FileDownload {
             throw new Exception('File: ' . $file . ' is not found.');
         }
         $o = file_get_contents($file);
+        $this->_chunks[$file] = $o;
         $chunk = $this->modx->newObject('modChunk');
 
         // just to create a name for the modChunk object.
@@ -712,9 +733,9 @@ class FileDownload {
             $d[] = $content;
 
             if ($content['type'] === 'dir') {
-                $this->_count['dirs']++;
+                $this->_count['dirs'] ++;
             } else {
-                $this->_count['files']++;
+                $this->_count['files'] ++;
             }
         }
 
@@ -784,9 +805,10 @@ class FileDownload {
 
             $scanDir = scandir($rootPath);
 
+            $excludes = $this->modx->getOption('filedownloadr.exclude_scan', $this->config, '.,..,Thumbs.db,.htaccess,.htpasswd,.ftpquota,.DS_Store');
+            $excludes = array_map('trim', @explode(',', $excludes));
             foreach ($scanDir as $file) {
-                if ($file === '.' || $file === '..' || $file === 'Thumbs.db' || $file === '.htaccess' || $file === '.htpasswd' || $file === '.ftpquota' || $file === '.DS_Store'
-                ) {
+                if (in_array($file, $excludes)) {
                     continue;
                 }
 
