@@ -2,6 +2,7 @@ Changelog for FileDownload.
 
 FileDownload-R 1.1.8-pl (October 06, 2014)
 ============================================
++ [#34] Not working with get variable in URL
 + [#31][#37][#38] Duplicate files on multiple snippet calls
 
 FileDownload-R 1.1.7-pl (September 20, 2013)

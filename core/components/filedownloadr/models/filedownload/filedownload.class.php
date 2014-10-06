@@ -1031,8 +1031,12 @@ class FileDownload {
         if ($this->config['noDownload']) {
             $link['url'] = $filePath;
         } else {
+            $existingArgs = strstr($_SERVER['REQUEST_URI'], '?');
+            if (!empty($existingArgs)) {
+                $existingArgs = ltrim($existingArgs, '?') . '&';
+            }
             $args = 'fdlfile=' . $hash;
-            $url = $this->modx->makeUrl($this->modx->resource->get('id'), $ctx, $args);
+            $url = $this->modx->makeUrl($this->modx->resource->get('id'), $ctx, $existingArgs . $args);
             $link['url'] = $url;
         }
         $link['hash'] = $hash;
