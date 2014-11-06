@@ -713,7 +713,8 @@ if (empty($scriptProperties['downloadByOther'])) {
                 return;
             }
         }
-    } elseif (!empty($sanitizedGets['fdlfile'])) {
+    } 
+    if (!empty($sanitizedGets['fdlfile'])) {
         $checkHash = $fdl->checkHash($modx->context->key, $sanitizedGets['fdlfile']);
         if (!$checkHash) {
             return;
