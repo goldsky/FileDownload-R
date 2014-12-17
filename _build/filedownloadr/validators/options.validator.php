@@ -34,7 +34,7 @@ if ($modx = & $object->xpdo) {
             if (empty($options['fdl_keep_db'])) {
                 $modelPath = $modx->getOption('core_path') . 'components/filedownloadr/models/';
                 $modelPath = realpath($modelPath) . DIRECTORY_SEPARATOR;
-                $tablePrefix = $modx->getOption('filedownload.table_prefix', null, $this->modx->config[modX::OPT_TABLE_PREFIX] . 'fd_');
+                $tablePrefix = $modx->getOption('filedownload.table_prefix', null, $modx->config[modX::OPT_TABLE_PREFIX] . 'fd_');
                 if ($modx->addPackage('filedownload', $modelPath, $tablePrefix)) {
                     $manager = $modx->getManager();
                     if (!$manager->removeObjectContainer('fdCount')) {
