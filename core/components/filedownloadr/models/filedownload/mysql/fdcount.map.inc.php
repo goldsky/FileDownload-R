@@ -1,7 +1,9 @@
 <?php
-$xpdo_meta_map['FDL']= array (
+$xpdo_meta_map['fdCount']= array (
   'package' => 'filedownload',
-  'table' => 'fd_count',
+  'version' => '1.1',
+  'table' => 'count',
+  'extends' => 'xPDOSimpleObject',
   'fields' => 
   array (
     'ctx' => 'web',

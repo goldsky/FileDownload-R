@@ -34,18 +34,6 @@ set_time_limit(0);
 define('PKG_NAME', 'FileDownloadR');
 define('PKG_NAME_LOWER', 'filedownloadr'); // work around the extra's namespace
 
-$fdl = $modx->getService('fdl'
-        , 'FileDownload'
-        , $modx->getOption('core_path') . 'components/filedownloadr/models/filedownload/'
-);
-
-if (!($fdl instanceof FileDownload)) {
-    return 'instanceof error.';
-}
-
-define('PKG_VERSION', FileDownload::VERSION);
-define('PKG_RELEASE', FileDownload::RELEASE);
-
 /* override with your own defines here (see build.config.sample.php) */
 require_once dirname(__FILE__) . '/build.config.php';
 require_once MODX_CORE_PATH . 'model/modx/modx.class.php';
@@ -67,11 +55,24 @@ $sources = array(
 unset($root);
 
 $modx = new modX();
+
 $modx->initialize('mgr');
 echo '<pre>'; /* used for nice formatting of log messages */
 $modx->setLogLevel(modX::LOG_LEVEL_INFO);
 flush();
 $modx->setLogTarget(XPDO_CLI_MODE ? 'ECHO' : 'HTML');
+
+$fdl = $modx->getService('fdl'
+        , 'FileDownload'
+        , $modx->getOption('core_path') . 'components/filedownloadr/models/filedownload/'
+);
+
+if (!($fdl instanceof FileDownload)) {
+    return 'instanceof error.';
+}
+
+define('PKG_VERSION', FileDownload::VERSION);
+define('PKG_RELEASE', FileDownload::RELEASE);
 
 $modx->loadClass('transport.modPackageBuilder', '', false, true);
 $builder = new modPackageBuilder($modx);

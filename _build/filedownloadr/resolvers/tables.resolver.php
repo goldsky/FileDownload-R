@@ -32,7 +32,7 @@ if ($modx = & $object->xpdo) {
             $modelPath = realpath($modelPath) . DIRECTORY_SEPARATOR;
             $modx->addPackage('filedownload', $modelPath);
             $manager = $modx->getManager();
-            if (!$manager->createObjectContainer('FDL')) {
+            if (!$manager->createObjectContainer('fdCount')) {
                 $modx->log(modX::LOG_LEVEL_ERROR, '[FileDownload] table was unable to be created');
                 return false;
             }

@@ -108,7 +108,8 @@ class FileDownload {
             'imgTypes' => 'fdimages'
                 ), $config);
 
-        $this->modx->addPackage('filedownload', $this->config['modelPath']);
+        $tablePrefix = $this->modx->getOption('exerplan.table_prefix', null, $this->modx->config[modX::OPT_TABLE_PREFIX] . 'fd_');
+        $this->modx->addPackage('filedownload', $this->config['modelPath'], $tablePrefix);
 
         if (!$this->modx->lexicon) {
             $this->modx->getService('lexicon', 'modLexicon');
@@ -695,13 +696,13 @@ class FileDownload {
             return FALSE;
         }
 
-        $fdlObj = $this->modx->getObject('FDL', array(
+        $fdlObj = $this->modx->getObject('fdCount', array(
             'ctx' => $file['ctx'],
             'filename' => utf8_encode($file['filename'])
         ));
         $checked = array();
         if ($fdlObj === null) {
-            $fdlObj = $this->modx->newObject('FDL');
+            $fdlObj = $this->modx->newObject('fdCount');
             $fdlObj->fromArray(array(
                 'ctx' => $file['ctx'],
                 'filename' => utf8_encode($file['filename']),
@@ -1112,7 +1113,7 @@ class FileDownload {
         if (empty($hash) || !$selected) {
             return FALSE;
         }
-        $fdlObj = $this->modx->getObject('FDL', array('hash' => $hash));
+        $fdlObj = $this->modx->getObject('fdCount', array('hash' => $hash));
         if (!$fdlObj) {
             return FALSE;
         }
@@ -1149,7 +1150,7 @@ class FileDownload {
             return FALSE;
         }
 
-        $fdlObj = $this->modx->getObject('FDL', array('hash' => $hash));
+        $fdlObj = $this->modx->getObject('fdCount', array('hash' => $hash));
         if (!$fdlObj) {
             return FALSE;
         }
@@ -1251,7 +1252,7 @@ class FileDownload {
      * @return type
      */
     private function _getDownloadCount($ctx, $filePath) {
-        $fdlObj = $this->modx->getObject('FDL', array(
+        $fdlObj = $this->modx->getObject('fdCount', array(
             'ctx' => $ctx,
             'filename' => $filePath
         ));
@@ -1721,7 +1722,7 @@ class FileDownload {
         $countTrimmedPathX = count($trimmedPathX);
         foreach ($trimmedPathX as $k => $title) {
             $trailingPath .= $title . DIRECTORY_SEPARATOR;
-            $fdlObj = $this->modx->getObject('FDL', array(
+            $fdlObj = $this->modx->getObject('fdCount', array(
                 'filename' => $trailingPath
             ));
             if (!$fdlObj) {
@@ -1733,7 +1734,7 @@ class FileDownload {
                 if (!$checkedDb) {
                     continue;
                 }
-                $fdlObj = $this->modx->getObject('FDL', array(
+                $fdlObj = $this->modx->getObject('fdCount', array(
                     'filename' => $trailingPath
                 ));
             }
@@ -1790,7 +1791,7 @@ class FileDownload {
      * @return  string  hashed parameter
      */
     private function _getHashedParam($ctx, $filename) {
-        $fdlObj = $this->modx->getObject('FDL', array(
+        $fdlObj = $this->modx->getObject('fdCount', array(
             'ctx' => $ctx,
             'filename' => $filename
         ));
@@ -1807,7 +1808,7 @@ class FileDownload {
      * @return  bool    TRUE | FALSE
      */
     public function checkHash($ctx, $hash) {
-        $fdlObj = $this->modx->getObject('FDL', array(
+        $fdlObj = $this->modx->getObject('fdCount', array(
             'ctx' => $ctx,
             'hash' => $hash
         ));

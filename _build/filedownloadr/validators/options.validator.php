@@ -36,7 +36,7 @@ if ($modx = & $object->xpdo) {
             if (!empty($options['fdl_keep_db'])) {
                 $modx->addPackage('filedownload', $modelPath);
                 $manager = $modx->getManager();
-                if (!$manager->removeObjectContainer('FDL')) {
+                if (!$manager->removeObjectContainer('fdCount')) {
                     $modx->log(modX::LOG_LEVEL_ERROR, '[FileDownload] table was unable to be deleted');
                     return false;
                 }
