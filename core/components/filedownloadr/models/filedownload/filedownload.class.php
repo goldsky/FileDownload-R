@@ -115,6 +115,10 @@ class FileDownload {
         $this->modx->lexicon->load('filedownloadr:default');
 
         $this->_imgType = $this->_imgTypeProp();
+        if (empty($this->_imgType)) {
+            $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownload] could not load image types.');
+            return false;
+        }
         if (!empty($this->config['encoding']))
             mb_internal_encoding($this->config['encoding']);
 
@@ -864,7 +868,7 @@ class FileDownload {
                         'sizeText' => '',
                         'unixdate' => $unixDate,
                         'date' => $date,
-                        'image' => $this->config['imgTypeUrl'] . $imgType,
+                        'image' => $this->config['imgLocat'] . $imgType,
                         'count' => $checkedDb['count'],
                         'link' => $link['url'], // fallback
                         'url' => $link['url'],
@@ -972,7 +976,7 @@ class FileDownload {
             'sizeText' => $this->_fileSizeText($size),
             'unixdate' => $unixDate,
             'date' => $date,
-            'image' => $this->config['imgTypeUrl'] . $imgType,
+            'image' => $this->config['imgLocat'] . $imgType,
             'count' => $checkedDb['count'],
             'link' => $link['url'], // fallback
             'url' => $link['url'],
@@ -1011,7 +1015,7 @@ class FileDownload {
      * @return  array   file type's images
      */
     private function _imgTypeProp() {
-        if (empty($this->config['imgLocat'])) {
+        if (empty($this->config['imgTypes'])) {
             return FALSE;
         }
         $fdImagesChunk = $this->parseTpl($this->config['imgTypes']);
