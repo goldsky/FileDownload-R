@@ -26,13 +26,13 @@ class FileDownload {
 
     /**
      * To hold error message
-     * @var string
+     * @var array
      */
-    private $_error = '';
+    private $_error = array();
 
     /**
      * To hold output message
-     * @var string
+     * @var array
      */
     private $_output = array();
 
@@ -165,15 +165,18 @@ class FileDownload {
      * @return  void
      */
     public function setError($msg) {
-        $this->_error = $msg;
+        $this->_error[] = $msg;
     }
 
     /**
      * Get string error for boolean returned methods
      * @return  string  output
      */
-    public function getError() {
-        return $this->_error;
+    public function getError($delimiter = "\n") {
+        if ($delimiter === '\n') {
+            $delimiter = "\n";
+        }
+        return @implode($delimiter, $this->_error);
     }
 
     /**
@@ -181,15 +184,18 @@ class FileDownload {
      * @return  void
      */
     public function setOutput($msg) {
-        $this->_output = $msg;
+        $this->_output[] = $msg;
     }
 
     /**
      * Get string output for boolean returned methods
      * @return  string  output
      */
-    public function getOutput() {
-        return $this->_output;
+    public function getOutput($delimiter = "\n") {
+        if ($delimiter === '\n') {
+            $delimiter = "\n";
+        }
+        return @implode($delimiter, $this->_output);
     }
 
     /**
@@ -733,9 +739,9 @@ class FileDownload {
             $d[] = $content;
 
             if ($content['type'] === 'dir') {
-                $this->_count['dirs'] ++;
+                $this->_count['dirs']++;
             } else {
-                $this->_count['files'] ++;
+                $this->_count['files']++;
             }
         }
 
@@ -785,7 +791,8 @@ class FileDownload {
 
         $contents = array();
         foreach ($paths as $rootPath) {
-            if (!is_dir($rootPath)) {
+            $rootRealPath = realpath($rootPath);
+            if (!is_dir($rootPath) || empty($rootRealPath)) {
                 // @todo: lexicon
                 $this->modx->log(
                         modX::LOG_LEVEL_ERROR, '&getDir parameter expects a correct dir path. <b>"' . $rootPath . '"</b> is given.'
@@ -810,11 +817,6 @@ class FileDownload {
             foreach ($scanDir as $file) {
                 if (in_array($file, $excludes)) {
                     continue;
-                }
-
-                $rootRealPath = realpath($rootPath);
-                if (!$rootRealPath) {
-                    return FALSE;
                 }
 
                 $fullPath = $rootRealPath . DIRECTORY_SEPARATOR . $file;

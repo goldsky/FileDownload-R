@@ -1,5 +1,10 @@
 Changelog for FileDownload.
 
+FileDownload-R dev
+============================================
++ change _error and _output types in main class
++ [#39] Fixed to allow files to download within folders with Revo 2.3.2
+
 FileDownload-R 1.1.8-pl (October 06, 2014)
 ============================================
 + [#34] Not working with get variable in URL
