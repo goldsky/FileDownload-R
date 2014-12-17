@@ -237,14 +237,14 @@ $scriptProperties['countDownloads'] = $modx->getOption('countDownloads', $script
 /////////////////////////////////////////////////////////////////////////////////
 /**
  * Path to the images to associate with each file extension.
- * The images will be outputted with [+fd.image+] placeholder.
+ * The images will be outputted with [[+fd.image]] placeholder.
  * @options: path to images
- * @default: assets/components/filedownloadr/img/filetype
+ * @default: assets/components/filedownloadr/img/filetypes/
  * @example: assets/images/icons
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['imgLocat'] = $modx->getOption('imgLocat', $scriptProperties, 'assets/components/filedownloadr/img/filetype');
+$scriptProperties['imgLocat'] = $modx->getOption('imgLocat', $scriptProperties, 'assets/components/filedownloadr/img/filetypes/');
 $scriptProperties['imgTypeUrl'] = $scriptProperties['imgLocat'];
 
 /**

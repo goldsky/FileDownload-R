@@ -75,7 +75,7 @@
     "desc":"prop_fd.imgLocat_desc",
     "xtype":"textfield",
     "options":[],
-    "value":"{assets_url}components/filedownloadr/img/filetype/",
+    "value":"{assets_url}components/filedownloadr/img/filetypes/",
     "lexicon":"filedownload:properties",
     "overridden":false,
     "desc_trans":"Path to the images to associate with each file extension. The images will be outputted with [+fd.image+] placeholder.",
