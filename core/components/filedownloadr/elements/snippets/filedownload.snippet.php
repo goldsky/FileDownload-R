@@ -245,6 +245,8 @@ $scriptProperties['countDownloads'] = $modx->getOption('countDownloads', $script
  * @since ver 1.2.0
  */
 $scriptProperties['imgLocat'] = $modx->getOption('imgLocat', $scriptProperties, 'assets/components/filedownloadr/img/filetype');
+$scriptProperties['imgTypeUrl'] = $scriptProperties['imgLocat'];
+
 /**
  * This allows for associations between file extensions and an image.
  * The information on these associations should be put into a chunk similar to
@@ -713,7 +715,7 @@ if (empty($scriptProperties['downloadByOther'])) {
                 return;
             }
         }
-    } 
+    }
     if (!empty($sanitizedGets['fdlfile'])) {
         $checkHash = $fdl->checkHash($modx->context->key, $sanitizedGets['fdlfile']);
         if (!$checkHash) {

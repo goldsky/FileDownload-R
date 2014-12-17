@@ -104,7 +104,8 @@ class FileDownload {
             'imgTypeUrl' => $assetsUrl . 'img/filetypes/',
             'imgLocat' => $assetsUrl . 'img/filetypes/',
             'assetsUrl' => $assetsUrl,
-            'encoding' => 'utf-8'
+            'encoding' => 'utf-8',
+            'imgTypes' => 'fdimages'
                 ), $config);
 
         $this->modx->addPackage('filedownload', $this->config['modelPath']);
