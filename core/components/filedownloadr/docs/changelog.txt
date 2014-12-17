@@ -2,6 +2,8 @@ Changelog for FileDownload.
 
 FileDownload-R 1.1.9-pl (December 18, 2014)
 ============================================
++ remove unused JS files
++ remove filetypes_old images
 + fix imageTypes
 + change _error and _output types in main class
 + [#39] Fixed to allow files to download within folders with Revo 2.3.2

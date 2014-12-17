@@ -303,11 +303,6 @@ if ($scriptProperties['fileCss'] !== 'disabled') {
 }
 
 if ($scriptProperties['ajaxMode'] && !empty($scriptProperties['ajaxControllerPage'])) {
-    // require dojo
-    if (!file_exists(realpath(MODX_BASE_PATH . 'assets/components/filedownloadr/js/dojo/dojo.js'))) {
-        return 'dojo.js is required.';
-    }
-    $modx->regClientStartupScript($fdl->configs['jsUrl'] . 'dojo/dojo.js');
     if ($scriptProperties['fileJs'] !== 'disabled') {
         $modx->regClientStartupScript($fdl->replacePropPhs($scriptProperties['fileJs']));
     }

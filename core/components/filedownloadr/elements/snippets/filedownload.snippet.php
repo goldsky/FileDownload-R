@@ -568,12 +568,11 @@ $scriptProperties['ajaxControllerPage'] = $modx->getOption('ajaxControllerPage',
 $scriptProperties['ajaxContainerId'] = $modx->getOption('ajaxContainerId', $scriptProperties, 'file-download');
 /**
  * FileDownload's Javascript file for the page header
- * @default: assets/components/filedownloadr/js/fd.js
+ * @default: empty
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['fileJs'] = $modx->getOption('fileJs', $scriptProperties
-        , $modx->getOption('assets_url') . 'components/filedownloadr/js/fd.js');
+$scriptProperties['fileJs'] = $modx->getOption('fileJs', $scriptProperties);
 /**
  * FileDownload's Cascading Style Sheet file for the page header
  * @default: assets/components/filedownloadr/css/fd.css
@@ -662,11 +661,6 @@ if ($scriptProperties['fileCss'] !== 'disabled') {
 }
 
 if ($scriptProperties['ajaxMode'] && !empty($scriptProperties['ajaxControllerPage'])) {
-    // require dojo
-    if (!file_exists(realpath(MODX_BASE_PATH . 'assets/components/filedownloadr/js/dojo/dojo.js'))) {
-        return 'dojo.js is required.';
-    }
-    $modx->regClientStartupScript($fdl->configs['jsUrl'] . 'dojo/dojo.js');
     if ($scriptProperties['fileJs'] !== 'disabled') {
         $modx->regClientStartupScript($fdl->replacePropPhs($scriptProperties['fileJs']));
     }
