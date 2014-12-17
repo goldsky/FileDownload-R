@@ -108,7 +108,7 @@ class FileDownload {
             'imgTypes' => 'fdimages'
                 ), $config);
 
-        $tablePrefix = $this->modx->getOption('exerplan.table_prefix', null, $this->modx->config[modX::OPT_TABLE_PREFIX] . 'fd_');
+        $tablePrefix = $this->modx->getOption('filedownload.table_prefix', null, $this->modx->config[modX::OPT_TABLE_PREFIX] . 'fd_');
         $this->modx->addPackage('filedownload', $this->config['modelPath'], $tablePrefix);
 
         if (!$this->modx->lexicon) {

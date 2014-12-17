@@ -30,11 +30,13 @@ if ($modx = & $object->xpdo) {
         case xPDOTransport::ACTION_INSTALL:
             $modelPath = $modx->getOption('core_path') . 'components/filedownloadr/models/';
             $modelPath = realpath($modelPath) . DIRECTORY_SEPARATOR;
-            $modx->addPackage('filedownload', $modelPath);
-            $manager = $modx->getManager();
-            if (!$manager->createObjectContainer('fdCount')) {
-                $modx->log(modX::LOG_LEVEL_ERROR, '[FileDownload] table was unable to be created');
-                return false;
+            $tablePrefix = $modx->getOption('filedownload.table_prefix', null, $this->modx->config[modX::OPT_TABLE_PREFIX] . 'fd_');
+            if ($modx->addPackage('filedownload', $modelPath, $tablePrefix)) {
+                $manager = $modx->getManager();
+                if (!$manager->createObjectContainer('fdCount')) {
+                    $modx->log(modX::LOG_LEVEL_ERROR, '[FileDownload] table was unable to be created');
+                    return false;
+                }
             }
             break;
         case xPDOTransport::ACTION_UPGRADE:
