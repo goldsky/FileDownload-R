@@ -33,8 +33,18 @@ set_time_limit(0);
 
 define('PKG_NAME', 'FileDownloadR');
 define('PKG_NAME_LOWER', 'filedownloadr'); // work around the extra's namespace
-define('PKG_VERSION', '1.1.8');
-define('PKG_RELEASE', 'pl');
+
+$fdl = $modx->getService('fdl'
+        , 'FileDownload'
+        , $modx->getOption('core_path') . 'components/filedownloadr/models/filedownload/'
+);
+
+if (!($fdl instanceof FileDownload)) {
+    return 'instanceof error.';
+}
+
+define('PKG_VERSION', FileDownload::VERSION);
+define('PKG_RELEASE', FileDownload::RELEASE);
 
 /* override with your own defines here (see build.config.sample.php) */
 require_once dirname(__FILE__) . '/build.config.php';

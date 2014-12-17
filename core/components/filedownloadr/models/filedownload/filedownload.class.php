@@ -12,6 +12,9 @@
  */
 class FileDownload {
 
+    const VERSION = '1.1.9';
+    const RELEASE = 'pl';
+
     /**
      * modX object
      * @var object
@@ -65,7 +68,7 @@ class FileDownload {
      * @var array
      */
     private $_chunks = array();
-    
+
     /**
      * constructor
      * @param   modX    $modx
@@ -89,6 +92,7 @@ class FileDownload {
             'fileRows' => ''
         );
         $this->config = array_merge(array(
+            'version' => self::VERSION . '-' . self::RELEASE,
             'corePath' => $corePath,
             'basePath' => $basePath,
             'modelPath' => $basePath . 'models/',
