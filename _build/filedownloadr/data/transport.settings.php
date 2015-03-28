@@ -22,13 +22,13 @@
  *
  * FileDownload build script
  *
- * @package filedownload
+ * @package filedownloadr
  * @subpackage build
  */
 $settings['filedownloadr.core_path'] = $modx->newObject('modSystemSetting');
 $settings['filedownloadr.core_path']->fromArray(array(
-    'key' => 'filedownload.core_path',
-    'value' => '{core_path}components/filedownload/',
+    'key' => 'filedownloadr.core_path',
+    'value' => '{core_path}components/filedownloadr/',
     'xtype' => 'textfield',
     'namespace' => 'filedownloadr',
     'area' => 'URL',
@@ -36,8 +36,8 @@ $settings['filedownloadr.core_path']->fromArray(array(
 
 $settings['filedownloadr.assets_url'] = $modx->newObject('modSystemSetting');
 $settings['filedownloadr.assets_url']->fromArray(array(
-    'key' => 'filedownload.assets_url',
-    'value' => '{assets_url}components/filedownload/',
+    'key' => 'filedownloadr.assets_url',
+    'value' => '{assets_url}components/filedownloadr/',
     'xtype' => 'textfield',
     'namespace' => 'filedownloadr',
     'area' => 'URL',
@@ -45,11 +45,29 @@ $settings['filedownloadr.assets_url']->fromArray(array(
 
 $settings['filedownloadr.exclude_scan'] = $modx->newObject('modSystemSetting');
 $settings['filedownloadr.exclude_scan']->fromArray(array(
-    'key' => 'filedownload.exclude_scan',
+    'key' => 'filedownloadr.exclude_scan',
     'value' => '.,..,Thumbs.db,.htaccess,.htpasswd,.ftpquota,.DS_Store',
     'xtype' => 'textfield',
     'namespace' => 'filedownloadr',
     'area' => 'file',
+        ), '', true, true);
+
+$settings['filedownloadr.use_geolocation'] = $modx->newObject('modSystemSetting');
+$settings['filedownloadr.use_geolocation']->fromArray(array(
+    'key' => 'filedownloadr.use_geolocation',
+    'value' => 0,
+    'xtype' => 'combo-boolean',
+    'namespace' => 'filedownloadr',
+    'area' => 'Geolocation',
+        ), '', true, true);
+
+$settings['filedownloadr.ipinfodb_api_key'] = $modx->newObject('modSystemSetting');
+$settings['filedownloadr.ipinfodb_api_key']->fromArray(array(
+    'key' => 'filedownloadr.ipinfodb_api_key',
+    'value' => '',
+    'xtype' => 'textfield',
+    'namespace' => 'filedownloadr',
+    'area' => 'Geolocation',
         ), '', true, true);
 
 return $settings;

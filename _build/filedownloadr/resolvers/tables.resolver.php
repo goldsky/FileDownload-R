@@ -22,16 +22,16 @@
  *
  * Resolve creating db tables
  *
- * @package filedownload
+ * @package filedownloadr
  * @subpackage build
  */
 if ($modx = & $object->xpdo) {
     switch ($options[xPDOTransport::PACKAGE_ACTION]) {
         case xPDOTransport::ACTION_INSTALL:
-            $modelPath = $modx->getOption('core_path') . 'components/filedownloadr/models/';
+            $modelPath = $modx->getOption('core_path') . 'components/filedownloadr/model/';
             $modelPath = realpath($modelPath) . DIRECTORY_SEPARATOR;
-            $tablePrefix = $modx->getOption('filedownload.table_prefix', null, $modx->config[modX::OPT_TABLE_PREFIX] . 'fd_');
-            if ($modx->addPackage('filedownload', $modelPath, $tablePrefix)) {
+            $tablePrefix = $modx->getOption('filedownloadr.table_prefix', null, $modx->config[modX::OPT_TABLE_PREFIX] . 'fd_');
+            if ($modx->addPackage('filedownloadr', $modelPath, $tablePrefix)) {
                 $manager = $modx->getManager();
                 if (!$manager->createObjectContainer('fdCount')) {
                     $modx->log(modX::LOG_LEVEL_ERROR, '[FileDownload] table was unable to be created');

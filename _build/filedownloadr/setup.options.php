@@ -22,7 +22,7 @@
  *
  * Build the setup options form.
  *
- * @package filedownload
+ * @package filedownloadr
  * @subpackage build
  */
 /* set some default values */

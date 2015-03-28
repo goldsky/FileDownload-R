@@ -22,7 +22,7 @@
  *
  * Define the MODX path constants necessary for installation
  *
- * @package filedownload
+ * @package filedownloadr
  * @subpackage build
  */
 define('MODX_BASE_PATH', dirname(dirname(__FILE__)) . '/');

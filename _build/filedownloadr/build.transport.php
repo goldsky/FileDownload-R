@@ -22,7 +22,7 @@
  *
  * FileDownload build script
  *
- * @package filedownload
+ * @package filedownloadr
  * @subpackage build
  */
 $mtime = microtime();
@@ -64,7 +64,7 @@ $modx->setLogTarget(XPDO_CLI_MODE ? 'ECHO' : 'HTML');
 
 $fdl = $modx->getService('fdl'
         , 'FileDownload'
-        , $modx->getOption('core_path') . 'components/filedownloadr/models/filedownload/'
+        , $modx->getOption('core_path') . 'components/filedownloadr/model/filedownloadr/'
 );
 
 if (!($fdl instanceof FileDownload)) {

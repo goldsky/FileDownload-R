@@ -22,7 +22,7 @@
  *
  * Define the MODX path constants necessary for installation
  *
- * @package filedownload
+ * @package filedownloadr
  * @subpackage build schema
  */
 require_once dirname(__FILE__) . '/build.config.php';
@@ -37,8 +37,8 @@ $modx->setLogTarget('ECHO');
 
 $root = dirname(dirname(__FILE__)) . '/';
 $sources = array(
-    'model' => $root . 'core/components/filedownloadr/models/',
-    'schema_file' => $root . 'core/components/filedownloadr/models/schema/filedownload.mysql.schema.xml'
+    'model' => $root . 'core/components/filedownloadr/model/',
+    'schema_file' => $root . 'core/components/filedownloadr/model/schema/filedownloadr.mysql.schema.xml'
 );
 $manager = $modx->getManager();
 $generator = $manager->getGenerator();

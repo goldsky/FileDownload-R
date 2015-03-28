@@ -22,7 +22,7 @@
  *
  * FileDownload build script
  *
- * @package filedownload
+ * @package filedownloadr
  * @subpackage build
  */
 if (!function_exists("fixJson")) {
