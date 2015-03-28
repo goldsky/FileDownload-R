@@ -1212,6 +1212,7 @@ class FileDownloadR {
      */
     private function _directLinkFileDownload($filePath) {
         $link = array();
+        $link['url'] = '';
         if ($this->config['noDownload']) {
             $link['url'] = $filePath;
         } else {
@@ -1221,11 +1222,17 @@ class FileDownloadR {
                 return false;
             }
             // switching from absolute path to url is nuts
-            $fileUrl = str_ireplace(MODX_BASE_PATH, MODX_SITE_URL, $filePath);
-            $fileUrl = str_replace(DIRECTORY_SEPARATOR, '/', $fileUrl);
-            $parseUrl = parse_url($fileUrl);
-            $url = ltrim($parseUrl['path'], '/' . MODX_HTTP_HOST);
-            $link['url'] = MODX_URL_SCHEME . MODX_HTTP_HOST . '/' . $url;
+            if (empty($this->mediaSource)) {
+                $fileUrl = str_ireplace(MODX_BASE_PATH, MODX_SITE_URL, $filePath);
+                $fileUrl = str_replace(DIRECTORY_SEPARATOR, '/', $fileUrl);
+                $parseUrl = parse_url($fileUrl);
+                $url = ltrim($parseUrl['path'], '/' . MODX_HTTP_HOST);
+                $link['url'] = MODX_URL_SCHEME . MODX_HTTP_HOST . '/' . $url;
+            } else {
+                if (method_exists($this->mediaSource, 'getObjectUrl')) {
+                    $link['url'] = $this->mediaSource->getObjectUrl($filePath);
+                }
+            }
         }
         $link['hash'] = '';
         return $link;
@@ -1407,37 +1414,7 @@ class FileDownloadR {
                 @unlink($temp);
             }
             if ($this->config['countDownloads']) {
-                // save the new count
-                $fdDownload = $this->modx->newObject('fdDownloads');
-                $fdDownload->set('path_id', $fdlPath->getPrimaryKey());
-                $fdDownload->set('referer', $_SERVER['HTTP_REFERER']);
-                $fdDownload->set('user', $this->modx->user->get('id'));
-                $fdDownload->set('timestamp', time());
-                if (!empty($this->config['useGeolocation']) && !empty($this->config['geoApiKey'])) {
-                    require_once $this->config['modelPath'] . 'ipinfodb/ipInfo.inc.php';
-                    if (class_exists('ipInfo')) {
-                        $ipInfo = new ipInfo($this->config['geoApiKey'], 'json');
-                        $userIP = $ipInfo->getIPAddress();
-                        $location = $ipInfo->getCity($userIP);
-                        if (!empty($location)) {
-                            $location = json_decode($location, true);
-                            $fdDownload->set('ip', $location['ipAddress']);
-                            $fdDownload->set('country', $location['countryCode']);
-                            $fdDownload->set('region', $location['regionName']);
-                            $fdDownload->set('city', $location['cityName']);
-                            $fdDownload->set('zip', $location['zipCode']);
-                            $fdDownload->set('geolocation', json_encode(array(
-                                'latitude' => $location['latitude'],
-                                'longitude' => $location['longitude'],
-                            )));
-                        }
-                    }
-                }
-                if ($fdDownload->save() === false) {
-                    $msg = $this->modx->lexicon($this->config['prefix'] . 'err_save_counter');
-                    $this->setError($msg);
-                    $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadR] ' . $msg);
-                }
+                $this->_setDownloadCount($hash);
             }
 
             // just run this away, it doesn't matter if the return is false
@@ -1453,6 +1430,53 @@ class FileDownloadR {
         }
 
         return false;
+    }
+
+    /**
+     * Add download counter
+     * @param   string  $hash   secret hash
+     * @return  boolean
+     */
+    private function _setDownloadCount($hash) {
+        if (!$this->config['countDownloads']) {
+            return false;
+        }
+        $fdlPath = $this->modx->getObject('fdPaths', array('hash' => $hash));
+        if (!$fdlPath) {
+            return false;
+        }
+        // save the new count
+        $fdDownload = $this->modx->newObject('fdDownloads');
+        $fdDownload->set('path_id', $fdlPath->getPrimaryKey());
+        $fdDownload->set('referer', $_SERVER['HTTP_REFERER']);
+        $fdDownload->set('user', $this->modx->user->get('id'));
+        $fdDownload->set('timestamp', time());
+        if (!empty($this->config['useGeolocation']) && !empty($this->config['geoApiKey'])) {
+            require_once $this->config['modelPath'] . 'ipinfodb/ipInfo.inc.php';
+            if (class_exists('ipInfo')) {
+                $ipInfo = new ipInfo($this->config['geoApiKey'], 'json');
+                $userIP = $ipInfo->getIPAddress();
+                $location = $ipInfo->getCity($userIP);
+                if (!empty($location)) {
+                    $location = json_decode($location, true);
+                    $fdDownload->set('ip', $location['ipAddress']);
+                    $fdDownload->set('country', $location['countryCode']);
+                    $fdDownload->set('region', $location['regionName']);
+                    $fdDownload->set('city', $location['cityName']);
+                    $fdDownload->set('zip', $location['zipCode']);
+                    $fdDownload->set('geolocation', json_encode(array(
+                        'latitude' => $location['latitude'],
+                        'longitude' => $location['longitude'],
+                    )));
+                }
+            }
+        }
+        if ($fdDownload->save() === false) {
+            $msg = $this->modx->lexicon($this->config['prefix'] . 'err_save_counter');
+            $this->setError($msg);
+            $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadR] ' . $msg);
+            return false;
+        }
     }
 
     /**
