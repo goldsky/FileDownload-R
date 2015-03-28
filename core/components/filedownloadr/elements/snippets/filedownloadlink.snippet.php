@@ -1,27 +1,27 @@
 <?php
 
 /**
- * The snippet for the FileDownload package for MODX Revolution
- * This is the conversion of the original FileDownload snippet for MODX
+ * The snippet for the FileDownloadR package for MODX Revolution
+ * This is the conversion of the original FileDownloadR snippet for MODX
  * Evolution, which was originally created by Kyle Jaebker, and converted by
  * goldsky.
  * The main parameters are taken from that version so any conversion can be done
  * smoothly.
  *
- * FileDownload is free software; you can redistribute it and/or modify it under the
+ * FileDownloadR is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
  * version.
  *
- * FileDownload is distributed in the hope that it will be useful, but WITHOUT ANY
+ * FileDownloadR is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * FileDownload; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
+ * FileDownloadR; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
  * Suite 330, Boston, MA 02111-1307 USA
  *
- * @author      goldsky <goldsky@fastmail.fm> <http://virtudraft.com>
+ * @author      goldsky <goldsky@virtudraft.com>
  * @package     filedownload
  * @subpackage  filedownloadlink snippet
  */
@@ -227,7 +227,7 @@ $scriptProperties['ajaxControllerPage'] = $modx->getOption('ajaxControllerPage',
  */
 $scriptProperties['ajaxContainerId'] = $modx->getOption('ajaxContainerId', $scriptProperties, 'file-download');
 /**
- * FileDownload's Javascript file for the page header
+ * FileDownloadR's Javascript file for the page header
  * @default: assets/components/filedownloadr/js/fd.js
  * @var string
  * @since ver 2.0.0
@@ -235,7 +235,7 @@ $scriptProperties['ajaxContainerId'] = $modx->getOption('ajaxContainerId', $scri
 $scriptProperties['fileJs'] = $modx->getOption('fileJs', $scriptProperties
         , $modx->getOption('assets_url') . 'components/filedownloadr/js/fd.js');
 /**
- * FileDownload's Cascading Style Sheet file for the page header
+ * FileDownloadR's Cascading Style Sheet file for the page header
  * @default: assets/components/filedownloadr/css/fd.css
  * @var string
  * @since ver 2.0.0
@@ -253,7 +253,7 @@ $scriptProperties['fileCss'] = $modx->getOption('fileCss', $scriptProperties
 
 /**
  * This text will be added to the file's hashed link to disguise the direct path
- * @default: FileDownload
+ * @default: FileDownloadR
  * @var string
  * @since ver 2.0.0
  */
@@ -281,16 +281,31 @@ $scriptProperties['plugins'] = $modx->getOption('plugins', $scriptProperties);
  */
 $scriptProperties['prefix'] = $modx->getOption('prefix', $scriptProperties, 'fd.');
 
+/**
+ * Use IP location or not
+ * @default: false
+ * @var boolean
+ */
+$scriptProperties['useGeolocation'] = (boolean) $modx->getOption('useGeolocation', $scriptProperties, false);
+
+/**
+ * API key of IPInfoDB.com
+ * @default: ''
+ * @var string
+ */
+$scriptProperties['geoApiKey'] = $modx->getOption('geoApiKey', $scriptProperties, $modx->getOption('filedownloadr.ipinfodb_api_key', $scriptProperties, ''));
+
 array_walk($scriptProperties, create_function('&$val', 'if (!is_array($val)) $val = trim($val);'));
 
-$fdl = $modx->getService('fdl'
-        , 'FileDownload'
-        , $modx->getOption('core_path') . 'components/filedownloadr/models/filedownload/'
+$fdl = $modx->getService('filedownloadr'
+        , 'FileDownloadR'
+        , $modx->getOption('core_path') . 'components/filedownloadr/model/filedownloadr/'
         , $scriptProperties
 );
 
-if (!($fdl instanceof FileDownload))
+if (!($fdl instanceof FileDownloadR)) {
     return 'instanceof error.';
+}
 
 $fdl->setConfigs($scriptProperties);
 

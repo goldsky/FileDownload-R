@@ -4,10 +4,10 @@
  * avoid FATAL ERROR
  */
 if (!($modx instanceof modX) ||
-        !($fileDownload instanceof FileDownload) ||
+        !($fileDownload instanceof FileDownloadR) ||
         !($plugin instanceof FileDownloadPlugin)
 ) {
-    return FALSE;
+    return false;
 }
 
 //$props = $plugin->getProperties();
@@ -24,7 +24,7 @@ switch ($e) {
             $errMsg = '[FileDownloadPlugin FormSave]Unable to load FormIt or FormSave';
             $modx->setPlaceholder($fileDownload->getConfig('prefix') . 'error_message', $errMsg);
             $modx->log(modX::LOG_LEVEL_ERROR, __LINE__ . ': ' . $errMsg);
-            return FALSE;
+            return false;
         }
         break;
     case 'AfterFileDownload':
@@ -40,15 +40,15 @@ switch ($e) {
             'fsFormTopic' => 'downloader',
             'fsFormFields' => 'ctx,filePath',
                 ));
-        if ($runFormit === FALSE) {
+        if ($runFormit === false) {
             $errMsg = '[FileDownloadPlugin FormSave] unabled to save the downloader into FormSave';
             $modx->setPlaceholder($fileDownload->getConfig('prefix') . 'error_message', $errMsg);
             $modx->log(modX::LOG_LEVEL_ERROR, __LINE__ . ': ' . $errMsg);
-            return FALSE;
+            return false;
         }
         break;
     default:
         break;
 }
 
-return TRUE;
+return true;

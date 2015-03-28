@@ -13,7 +13,7 @@ $events = array(
         ),
         'returnType' => array(
             NULL,
-            FALSE,
+            false,
             'continue'
         )
     ),
@@ -24,7 +24,7 @@ $events = array(
         ),
         'returnType' => array(
             NULL,
-            FALSE,
+            false,
             'continue'
         )
     ),
@@ -37,7 +37,7 @@ $events = array(
         ),
         'returnType' => array(
             NULL,
-            FALSE
+            false
         )
     ),
     'AfterFileDownload' => array(

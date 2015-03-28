@@ -1,14 +1,14 @@
 <?php
-$xpdo_meta_map['fdCount']= array (
-  'package' => 'filedownload',
+$xpdo_meta_map['fdPaths']= array (
+  'package' => 'filedownloadr',
   'version' => '1.1',
-  'table' => 'count',
+  'table' => 'paths',
   'extends' => 'xPDOSimpleObject',
   'fields' => 
   array (
     'ctx' => 'web',
+    'media_source_id' => 0,
     'filename' => '',
-    'count' => 0,
     'hash' => '',
   ),
   'fieldMeta' => 
@@ -21,6 +21,15 @@ $xpdo_meta_map['fdCount']= array (
       'null' => true,
       'default' => 'web',
     ),
+    'media_source_id' => 
+    array (
+      'dbtype' => 'int',
+      'precision' => '10',
+      'attributes' => 'unsigned',
+      'phptype' => 'integer',
+      'null' => false,
+      'default' => 0,
+    ),
     'filename' => 
     array (
       'dbtype' => 'varchar',
@@ -29,15 +38,6 @@ $xpdo_meta_map['fdCount']= array (
       'null' => true,
       'default' => '',
     ),
-    'count' => 
-    array (
-      'dbtype' => 'int',
-      'precision' => '10',
-      'attributes' => 'unsigned',
-      'phptype' => 'integer',
-      'null' => true,
-      'default' => 0,
-    ),
     'hash' => 
     array (
       'dbtype' => 'varchar',
@@ -45,6 +45,17 @@ $xpdo_meta_map['fdCount']= array (
       'phptype' => 'string',
       'null' => true,
       'default' => '',
+    ),
+  ),
+  'composites' => 
+  array (
+    'Downloads' => 
+    array (
+      'class' => 'fdDownloads',
+      'local' => 'id',
+      'foreign' => 'path_id',
+      'cardinality' => 'many',
+      'owner' => 'local',
     ),
   ),
 );

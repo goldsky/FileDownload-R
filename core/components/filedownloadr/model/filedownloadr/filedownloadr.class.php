@@ -7,13 +7,13 @@
  * The main parameters are taken from that version so any conversion can be done
  * smoothly.
  *
- * @author goldsky <goldsky@fastmail.fm>
+ * @author goldsky <goldsky@virtudraft.com>
  * @package main class
  */
-class FileDownload {
+class FileDownloadR {
 
-    const VERSION = '1.1.9';
-    const RELEASE = 'pl';
+    const VERSION = '2.0.0';
+    const RELEASE = 'beta1';
 
     /**
      * modX object
@@ -69,6 +69,14 @@ class FileDownload {
      */
     private $_chunks = array();
 
+    public $mediaSource;
+
+    /**
+     * Directory Separator
+     * @var string
+     */
+    public $ds;
+
     /**
      * constructor
      * @param   modX    $modx
@@ -76,11 +84,6 @@ class FileDownload {
      */
     public function __construct(modX $modx, $config = array()) {
         $this->modx = &$modx;
-
-        $config['getDir'] = !empty($config['getDir']) ? $this->_checkPath($config['getDir']) : '';
-        $config['origDir'] = !empty($config['getDir']) ? $config['getDir'] : ''; // getDir will be overridden by setDirProp()
-        $config['getFile'] = !empty($config['getFile']) ? $this->_checkPath($config['getFile']) : '';
-        $config = $this->replacePropPhs($config);
 
         $corePath = $this->modx->getOption('core_path');
         $basePath = $corePath . 'components/filedownloadr/';
@@ -95,7 +98,7 @@ class FileDownload {
             'version' => self::VERSION . '-' . self::RELEASE,
             'corePath' => $corePath,
             'basePath' => $basePath,
-            'modelPath' => $basePath . 'models/',
+            'modelPath' => $basePath . 'model/',
             'processorsPath' => $basePath . 'processors/',
             'controllersPath' => $basePath . 'controllers/',
             'chunksPath' => $basePath . 'elements/chunks/',
@@ -108,8 +111,8 @@ class FileDownload {
             'imgTypes' => 'fdimages'
                 ), $config);
 
-        $tablePrefix = $this->modx->getOption('filedownload.table_prefix', null, $this->modx->config[modX::OPT_TABLE_PREFIX] . 'fd_');
-        $this->modx->addPackage('filedownload', $this->config['modelPath'], $tablePrefix);
+        $tablePrefix = $this->modx->getOption('filedownloadr.table_prefix', null, $this->modx->config[modX::OPT_TABLE_PREFIX] . 'fd_');
+        $this->modx->addPackage('filedownloadr', $this->config['modelPath'], $tablePrefix);
 
         if (!$this->modx->lexicon) {
             $this->modx->getService('lexicon', 'modLexicon');
@@ -118,19 +121,39 @@ class FileDownload {
 
         $this->_imgType = $this->_imgTypeProp();
         if (empty($this->_imgType)) {
-            $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownload] could not load image types.');
+            $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadR] could not load image types.');
             return false;
         }
-        if (!empty($this->config['encoding']))
+        if (!empty($this->config['encoding'])) {
             mb_internal_encoding($this->config['encoding']);
+        }
 
         if (!empty($this->config['plugins'])) {
-            if (!$this->modx->loadClass('filedownload.FileDownloadPlugin', $this->config['modelPath'], true, true)) {
-                $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownload] could not load plugin class.');
+            if (!$this->modx->loadClass('filedownloadr.FileDownloadPlugin', $this->config['modelPath'], true, true)) {
+                $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadR] could not load plugin class.');
                 return false;
             }
             $this->plugins = new FileDownloadPlugin($this);
         }
+
+        if (!empty($this->config['mediaSourceId'])) {
+            $this->mediaSource = $this->modx->getObject('sources.modMediaSource', array('id' => $this->config['mediaSourceId']));
+            if ($this->mediaSource) {
+                $this->mediaSource->initialize();
+            }
+        }
+
+        if (empty($this->mediaSource)) {
+            $this->ds = DIRECTORY_SEPARATOR;
+        } else {
+            $this->ds = '/';
+        }
+
+        $this->config['getDir'] = !empty($this->config['getDir']) ? $this->_checkPath($this->config['getDir']) : '';
+        $this->config['origDir'] = !empty($this->config['origDir']) ? $this->trimArray(@explode(',', $this->config['origDir'])) : '';
+        $this->config['getFile'] = !empty($this->config['getFile']) ? $this->_checkPath($this->config['getFile']) : '';
+        $this->config = $this->replacePropPhs($this->config);
+
     }
 
     /**
@@ -145,7 +168,7 @@ class FileDownload {
             'fileRows' => ''
         );
         $config['getDir'] = !empty($config['getDir']) ? $this->_checkPath($config['getDir']) : '';
-        $config['origDir'] = !empty($config['getDir']) ? $config['getDir'] : ''; // getDir will be overridden by setDirProp()
+        $config['origDir'] = !empty($config['origDir']) ? $this->trimArray(@explode(',', $this->config['origDir'])) : '';
         $config['getFile'] = !empty($config['getFile']) ? $this->_checkPath($config['getFile']) : '';
 
         $config = $this->replacePropPhs($config);
@@ -180,6 +203,7 @@ class FileDownload {
 
     /**
      * Get string error for boolean returned methods
+     * @param   string  $delimiter  delimiter of the imploded output (default: "\n")
      * @return  string  output
      */
     public function getError($delimiter = "\n") {
@@ -199,6 +223,7 @@ class FileDownload {
 
     /**
      * Get string output for boolean returned methods
+     * @param   string  $delimiter  delimiter of the imploded output (default: "\n")
      * @return  string  output
      */
     public function getOutput($delimiter = "\n") {
@@ -223,17 +248,21 @@ class FileDownload {
      * Set internal placeholders
      * @param   array   $placeholders   placeholders in an associative array
      * @param   string  $prefix         add prefix if it's required
+     * @param   boolean $merge          define whether the output will be merge to global properties or not
+     * @param   string  $delimiter      define placeholder's delimiter
      * @return  mixed   boolean|array of placeholders
      */
-    public function setPlaceholders($placeholders, $prefix = '') {
+    public function setPlaceholders($placeholders, $prefix = '', $merge = true, $delimiter = '.') {
         if (empty($placeholders)) {
-            return FALSE;
+            return false;
         }
         $prefix = !empty($prefix) ? $prefix : (isset($this->config['phsPrefix']) ? $this->config['phsPrefix'] : '');
         $placeholders = $this->trimArray($placeholders);
-        $placeholders = $this->implodePhs($placeholders, rtrim($prefix, '.'));
+        $placeholders = $this->implodePhs($placeholders, rtrim($prefix, $delimiter));
         // enclosed private scope
-        $this->_placeholders = array_merge($this->_placeholders, $placeholders);
+        if ($merge) {
+            $this->_placeholders = array_merge($this->_placeholders, $placeholders);
+        }
         // return only for this scope
         return $placeholders;
     }
@@ -505,17 +534,21 @@ class FileDownload {
                     continue;
                 }
                 $path = $this->trimString($path);
-                $realpath = realpath($path);
-                if (empty($realpath)) {
-                    $realpath = realpath(MODX_BASE_PATH . $path);
-                    if (empty($realpath)) {
-                        continue;
+                if (empty($this->mediaSource)) {
+                    $fullPath = realpath($path);
+                    if (empty($fullPath)) {
+                        $fullPath = realpath(MODX_BASE_PATH . $path);
+                        if (empty($fullPath)) {
+                            continue;
+                        }
                     }
+                } else {
+                    $fullPath = $path;
                 }
-                if (in_array($realpath, $forbiddenFolders)) {
+                if (in_array($fullPath, $forbiddenFolders)) {
                     continue;
                 }
-                $cleanPaths[] = $realpath;
+                $cleanPaths[$path] = $fullPath;
             }
         }
 
@@ -607,21 +640,23 @@ class FileDownload {
      */
     public function getContents() {
         $plugins = $this->getPlugins('OnLoad', $this->config);
-        if ($plugins === FALSE) { // strict detection
-            return FALSE;
+        if ($plugins === false) { // strict detection
+            return false;
         }
 
         $dirContents = array();
         if (!empty($this->config['getDir'])) {
             $dirContents = $this->_getDirContents($this->config['getDir']);
-            if (!$dirContents)
+            if (!$dirContents) {
                 $dirContents = array();
+            }
         }
         $fileContents = array();
         if (!empty($this->config['getFile'])) {
             $fileContents = $this->_getFileContents($this->config['getFile']);
-            if (!$fileContents)
+            if (!$fileContents) {
                 $fileContents = array();
+            }
         }
         $mergedContents = array();
         $mergedContents = array_merge($dirContents, $fileContents);
@@ -683,47 +718,60 @@ class FileDownload {
     /**
      * Check the called file contents with the registered database.
      * If it's not listed, auto save
-     * @param   array   $file   Realpath filename / dirname
+     * @param   array   $file       Realpath filename / dirname
+     * @param   boolean $autoCreate Auto create database if it doesn't exist
      * @return  void
      */
-    private function _checkDb(array $file) {
+    private function _checkDb(array $file = array(), $autoCreate = true) {
         if (empty($file)) {
-            return FALSE;
+            return false;
         }
 
-        $realPath = realpath($file['filename']);
-        if (empty($realPath)) {
-            return FALSE;
+        if (empty($this->mediaSource)) {
+            $realPath = realpath($file['filename']);
+            if (empty($realPath)) {
+                return false;
+            }
+        } else {
+            if (method_exists($this->mediaSource, 'getBasePath')) {
+                $search = $this->mediaSource->getBasePath($file['filename']);
+            } elseif (method_exists($this->mediaSource, 'getBaseUrl')) {
+                $search = $this->mediaSource->getBaseUrl();
+            }
+            if (!empty($search)) {
+                $file['filename'] = str_replace($search, '', $file['filename']);
+            }
         }
 
-        $fdlObj = $this->modx->getObject('fdCount', array(
+        $filename = utf8_encode($file['filename']);
+        $fdlPath = $this->modx->getObject('fdPaths', array(
             'ctx' => $file['ctx'],
-            'filename' => utf8_encode($file['filename'])
+            'media_source_id' => $this->config['mediaSourceId'],
+            'filename' => $filename
         ));
-        $checked = array();
-        if ($fdlObj === null) {
-            $fdlObj = $this->modx->newObject('fdCount');
-            $fdlObj->fromArray(array(
+        if (!$fdlPath) {
+            if (!$autoCreate) {
+                return false;
+            }
+            $fdlPath = $this->modx->newObject('fdPaths');
+            $fdlPath->fromArray(array(
                 'ctx' => $file['ctx'],
-                'filename' => utf8_encode($file['filename']),
+                'media_source_id' => $this->config['mediaSourceId'],
+                'filename' => $filename,
                 'count' => 0,
                 'hash' => $this->_setHashedParam($file['ctx'], $file['filename'])
             ));
-            $fdlObj->save();
-            $checked['ctx'] = $fdlObj->get('ctx');
-            $checked['filename'] = $fdlObj->get('filename');
-            $checked['count'] = $fdlObj->get('count');
-            $checked['hash'] = $fdlObj->get('hash');
-            return $checked;
-        } else {
-            $checked['ctx'] = $fdlObj->get('ctx');
-            $checked['filename'] = $fdlObj->get('filename');
-            $checked['count'] = $fdlObj->get('count');
-            $checked['hash'] = $fdlObj->get('hash');
-            return $checked;
+            if ($fdlPath->save() === false) {
+                $msg = $this->modx->lexicon($this->config['prefix'] . 'err_save_counter');
+                $this->setError($msg);
+                $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadR] ' . $msg);
+                return false;
+            }
         }
+        $checked = $fdlPath->toArray();
+        $checked['count'] = (int) $this->modx->getCount('fdDownloads', array('path_id' => $fdlPath->getPrimaryKey()));
 
-        return FALSE;
+        return $checked;
     }
 
     /**
@@ -782,8 +830,8 @@ class FileDownload {
      * @return  string  converted text
      */
     private function _utfRin($callback, array $callbackParams = array()) {
-        include_once(dirname(dirname(dirname(__FILE__))) . '/includes/UTF8-2.1.1/UTF8.php');
-        include_once(dirname(dirname(dirname(__FILE__))) . '/includes/UTF8-2.1.1/ReflectionTypehint.php');
+        include_once($this->config['modelPath'] . 'UTF8-2.1.1/UTF8.php');
+        include_once($this->config['modelPath'] . 'UTF8-2.1.1/ReflectionTypehint.php');
 
         $utf = call_user_func_array(array('UTF8', $callback), $callbackParams);
         return $utf;
@@ -796,88 +844,161 @@ class FileDownload {
      */
     private function _getDirContents(array $paths = array()) {
         if (empty($paths)) {
-            return FALSE;
+            return false;
         }
 
         $contents = array();
         foreach ($paths as $rootPath) {
-            $rootRealPath = realpath($rootPath);
-            if (!is_dir($rootPath) || empty($rootRealPath)) {
-                // @todo: lexicon
-                $this->modx->log(
-                        modX::LOG_LEVEL_ERROR, '&getDir parameter expects a correct dir path. <b>"' . $rootPath . '"</b> is given.'
-                );
-                return FALSE;
+            if (empty($this->mediaSource)) {
+                $rootRealPath = realpath($rootPath);
+                if (!is_dir($rootPath) || empty($rootRealPath)) {
+                    // @todo: lexicon
+                    $this->modx->log(modX::LOG_LEVEL_ERROR, '&getDir parameter expects a correct dir path. <b>"' . $rootPath . '"</b> is given.');
+                    return false;
+                }
             }
 
             $plugins = $this->getPlugins('BeforeDirOpen', array(
                 'dirPath' => $rootPath,
             ));
 
-            if ($plugins === FALSE) { // strict detection
-                return FALSE;
+            if ($plugins === false) { // strict detection
+                return false;
             } elseif ($plugins === 'continue') {
                 continue;
             }
 
-            $scanDir = scandir($rootPath);
+            if (empty($this->mediaSource)) {
+                $scanDir = scandir($rootPath);
 
-            $excludes = $this->modx->getOption('filedownloadr.exclude_scan', $this->config, '.,..,Thumbs.db,.htaccess,.htpasswd,.ftpquota,.DS_Store');
-            $excludes = array_map('trim', @explode(',', $excludes));
-            foreach ($scanDir as $file) {
-                if (in_array($file, $excludes)) {
-                    continue;
+                $excludes = $this->modx->getOption('filedownloadr.exclude_scan', $this->config, '.,..,Thumbs.db,.htaccess,.htpasswd,.ftpquota,.DS_Store');
+                $excludes = array_map('trim', @explode(',', $excludes));
+                foreach ($scanDir as $file) {
+                    if (in_array($file, $excludes)) {
+                        continue;
+                    }
+
+                    $fullPath = $rootRealPath . $this->ds . $file;
+                    $fileType = @filetype($fullPath);
+
+                    if ($fileType == 'file') {
+                        $fileInfo = $this->_fileInformation($fullPath);
+                        if (!$fileInfo) {
+                            continue;
+                        }
+                        $contents[] = $fileInfo;
+                    } elseif ($this->config['browseDirectories']) {
+                        // a directory
+                        $cdb = array();
+                        $cdb['ctx'] = $this->modx->context->key;
+                        $cdb['filename'] = $fullPath . $this->ds;
+                        $cdb['hash'] = $this->_getHashedParam($cdb['ctx'], $cdb['filename']);
+
+                        $checkedDb = $this->_checkDb($cdb);
+                        if (!$checkedDb) {
+                            continue;
+                        }
+
+                        $notation = $this->_aliasName($file);
+                        $alias = $notation[1];
+
+                        $unixDate = filemtime($fullPath);
+                        $date = date($this->config['dateFormat'], $unixDate);
+                        $link = $this->_linkDirOpen($checkedDb['hash'], $checkedDb['ctx']);
+
+                        $imgType = $this->_imgType('dir');
+                        $dir = array(
+                            'ctx' => $checkedDb['ctx'],
+                            'fullPath' => utf8_encode($fullPath),
+                            'path' => utf8_encode($rootRealPath),
+                            'filename' => utf8_encode($file),
+                            'alias' => utf8_encode($alias),
+                            'type' => $fileType,
+                            'ext' => '',
+                            'size' => '',
+                            'sizeText' => '',
+                            'unixdate' => $unixDate,
+                            'date' => $date,
+                            'image' => $this->config['imgLocat'] . $imgType,
+                            'count' => (int) $this->modx->getCount('fdDownloads', array('path_id' => $checkedDb['id'])),
+                            'link' => $link['url'], // fallback
+                            'url' => $link['url'],
+                            'hash' => $checkedDb['hash']
+                        );
+
+                        $contents[] = $dir;
+                    }
                 }
+            } else {
+                $scanDir = $this->mediaSource->getContainerList($rootPath);
 
-                $fullPath = $rootRealPath . DIRECTORY_SEPARATOR . $file;
-                $fileType = @filetype($fullPath);
-
-                if ($fileType == 'file') {
-                    $fileInfo = $this->_fileInformation($fullPath);
-                    if (!$fileInfo) {
-                        continue;
-                    }
-                    $contents[] = $fileInfo;
-                } elseif ($this->config['browseDirectories']) {
-                    // a directory
-                    $cdb['ctx'] = $this->modx->context->key;
-                    $cdb['filename'] = $fullPath;
-                    $cdb['count'] = $this->_getDownloadCount($cdb['ctx'], $cdb['filename']);
-                    $cdb['hash'] = $this->_getHashedParam($cdb['ctx'], $cdb['filename']);
-
-                    $checkedDb = $this->_checkDb($cdb);
-                    if (!$checkedDb) {
+                $excludes = $this->modx->getOption('filedownloadr.exclude_scan', $this->config, '.,..,Thumbs.db,.htaccess,.htpasswd,.ftpquota,.DS_Store');
+                $excludes = array_map('trim', @explode(',', $excludes));
+                foreach ($scanDir as $file) {
+                    if (in_array(($file['text']), $excludes)) {
                         continue;
                     }
 
-                    $notation = $this->_aliasName($file);
-                    $alias = $notation[1];
+                    $fullPath = $file['id'];
 
-                    $unixDate = filemtime($fullPath);
-                    $date = date($this->config['dateFormat'], $unixDate);
-                    $link = $this->_linkDirOpen($checkedDb['hash'], $checkedDb['ctx']);
+                    if ($file['type'] == 'file') {
+                        $fileInfo = $this->_fileInformation($fullPath);
+                        if (!$fileInfo) {
+                            continue;
+                        }
 
-                    $imgType = $this->_imgType('dir');
-                    $dir = array(
-                        'ctx' => $checkedDb['ctx'],
-                        'fullPath' => utf8_encode($fullPath),
-                        'path' => utf8_encode($rootRealPath),
-                        'filename' => utf8_encode($file),
-                        'alias' => utf8_encode($alias),
-                        'type' => $fileType,
-                        'ext' => '',
-                        'size' => '',
-                        'sizeText' => '',
-                        'unixdate' => $unixDate,
-                        'date' => $date,
-                        'image' => $this->config['imgLocat'] . $imgType,
-                        'count' => $checkedDb['count'],
-                        'link' => $link['url'], // fallback
-                        'url' => $link['url'],
-                        'hash' => $checkedDb['hash']
-                    );
+                        $contents[] = $fileInfo;
+                    } elseif ($this->config['browseDirectories']) {
+                        // a directory
+                        $cdb = array();
+                        $cdb['ctx'] = $this->modx->context->key;
+                        $cdb['filename'] = $fullPath;
+                        $cdb['hash'] = $this->_getHashedParam($cdb['ctx'], $cdb['filename']);
 
-                    $contents[] = $dir;
+                        $checkedDb = $this->_checkDb($cdb);
+                        if (!$checkedDb) {
+                            continue;
+                        }
+
+                        $notation = $this->_aliasName($file['name']);
+                        $alias = $notation[1];
+
+                        if (method_exists($this->mediaSource, 'getBasePath')) {
+                            $rootRealPath = $this->mediaSource->getBasePath($rootPath) . $rootPath;
+                            $unixDate = filemtime(realpath($rootRealPath));
+                        } elseif (method_exists($this->mediaSource, 'getObjectUrl')) {
+                            $rootRealPath = $this->mediaSource->getObjectUrl($rootPath);
+                            $unixDate = filemtime($rootRealPath);
+                        } else {
+                            $rootRealPath = realpath($rootPath);
+                            $unixDate = filemtime($rootRealPath);
+                        }
+
+                        $date = date($this->config['dateFormat'], $unixDate);
+                        $link = $this->_linkDirOpen($checkedDb['hash'], $checkedDb['ctx']);
+
+                        $imgType = $this->_imgType('dir');
+                        $dir = array(
+                            'ctx' => $checkedDb['ctx'],
+                            'fullPath' => utf8_encode($fullPath),
+                            'path' => utf8_encode($rootRealPath),
+                            'filename' => utf8_encode(basename($fullPath)),
+                            'alias' => utf8_encode($alias),
+                            'type' => 'dir',
+                            'ext' => '',
+                            'size' => '',
+                            'sizeText' => '',
+                            'unixdate' => $unixDate,
+                            'date' => $date,
+                            'image' => $this->config['imgLocat'] . $imgType,
+                            'count' => (int) $this->modx->getCount('fdDownloads', array('path_id' => $checkedDb['id'])),
+                            'link' => $link['url'], // fallback
+                            'url' => $link['url'],
+                            'hash' => $checkedDb['hash']
+                        );
+
+                        $contents[] = $dir;
+                    }
                 }
             }
 
@@ -886,8 +1007,8 @@ class FileDownload {
                 'contents' => $contents,
             ));
 
-            if ($plugins === FALSE) { // strict detection
-                return FALSE;
+            if ($plugins === false) { // strict detection
+                return false;
             } elseif ($plugins === 'continue') {
                 continue;
             }
@@ -923,43 +1044,61 @@ class FileDownload {
         $notation = $this->_aliasName($file);
         $path = $notation[0];
         $alias = $notation[1];
-        $fileRealPath = realpath($path);
-        if (!is_file($fileRealPath) || !$fileRealPath) {
-            // @todo: lexicon
-            $this->modx->log(
-                    modX::LOG_LEVEL_ERROR, '&getFile parameter expects a correct file path. ' . $path . ' is given.'
-            );
-            return FALSE;
+
+        if (empty($this->mediaSource)) {
+            $fileRealPath = realpath($path);
+            if (!is_file($fileRealPath) || !$fileRealPath) {
+                // @todo: lexicon
+                $this->modx->log(modX::LOG_LEVEL_ERROR, '&getFile parameter expects a correct file path. ' . $path . ' is given.');
+                return false;
+            }
+            $baseName = basename($fileRealPath);
+            $size = filesize($fileRealPath);
+            $type = @filetype($fileRealPath);
+        } else {
+            if (method_exists($this->mediaSource, 'getBasePath')) {
+                $fileRealPath = $this->mediaSource->getBasePath($path) . $path;
+            } elseif (method_exists($this->mediaSource, 'getObjectUrl')) {
+                $fileRealPath = $this->mediaSource->getObjectUrl($path);
+            } else {
+                $fileRealPath = realpath($path);
+            }
+            $baseName = basename($fileRealPath);
+            if (method_exists($this->mediaSource,'getObjectFileSize')) {
+                $size = $this->mediaSource->getObjectFileSize($path);
+            } else {
+                $size = filesize(realpath($path));
+            }
+            $type = @filetype($fileRealPath);
         }
 
-        $baseName = basename($fileRealPath);
         $xBaseName = explode('.', $baseName);
         $tempExt = end($xBaseName);
         $ext = strtolower($tempExt);
-        $size = filesize($fileRealPath);
         $imgType = $this->_imgType($ext);
 
         if (!$this->_isExtShown($ext)) {
-            return FALSE;
+            return false;
         }
         if ($this->_isExtHidden($ext)) {
-            return FALSE;
+            return false;
         }
 
+        $cdb = array();
         $cdb['ctx'] = $this->modx->context->key;
         $cdb['filename'] = $fileRealPath;
-        $cdb['count'] = $this->_getDownloadCount($cdb['ctx'], $cdb['filename']);
         $cdb['hash'] = $this->_getHashedParam($cdb['ctx'], $cdb['filename']);
 
         $checkedDb = $this->_checkDb($cdb);
         if (!$checkedDb) {
-            return FALSE;
+            return false;
         }
 
         if ($this->config['directLink']) {
             $link = $this->_directLinkFileDownload(utf8_decode($checkedDb['filename']));
-            if (!$link)
-                return FALSE;
+            if (!$link) {
+                return false;
+            }
         } else {
             $link = $this->_linkFileDownload($checkedDb['filename'], $checkedDb['hash'], $checkedDb['ctx']);
         }
@@ -972,14 +1111,14 @@ class FileDownload {
             'path' => utf8_encode(dirname($fileRealPath)),
             'filename' => utf8_encode($baseName),
             'alias' => $alias,
-            'type' => filetype($fileRealPath),
+            'type' => $type,
             'ext' => $ext,
             'size' => $size,
             'sizeText' => $this->_fileSizeText($size),
             'unixdate' => $unixDate,
             'date' => $date,
             'image' => $this->config['imgLocat'] . $imgType,
-            'count' => $checkedDb['count'],
+            'count' => (int) $this->modx->getCount('fdDownloads', array('path_id' => $checkedDb['id'])),
             'link' => $link['url'], // fallback
             'url' => $link['url'],
             'hash' => $checkedDb['hash']
@@ -1009,7 +1148,7 @@ class FileDownload {
      * @return type
      */
     private function _imgType($ext) {
-        return isset($this->_imgType[$ext]) ? $this->_imgType[$ext] : (isset($this->_imgType['default']) ? $this->_imgType['default'] : FALSE);
+        return isset($this->_imgType[$ext]) ? $this->_imgType[$ext] : (isset($this->_imgType['default']) ? $this->_imgType['default'] : false);
     }
 
     /**
@@ -1018,7 +1157,7 @@ class FileDownload {
      */
     private function _imgTypeProp() {
         if (empty($this->config['imgTypes'])) {
-            return FALSE;
+            return false;
         }
         $fdImagesChunk = $this->parseTpl($this->config['imgTypes']);
         $fdImagesChunkX = @explode(',', $fdImagesChunk);
@@ -1043,12 +1182,23 @@ class FileDownload {
         if ($this->config['noDownload']) {
             $link['url'] = $filePath;
         } else {
-            $existingArgs = strstr($_SERVER['REQUEST_URI'], '?');
-            if (!empty($existingArgs)) {
-                $existingArgs = ltrim($existingArgs, '?') . '&';
+            $queries = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY);
+            $queries = @explode('&', $queries);
+            $existingArgs = array();
+            foreach ($queries as $query) {
+                $xquery = @explode('=', $query);
+                $existingArgs[$xquery[0]] = !empty($xquery[1]) ? $xquery[1] : '';
             }
-            $args = 'fdlfile=' . $hash;
-            $url = $this->modx->makeUrl($this->modx->resource->get('id'), $ctx, $existingArgs . $args);
+            $args = '';
+            if (!empty($existingArgs)) {
+                unset($existingArgs['id']);
+                foreach ($existingArgs as $k => $v) {
+                    $args .= $k . '=' . $v . '&';
+                }
+            }
+            $args .= 'fdlfile=' . $hash;
+            $args .= '&msid=' . $this->config['mediaSourceId'];
+            $url = $this->modx->makeUrl($this->modx->resource->get('id'), $ctx, $args);
             $link['url'] = $url;
         }
         $link['hash'] = $hash;
@@ -1068,7 +1218,7 @@ class FileDownload {
             // to use this method, the file should always be placed on the web root
             $corePath = str_replace('/', DIRECTORY_SEPARATOR, MODX_CORE_PATH);
             if (stristr($filePath, $corePath)) {
-                return FALSE;
+                return false;
             }
             // switching from absolute path to url is nuts
             $fileUrl = str_ireplace(MODX_BASE_PATH, MODX_SITE_URL, $filePath);
@@ -1089,14 +1239,29 @@ class FileDownload {
      */
     private function _linkDirOpen($hash, $ctx = 'web') {
         if (!$this->config['browseDirectories']) {
-            return FALSE;
+            return false;
         }
-        $link = array();
-        $args = 'fdldir=' . $hash;
+        $queries = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY);
+        $queries = @explode('&', $queries);
+        $existingArgs = array();
+        foreach ($queries as $query) {
+            $xquery = @explode('=', $query);
+            $existingArgs[$xquery[0]] = !empty($xquery[1]) ? $xquery[1] : '';
+        }
+        $args = '';
+        if (!empty($existingArgs)) {
+            unset($existingArgs['id']);
+            foreach ($existingArgs as $k => $v) {
+                $args .= $k . '=' . $v . '&';
+            }
+        }
+        $args .= 'fdldir=' . $hash;
         if (!empty($this->config['fdlid'])) {
             $args .= '&fdlid=' . $this->config['fdlid'];
+            $args .= '&msid=' . $this->config['mediaSourceId'];
         }
         $url = $this->modx->makeUrl($this->modx->resource->get('id'), $ctx, $args);
+        $link = array();
         $link['url'] = $url;
         $link['hash'] = $hash;
         return $link;
@@ -1107,37 +1272,25 @@ class FileDownload {
      * directory
      * @param   string  $hash       the hashed link
      * @param   bool    $selected   to patch multiple snippet call
-     * @return  bool    TRUE | FALSE
+     * @return  bool    true | false
      */
     public function setDirProp($hash, $selected = true) {
         if (empty($hash) || !$selected) {
-            return FALSE;
+            return false;
         }
-        $fdlObj = $this->modx->getObject('fdCount', array('hash' => $hash));
-        if (!$fdlObj) {
-            return FALSE;
+        $fdlPath = $this->modx->getObject('fdPaths', array('hash' => $hash));
+        if (!$fdlPath) {
+            return false;
         }
-
-        $ctx = $fdlObj->get('ctx');
-        $path = $fdlObj->get('filename');
-        $count = $fdlObj->get('count');
-
+        $ctx = $fdlPath->get('ctx');
         if ($this->modx->context->key !== $ctx) {
-            return FALSE;
+            return false;
         }
-
+        $path = $fdlPath->get('filename');
         $this->config['getDir'] = array($path);
         $this->config['getFile'] = array();
 
-        // save the new count
-        $newCount = $count + 1;
-        $fdlObj->set('count', $newCount);
-        if ($fdlObj->save() === false) {
-            // @todo setDirProp: lexicon string
-            return $this->modx->error->failure($this->modx->lexicon($this->config['prefix'] . 'err_save_counter'));
-        }
-
-        return TRUE;
+        return true;
     }
 
     /**
@@ -1147,34 +1300,64 @@ class FileDownload {
      */
     public function downloadFile($hash) {
         if (empty($hash)) {
-            return FALSE;
+            return false;
         }
-
-        $fdlObj = $this->modx->getObject('fdCount', array('hash' => $hash));
-        if (!$fdlObj) {
-            return FALSE;
+        $fdlPath = $this->modx->getObject('fdPaths', array('hash' => $hash));
+        if (!$fdlPath) {
+            return false;
         }
-
-        $ctx = $fdlObj->get('ctx');
-        $filePath = utf8_decode($fdlObj->get('filename'));
-        $count = $fdlObj->get('count');
-
+        $ctx = $fdlPath->get('ctx');
         if ($this->modx->context->key !== $ctx) {
-            return FALSE;
+            return false;
         }
-
+        $mediaSourceId = $fdlPath->get('media_source_id');
+        if (intval($this->config['mediaSourceId']) !== $mediaSourceId) {
+            return false;
+        }
+        $filePath = utf8_decode($fdlPath->get('filename'));
         $plugins = $this->getPlugins('BeforeFileDownload', array(
             'hash' => $hash,
             'ctx' => $ctx,
+            'media_source_id' => $mediaSourceId,
             'filePath' => $filePath,
-            'count' => $count,
+            'count' => (int) $this->modx->getCount('fdDownloads', array('path_id' => $fdlPath->get('id'))),
         ));
-
-        if ($plugins === FALSE) { // strict detection
-            return FALSE;
+        if ($plugins === false) { // strict detection
+            return false;
         }
-
-        if (file_exists($filePath)) {
+        $fileExists = false;
+        $filename = basename($filePath);
+        if (empty($this->mediaSource)) {
+            if (file_exists($filePath)) {
+                $fileExists = true;
+            }
+        } else {
+            if (method_exists($this->mediaSource, 'getBasePath')) {
+                if (file_exists($this->mediaSource->getBasePath($filePath) . $filePath)) {
+                    $fileExists = true;
+                }
+            } elseif (method_exists($this->mediaSource, 'getBaseUrl')) {
+                $this->mediaSource->getObjectUrl($filePath);
+                $content = @file_get_contents(urlencode($this->mediaSource->getObjectUrl($filePath)));
+                if (!empty($content)) {
+                    $pathParts = pathinfo($filename);
+                    $temp = tempnam(sys_get_temp_dir(), 'fdl_' . time() . '_' . $pathParts['filename'] . '_');
+                    $handle = fopen($temp, "r+b");
+                    fwrite($handle, $content);
+                    fseek($handle, 0);
+                    fclose($handle);
+                    $filePath = $temp;
+                    $fileExists = true;
+                } else {
+                    $msg = 'Unable to get the content from remote server';
+                    $this->setError($msg);
+                    $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadR] ' . $msg);
+                }
+            } else {
+                $fileExists = false;
+            }
+        }
+        if ($fileExists) {
             // required for IE
             if (ini_get('zlib.output_compression')) {
                 ini_set('zlib.output_compression', 'Off');
@@ -1193,7 +1376,7 @@ class FileDownload {
             header('Content-Description: File Transfer');
             header('Content-Type:'); //added to fix ZIP file corruption
             header('Content-Type: "application/force-download"');
-            header('Content-Disposition: attachment; filename="' . basename($filePath) . '"');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
             header('Content-Transfer-Encoding: binary');
             header('Content-Length: ' . (string) (filesize($filePath))); // provide file size
             header('Connection: close');
@@ -1220,29 +1403,56 @@ class FileDownload {
                 flush();
             }
             fclose($handle);
-
+            if (!empty($temp)) {
+                @unlink($temp);
+            }
             if ($this->config['countDownloads']) {
                 // save the new count
-                $newCount = $count + 1;
-                $fdlObj->set('count', $newCount);
-                if ($fdlObj->save() === false) {
-                    // @todo downloadFile: lexicon string
-                    return $this->modx->error->failure($this->modx->lexicon('filedownload.fdl_err_save'));
+                $fdDownload = $this->modx->newObject('fdDownloads');
+                $fdDownload->set('path_id', $fdlPath->getPrimaryKey());
+                $fdDownload->set('referer', $_SERVER['HTTP_REFERER']);
+                $fdDownload->set('user', $this->modx->user->get('id'));
+                $fdDownload->set('timestamp', time());
+                if (!empty($this->config['useGeolocation']) && !empty($this->config['geoApiKey'])) {
+                    require_once $this->config['modelPath'] . 'ipinfodb/ipInfo.inc.php';
+                    if (class_exists('ipInfo')) {
+                        $ipInfo = new ipInfo($this->config['geoApiKey'], 'json');
+                        $userIP = $ipInfo->getIPAddress();
+                        $location = $ipInfo->getCity($userIP);
+                        if (!empty($location)) {
+                            $location = json_decode($location, true);
+                            $fdDownload->set('ip', $location['ipAddress']);
+                            $fdDownload->set('country', $location['countryCode']);
+                            $fdDownload->set('region', $location['regionName']);
+                            $fdDownload->set('city', $location['cityName']);
+                            $fdDownload->set('zip', $location['zipCode']);
+                            $fdDownload->set('geolocation', json_encode(array(
+                                'latitude' => $location['latitude'],
+                                'longitude' => $location['longitude'],
+                            )));
+                        }
+                    }
+                }
+                if ($fdDownload->save() === false) {
+                    $msg = $this->modx->lexicon($this->config['prefix'] . 'err_save_counter');
+                    $this->setError($msg);
+                    $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadR] ' . $msg);
                 }
             }
 
-            // just run this away, it doesn't matter if the return is FALSE
+            // just run this away, it doesn't matter if the return is false
             $this->getPlugins('AfterFileDownload', array(
                 'hash' => $hash,
                 'ctx' => $ctx,
+                'media_source_id' => $mediaSourceId,
                 'filePath' => $filePath,
-                'count' => $newCount,
+                'count' => (int) $this->modx->getCount('fdDownloads', array('path_id' => $fdlPath->get('id'))),
             ));
 
             exit;
         }
 
-        return FALSE;
+        return false;
     }
 
     /**
@@ -1252,60 +1462,61 @@ class FileDownload {
      * @return type
      */
     private function _getDownloadCount($ctx, $filePath) {
-        $fdlObj = $this->modx->getObject('fdCount', array(
+        $fdlPath = $this->modx->getObject('fdPaths', array(
             'ctx' => $ctx,
             'filename' => $filePath
         ));
-        if (!$fdlObj)
-            return '';
+        if (!$fdlPath) {
+            return 0;
+        }
 
-        return $fdlObj->get('count');
+        return $fdlPath->get('count');
     }
 
     /**
      * Check whether the file with the specified extension is hidden from the list
      * @param   string  $ext    file's extension
-     * @return  bool    TRUE | FALSE
+     * @return  bool    true | false
      */
     private function _isExtHidden($ext) {
         if (empty($this->config['extHidden'])) {
-            return FALSE;
+            return false;
         }
         $extHiddenX = @explode(',', $this->config['extHidden']);
         array_walk($extHiddenX, create_function('&$val', '$val = strtolower(trim($val));'));
         if (!in_array($ext, $extHiddenX)) {
-            return TRUE;
+            return true;
         } else {
-            return FALSE;
+            return false;
         }
     }
 
     /**
      * Check whether the file with the specified extension is shown to the list
      * @param   string  $ext    file's extension
-     * @return  bool    TRUE | FALSE
+     * @return  bool    true | false
      */
     private function _isExtShown($ext) {
         if (empty($this->config['extShown'])) {
-            return TRUE;
+            return true;
         }
         $extShownX = @explode(',', $this->config['extShown']);
         array_walk($extShownX, create_function('&$val', '$val = strtolower(trim($val));'));
         if (in_array($ext, $extShownX)) {
-            return TRUE;
+            return true;
         } else {
-            return FALSE;
+            return false;
         }
     }
 
     /**
      * Check the user's group
      * @param   void
-     * @return  bool    TRUE | FALSE
+     * @return  bool    true | false
      */
     public function isAllowed() {
         if (empty($this->config['userGroups'])) {
-            return TRUE;
+            return true;
         } else {
             $userGroupsX = @explode(',', $this->config['userGroups']);
             array_walk($userGroupsX, create_function('&$val', '$val = trim($val);'));
@@ -1314,9 +1525,9 @@ class FileDownload {
             $intersect = array_uintersect($userGroupsX, $userAccessGroupNames, "strcasecmp");
 
             if (count($intersect) > 0) {
-                return TRUE;
+                return true;
             } else {
-                return FALSE;
+                return false;
             }
         }
     }
@@ -1412,7 +1623,7 @@ class FileDownload {
      */
     private function _groupByType(array $contents) {
         if (empty($contents)) {
-            return FALSE;
+            return false;
         }
 
         $sortType = array();
@@ -1423,7 +1634,7 @@ class FileDownload {
             $sortType[$file['type']][$k] = $file;
         }
         if (empty($sortType)) {
-            return FALSE;
+            return false;
         }
 
         foreach ($sortType as $k => $file) {
@@ -1485,8 +1696,8 @@ class FileDownload {
      * @param   array   $array          content array
      * @param   string  $index          order index
      * @param   string  $order          asc [| void]
-     * @param   bool    $natSort        TRUE | FALSE
-     * @param   bool    $caseSensitive  TRUE | FALSE
+     * @param   bool    $natSort        true | false
+     * @param   bool    $caseSensitive  true | false
      * @return  array   the sorted array
      * @link    modified from http://www.php.net/manual/en/function.sort.php#104464
      */
@@ -1513,7 +1724,7 @@ class FileDownload {
                 natsort($temp);
             }
             if (strtolower($this->config['sortOrder']) != 'asc') {
-                $temp = array_reverse($temp, TRUE);
+                $temp = array_reverse($temp, true);
             }
         }
 
@@ -1643,7 +1854,7 @@ class FileDownload {
             return '';
         }
         $phs[$this->config['prefix'] . 'class'] = (!empty($this->config['cssGroupDir'])) ? ' class="' . $this->config['cssGroupDir'] . '"' : '';
-        $groupPath = str_replace(DIRECTORY_SEPARATOR, $this->config['breadcrumbSeparator'], $this->_trimPath($path));
+        $groupPath = str_replace($this->ds, $this->config['breadcrumbSeparator'], $this->_trimPath($path));
         $phs[$this->config['prefix'] . 'groupDirectory'] = $groupPath;
         $tpl = $this->parseTpl($this->config['tplGroupDir'], $phs);
 
@@ -1676,23 +1887,47 @@ class FileDownload {
      * @return  string  trimmed path
      */
     private function _trimPath($path) {
-        $xPath = @explode(DIRECTORY_SEPARATOR, $this->config['origDir'][0]);
-        array_pop($xPath);
-        $parentPath = @implode(DIRECTORY_SEPARATOR, $xPath) . DIRECTORY_SEPARATOR;
         $trimmedPath = $path;
-        if (FALSE !== stristr($trimmedPath, $parentPath)) {
-            $trimmedPath = str_replace($parentPath, '', $trimmedPath);
-        }
-
-        $modxCorePath = realpath(MODX_CORE_PATH) . DIRECTORY_SEPARATOR;
-        $modxAssetsPath = realpath(MODX_ASSETS_PATH) . DIRECTORY_SEPARATOR;
-        if (FALSE !== stristr($trimmedPath, $modxCorePath)) {
-            $trimmedPath = str_replace($modxCorePath, '', $trimmedPath);
-        } elseif (FALSE !== stristr($trimmedPath, $modxAssetsPath)) {
-            $trimmedPath = str_replace($modxAssetsPath, '', $trimmedPath);
+        foreach ($this->config['origDir'] as $dir) {
+            $dir = trim($dir, '/') . '/';
+            $pattern = '`^(' . preg_quote($dir) . ')`';
+            if (preg_match($pattern, $path)) {
+                $trimmedPath = preg_replace($pattern, '', $path);
+            }
+            if (empty($this->mediaSource)) {
+                $modxCorePath = realpath(MODX_CORE_PATH) . DIRECTORY_SEPARATOR;
+                $modxAssetsPath = realpath(MODX_ASSETS_PATH) . DIRECTORY_SEPARATOR;
+            } else {
+                $modxCorePath = MODX_CORE_PATH;
+                $modxAssetsPath = MODX_ASSETS_PATH;
+            }
+            if (false !== stristr($trimmedPath, $modxCorePath)) {
+                $trimmedPath = str_replace($modxCorePath, '', $trimmedPath);
+            } elseif (false !== stristr($trimmedPath, $modxAssetsPath)) {
+                $trimmedPath = str_replace($modxAssetsPath, '', $trimmedPath);
+            }
         }
 
         return $trimmedPath;
+    }
+
+    /**
+     * Get absolute path of the given relative path, based on media source
+     * @param   string  $path   relative path
+     * @return  string  absolute path
+     */
+    private function _getAbsolutePath($path) {
+        $output = '';
+        if (empty($this->mediaSource)) {
+            $output = realpath($path) . $this->ds;
+        } else {
+            if (method_exists($this->mediaSource, 'getBasePath')) {
+                $output = $this->mediaSource->getBasePath($path) . trim($path, $this->ds) . $this->ds;
+            } elseif (method_exists($this->mediaSource, 'getObjectUrl')) {
+                $output = $this->mediaSource->getObjectUrl($path) . $this->ds;
+            }
+        }
+        return $output;
     }
 
     /**
@@ -1710,35 +1945,50 @@ class FileDownload {
         } else {
             $path = $dirs[0];
         }
-
-        $trimmedPath = trim($this->_trimPath($path), DIRECTORY_SEPARATOR);
-
+        $trimmedPath = trim($path);
+        $trimmedPath = trim($this->_trimPath($trimmedPath), $this->ds);
+        $trimmedPath = trim($trimmedPath, $this->config['breadcrumbSeparator']);
         $basePath = str_replace($trimmedPath, '', $path);
-        $trimmedPathX = @explode(DIRECTORY_SEPARATOR, $trimmedPath);
-
+        if ($basePath === '/') {
+            $basePath = '';
+        }
+        if ($this->ds !== $this->config['breadcrumbSeparator']) {
+            $pattern = '`[' . preg_quote($this->ds) . preg_quote($this->config['breadcrumbSeparator']) . ']+`';
+        } else {
+            $pattern = '`[' . preg_quote($this->ds) . ']+`';
+        }
+        $trimmedPathX = preg_split($pattern, $trimmedPath);
         $trailingPath = $basePath;
         $trail = array();
         $trailingLink = array();
         $countTrimmedPathX = count($trimmedPathX);
         foreach ($trimmedPathX as $k => $title) {
-            $trailingPath .= $title . DIRECTORY_SEPARATOR;
-            $fdlObj = $this->modx->getObject('fdCount', array(
-                'filename' => $trailingPath
+            $trailingPath .= $title . $this->ds;
+            $absPath = $this->_getAbsolutePath($trailingPath);
+            if (empty($absPath)) {
+                return false;
+            }
+            $fdlPath = $this->modx->getObject('fdPaths', array(
+                'ctx' => $this->modx->context->key,
+                'media_source_id' => $this->config['mediaSourceId'],
+                'filename' => $absPath,
             ));
-            if (!$fdlObj) {
+            if (!$fdlPath) {
                 $cdb = array();
                 $cdb['ctx'] = $this->modx->context->key;
-                $cdb['filename'] = $trailingPath;
+                $cdb['filename'] = $absPath;
 
-                $checkedDb = $this->_checkDb($cdb);
+                $checkedDb = $this->_checkDb($cdb, false);
                 if (!$checkedDb) {
                     continue;
                 }
-                $fdlObj = $this->modx->getObject('fdCount', array(
-                    'filename' => $trailingPath
+                $fdlPath = $this->modx->getObject('fdPaths', array(
+                    'ctx' => $this->modx->context->key,
+                    'media_source_id' => $this->config['mediaSourceId'],
+                    'filename' => $absPath
                 ));
             }
-            $hash = $fdlObj->get('hash');
+            $hash = $fdlPath->get('hash');
             $link = $this->_linkDirOpen($hash, $this->modx->context->key);
 
             if ($k === 0) {
@@ -1780,7 +2030,7 @@ class FileDownload {
      * @return  string  hashed parameter
      */
     private function _setHashedParam($ctx, $filename) {
-        $input = $this->config['saltText'] . $ctx . $filename;
+        $input = $this->config['saltText'] . $ctx . $this->config['mediaSourceId'] . $filename;
         return str_rot13(base64_encode(hash('sha512', $input)));
     }
 
@@ -1791,31 +2041,42 @@ class FileDownload {
      * @return  string  hashed parameter
      */
     private function _getHashedParam($ctx, $filename) {
-        $fdlObj = $this->modx->getObject('fdCount', array(
+        if (!empty($this->mediaSource)) {
+            if (method_exists($this->mediaSource, 'getBasePath')) {
+                $search = $this->mediaSource->getBasePath($filename);
+            } elseif (method_exists($this->mediaSource, 'getBaseUrl')) {
+                $search = $this->mediaSource->getBaseUrl();
+            }
+            if (!empty($search)) {
+                $filename = str_replace($search, '', $filename);
+            }
+        }
+        $fdlPath = $this->modx->getObject('fdPaths', array(
             'ctx' => $ctx,
+            'media_source_id' => $this->config['mediaSourceId'],
             'filename' => $filename
         ));
-        if (!$fdlObj) {
-            return FALSE;
+        if (!$fdlPath) {
+            return false;
         }
-        return $fdlObj->get('hash');
+        return $fdlPath->get('hash');
     }
 
     /**
      * Check whether the REQUEST parameter exists in the database.
      * @param   string  $ctx    context
      * @param   string  $hash   hash value
-     * @return  bool    TRUE | FALSE
+     * @return  bool    true | false
      */
     public function checkHash($ctx, $hash) {
-        $fdlObj = $this->modx->getObject('fdCount', array(
+        $fdlPath = $this->modx->getObject('fdPaths', array(
             'ctx' => $ctx,
             'hash' => $hash
         ));
-        if (!$fdlObj) {
-            return FALSE;
+        if (!$fdlPath) {
+            return false;
         }
-        return TRUE;
+        return true;
     }
 
     /**
@@ -1829,8 +2090,9 @@ class FileDownload {
         if (empty($this->plugins)) {
             return;
         }
-        if (!is_array($customProperties))
+        if (!is_array($customProperties)) {
             $customProperties = array();
+        }
 
         $this->plugins->setProperties($customProperties);
         return $this->plugins->getPlugins($eventName, $toString);

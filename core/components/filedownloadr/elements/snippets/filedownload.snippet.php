@@ -1,31 +1,31 @@
 <?php
+
 /**
- * The snippet for the FileDownload package for MODX Revolution
- * This is the conversion of the original FileDownload snippet for MODX
+ * The snippet for the FileDownloadR package for MODX Revolution
+ * This is the conversion of the original FileDownloadR snippet for MODX
  * Evolution, which was originally created by Kyle Jaebker, and converted by
  * goldsky.
  * The main parameters are taken from that version so any conversion can be done
  * smoothly.
  *
- * FileDownload is free software; you can redistribute it and/or modify it under the
+ * FileDownloadR is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
  * version.
  *
- * FileDownload is distributed in the hope that it will be useful, but WITHOUT ANY
+ * FileDownloadR is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * FileDownload; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
+ * FileDownloadR; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
  * Suite 330, Boston, MA 02111-1307 USA
  *
  * @author      Kyle Jaebker <http://muddydogpaws.com>
- * @author      goldsky <goldsky@fastmail.fm> <http://virtudraft.com>
+ * @author      goldsky <goldsky@virtudraft.com>
  * @package     filedownload
  * @subpackage  filedownload snippet
  */
-
 $scriptProperties['encoding'] = $modx->getOption('encoding', $scriptProperties, 'UTF-8');
 header('Content-Type: text/html; charset=' . $scriptProperties['encoding']);
 mb_internal_encoding($scriptProperties['encoding']);
@@ -45,6 +45,8 @@ mb_internal_encoding($scriptProperties['encoding']);
  * @since ver 1.2.0
  */
 $scriptProperties['getDir'] = $modx->getOption('getDir', $scriptProperties);
+$scriptProperties['origDir'] = $modx->getOption('getDir', $scriptProperties); // getDir will be overridden by &_GET['fdldir'] in setDirProp()
+
 /**
  * The getFile parameter will make the snippet output only the file specified.
  * The getDir parameter is still required and getFile should be a file inside
@@ -60,7 +62,7 @@ $scriptProperties['getDir'] = $modx->getOption('getDir', $scriptProperties);
 $scriptProperties['getFile'] = $modx->getOption('getFile', $scriptProperties);
 
 if (empty($scriptProperties['getDir']) && empty($scriptProperties['getFile'])) {
-    return '<!-- FileDownload parameters are empty -->';
+    return '<!-- FileDownloadR parameters are empty -->';
 }
 
 /**
@@ -567,14 +569,14 @@ $scriptProperties['ajaxControllerPage'] = $modx->getOption('ajaxControllerPage',
  */
 $scriptProperties['ajaxContainerId'] = $modx->getOption('ajaxContainerId', $scriptProperties, 'file-download');
 /**
- * FileDownload's Javascript file for the page header
+ * FileDownloadR's Javascript file for the page header
  * @default: empty
  * @var string
  * @since ver 2.0.0
  */
 $scriptProperties['fileJs'] = $modx->getOption('fileJs', $scriptProperties);
 /**
- * FileDownload's Cascading Style Sheet file for the page header
+ * FileDownloadR's Cascading Style Sheet file for the page header
  * @default: assets/components/filedownloadr/css/fd.css
  * @var string
  * @since ver 2.0.0
@@ -592,7 +594,7 @@ $scriptProperties['fileCss'] = $modx->getOption('fileCss', $scriptProperties
 
 /**
  * This text will be added to the file's hashed link to disguise the direct path
- * @default: FileDownload
+ * @default: FileDownloadR
  * @var string
  * @since ver 2.0.0
  */
@@ -639,18 +641,38 @@ $scriptProperties['breadcrumbSeparator'] = $modx->getOption('breadcrumbSeparator
  */
 $scriptProperties['prefix'] = $modx->getOption('prefix', $scriptProperties, 'fd.');
 
+/**
+ * Media Source's ID
+ * @default: 0
+ * @var integer
+ */
+$scriptProperties['mediaSourceId'] = (int) $modx->getOption('mediaSourceId', $scriptProperties, 0);
+
+/**
+ * Use IP location or not
+ * @default: false
+ * @var boolean
+ */
+$scriptProperties['useGeolocation'] = (boolean) $modx->getOption('useGeolocation', $scriptProperties, $modx->getOption('filedownloadr.use_geolocation', $scriptProperties, false));
+
+/**
+ * API key of IPInfoDB.com
+ * @default: ''
+ * @var string
+ */
+$scriptProperties['geoApiKey'] = $modx->getOption('geoApiKey', $scriptProperties, $modx->getOption('filedownloadr.ipinfodb_api_key', $scriptProperties, ''));
+
 array_walk($scriptProperties, create_function('&$val', 'if (!is_array($val)) $val = trim($val);'));
 
-$fdl = $modx->getService('fdl'
-        , 'FileDownload'
-        , $modx->getOption('core_path') . 'components/filedownloadr/models/filedownload/'
-        , $scriptProperties
-);
+// $modx->getService brings more problem on multiple calls
+if (!class_exists('FileDownloadR')) {
+    require_once $modx->getOption('core_path') . 'components/filedownloadr/model/filedownloadr/filedownloadr.class.php';
+}
+$fdl = new FileDownloadR($modx, $scriptProperties);
 
-if (!($fdl instanceof FileDownload))
-    return 'instanceof error.';
-
-$fdl->setConfigs($scriptProperties);
+if (!($fdl instanceof FileDownloadR)) {
+    return '[FileDownload] instanceof error.';
+}
 
 if (!$fdl->isAllowed()) {
     return $fdl->parseTpl($scriptProperties['tplNotAllowed'], array());
@@ -699,9 +721,9 @@ if (empty($scriptProperties['downloadByOther'])) {
         }
         if ((!empty($sanitizedGets['fdlid']) && !empty($scriptProperties['fdlid'])) &&
                 ($sanitizedGets['fdlid'] != $scriptProperties['fdlid'])) {
-            $selected = FALSE;
+            $selected = false;
         } else {
-            $selected = TRUE;
+            $selected = true;
         }
         if ($selected) {
             $setDir = $fdl->setDirProp($sanitizedGets['fdldir'], $selected);

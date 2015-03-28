@@ -1,7 +1,7 @@
 -------------------------------------------
 Snippet: FileDownload (for MODX Revolution)
 -------------------------------------------
-Revo author: goldsky <goldsky@fastmail.fm>
+Revo author: goldsky <goldsky@virtudraft.com>
 The original Evo version author: Kyle Jaebker
 
 A document download listing snippet for MODX Revolution

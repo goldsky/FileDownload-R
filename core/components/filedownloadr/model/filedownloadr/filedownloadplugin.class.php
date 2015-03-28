@@ -11,7 +11,7 @@ class FileDownloadPlugin {
     private $_allEvents = array();
     private $_properties = array();
 
-    public function __construct(FileDownload &$fileDownload) {
+    public function __construct(FileDownloadR &$fileDownload) {
         $this->modx = &$fileDownload->modx;
         $this->configs = $fileDownload->configs;
         $this->fileDownload = $fileDownload;
@@ -114,9 +114,9 @@ class FileDownloadPlugin {
      * Get all plugins, with the strict option if it is enabled by the snippet
      * @param   string          $eventName  name of the event
      * @param   boolean         $toString   return the results as string instead
-     * @return  boolean|array   FALSE | plugin's output array
+     * @return  boolean|array   false | plugin's output array
      */
-    public function getPlugins($eventName, $toString = FALSE) {
+    public function getPlugins($eventName, $toString = false) {
         $this->_event = $eventName;
         $output = array();
         if (empty($this->_appliedEvents[$eventName]) ||
@@ -127,8 +127,8 @@ class FileDownloadPlugin {
             $loaded = $this->_loadPlugin($plugin);
             if (!$loaded) {
                 if (!empty($plugin['strict'])) {
-                    $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadPlugin] ' . $eventName . ' of <b>' . $plugin . '</b> returned FALSE.');
-                    return FALSE;
+                    $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadPlugin] ' . $eventName . ' of <b>' . $plugin . '</b> returned false.');
+                    return false;
                 } else {
                     continue;
                 }
@@ -144,7 +144,7 @@ class FileDownloadPlugin {
 
     private function _loadPlugin($plugin) {
         $pluginName = $plugin['name'];
-        $success = FALSE;
+        $success = false;
         if ($snippet = $this->modx->getObject('modSnippet', array('name' => $pluginName))) {
             /* custom snippet plugin */
             $properties = $this->configs;
@@ -160,7 +160,7 @@ class FileDownloadPlugin {
             } else {
                 /* no plugin found */
                 $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadPlugin] could not find plugin "' . $pluginName . '".');
-                $success = FALSE;
+                $success = false;
             }
         }
 

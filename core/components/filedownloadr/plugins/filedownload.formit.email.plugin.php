@@ -3,10 +3,10 @@
  * avoid FATAL ERROR
  */
 if (!($modx instanceof modX) ||
-        !($fileDownload instanceof FileDownload) ||
+        !($fileDownload instanceof FileDownloadR) ||
         !($plugin instanceof FileDownloadPlugin)
 ) {
-    return FALSE;
+    return false;
 }
 
 //$props = $plugin->getProperties();
@@ -27,15 +27,15 @@ switch ($e) {
         $emailProps = json_decode($emailProps, 1);
         $formitProps = array_merge(array('hooks' => 'email'), $emailProps);
         $runFormit = $modx->runSnippet('FormIt', $formitProps);
-        if ($runFormit === FALSE) {
+        if ($runFormit === false) {
             $errMsg = '[FileDownloadPlugin Email] unabled to send email.';
             $modx->setPlaceholder($fileDownload->getConfig('prefix') . 'error_message', $errMsg);
             $modx->log(modX::LOG_LEVEL_ERROR, __LINE__ . ': ' . $errMsg);
-            return FALSE;
+            return false;
         }
         break;
     default:
         break;
 }
 
-return TRUE;
+return true;

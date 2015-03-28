@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model package="filedownloadr" baseClass="xPDOObject" platform="mysql" defaultEngine="MyISAM" version="1.1">
+	<object class="fdDownloads" table="downloads" extends="xPDOSimpleObject">
+		<field key="path_id" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false" index="index" />
+		<field key="ip" dbtype="varchar" precision="25" phptype="string" null="false" default="0.0.0.0" />
+		<field key="referer" dbtype="varchar" precision="255" phptype="string" null="true" default="" />
+		<field key="country" dbtype="varchar" precision="255" phptype="string" null="true" default="" />
+		<field key="region" dbtype="varchar" precision="255" phptype="string" null="true" default="" />
+		<field key="city" dbtype="varchar" precision="255" phptype="string" null="true" default="" />
+		<field key="zip" dbtype="varchar" precision="30" phptype="string" null="true" default="" />
+		<field key="geolocation" dbtype="text" phptype="string" null="true" />
+		<field key="user" dbtype="int" precision="10" phptype="integer" null="false" default="0" index="index" />
+		<field key="timestamp" dbtype="int" precision="10" phptype="integer" null="true" />
+
+		<index alias="path" name="path" primary="false" unique="false" type="BTREE" >
+			<column key="path_id" length="" collation="A" null="false" />
+		</index>
+		<index alias="user" name="user" primary="false" unique="false" type="BTREE" >
+			<column key="user" length="" collation="A" null="false" />
+		</index>
+
+        <aggregate alias="Path" class="fdPaths" local="path_id" foreign="id" cardinality="one" owner="foreign" />
+
+	</object>
+	<object class="fdPaths" table="paths" extends="xPDOSimpleObject">
+		<field key="ctx" dbtype="varchar" precision="255" phptype="string" null="true" default="web" />
+		<field key="media_source_id" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false" default="0" />
+		<field key="filename" dbtype="varchar" precision="255" phptype="string" null="true" default="" />
+		<field key="hash" dbtype="varchar" precision="255" phptype="string" null="true" default="" />
+
+        <composite alias="Downloads" class="fdDownloads" local="id" foreign="path_id" cardinality="many" owner="local" />
+
+	</object>
+</model>
