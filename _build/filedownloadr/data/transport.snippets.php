@@ -46,7 +46,7 @@ $snippets[0]->fromArray(array(
     'description' => 'Snippet to list downloadable files.',
     'snippet' => getSnippetContent($sources['source_core'].'/elements/snippets/filedownload.snippet.php'),
         ), '', true, true);
-$properties = include $sources['properties'] . 'filedownloadr.properties.php';
+$properties = include $sources['properties'] . 'filedownload.properties.php';
 $snippets[0]->setProperties($properties);
 unset($properties);
 
@@ -66,7 +66,7 @@ $snippets[2]->fromArray(array(
     'id' => 2,
     'name' => 'FileDownloadEmailPlugin',
     'description' => 'Snippet as a plugin for FileDownload R\'s.',
-    'snippet' => getSnippetContent($sources['source_core'].'/plugins/filedownloadr.formit.email.plugin.php'),
+    'snippet' => getSnippetContent($sources['source_core'].'/plugins/filedownload.formit.email.plugin.php'),
         ), '', true, true);
 
 return $snippets;

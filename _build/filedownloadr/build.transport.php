@@ -63,16 +63,16 @@ flush();
 $modx->setLogTarget(XPDO_CLI_MODE ? 'ECHO' : 'HTML');
 
 $fdl = $modx->getService('fdl'
-        , 'FileDownload'
+        , 'FileDownloadR'
         , $modx->getOption('core_path') . 'components/filedownloadr/model/filedownloadr/'
 );
 
-if (!($fdl instanceof FileDownload)) {
+if (!($fdl instanceof FileDownloadR)) {
     return 'instanceof error.';
 }
 
-define('PKG_VERSION', FileDownload::VERSION);
-define('PKG_RELEASE', FileDownload::RELEASE);
+define('PKG_VERSION', FileDownloadR::VERSION);
+define('PKG_RELEASE', FileDownloadR::RELEASE);
 
 $modx->loadClass('transport.modPackageBuilder', '', false, true);
 $builder = new modPackageBuilder($modx);

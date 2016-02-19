@@ -118,13 +118,19 @@ if ($modx = & $object->xpdo) {
             $manager = $modx->getManager();
             $manager->createObjectContainer('fdDownloads');
             $manager->createObjectContainer('fdPaths');
-            $count = (int) $modx->getCount('fdCount');
-            if ($count > 0) {
-                $modx->log(modX::LOG_LEVEL_INFO, "[FileDownloadR] is starting to convert the database...");
-                $split = ceil($count / 1000); // limit
-                for ($index = 0; $index < $split; $index++) {
-                    $offset = $index * 10;
-                    convertCount($modx, $offset);
+
+            if ($oldPackage) {
+                if ($oldPackage->compareVersion('2.0.0-beta1', '>')) {
+                    $count = (int) $modx->getCount('fdCount');
+                    if ($count > 0) {
+                        $modx->log(modX::LOG_LEVEL_INFO, "[FileDownloadR] is starting to convert the database...");
+                        $split = ceil($count / 1000); // limit
+                        for ($index = 0; $index < $split; $index++) {
+                            $offset = $index * 10;
+                            convertCount($modx, $offset);
+                        }
+                        $modx->log(modX::LOG_LEVEL_INFO, "[FileDownloadR] conversion is finished!");
+                    }
                 }
             }
 
