@@ -1679,10 +1679,11 @@ class FileDownloadR {
                 $row++;
             }
         }
+
         $phs = array();
         $phs[$this->config['prefix'] . 'classPath'] = (!empty($this->config['cssPath'])) ? ' class="' . $this->config['cssPath'] . '"' : '';
         $phs[$this->config['prefix'] . 'path'] = $this->_breadcrumbs();
-
+        $this->_output['dirRows'] = '';
         if (!empty($this->config['tplWrapperDir']) && !empty($dirs)) {
             $phs[$this->config['prefix'] . 'dirRows'] = $dirs;
             $this->_output['dirRows'] .= $this->parseTpl($this->config['tplWrapperDir'], $phs);
@@ -1701,7 +1702,7 @@ class FileDownloadR {
                 $row++;
             }
         }
-
+        $this->_output['fileRows'] = '';
         if (!empty($this->config['tplWrapperFile']) && !empty($files)) {
             $phs[$this->config['prefix'] . 'fileRows'] = $files;
             $this->_output['fileRows'] .= $this->parseTpl($this->config['tplWrapperFile'], $phs);
