@@ -3,7 +3,7 @@
 /**
  * FileDownload
  *
- * Copyright 2011 by goldsky <goldsky@fastmail.fm>
+ * Copyright 2011-2016 by goldsky <goldsky@virtudraft.com>
  *
  * This file is part of FileDownload, a file downloader for MODX Revolution
  *
