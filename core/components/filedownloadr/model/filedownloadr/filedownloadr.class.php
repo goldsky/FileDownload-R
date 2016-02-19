@@ -747,7 +747,8 @@ class FileDownloadR {
         $fdlPath = $this->modx->getObject('fdPaths', array(
             'ctx' => $file['ctx'],
             'media_source_id' => $this->config['mediaSourceId'],
-            'filename' => $filename
+            'filename' => $filename,
+            'hash' => $this->_setHashedParam($file['ctx'], $file['filename'])
         ));
         if (!$fdlPath) {
             if (!$autoCreate) {
