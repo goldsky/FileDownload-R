@@ -662,6 +662,14 @@ $scriptProperties['useGeolocation'] = (boolean) $modx->getOption('useGeolocation
  */
 $scriptProperties['geoApiKey'] = $modx->getOption('geoApiKey', $scriptProperties, $modx->getOption('filedownloadr.ipinfodb_api_key', $scriptProperties, ''));
 
+/**
+ * Show empty folder when required
+ * @link https://github.com/goldsky/FileDownload-R/issues/42
+ * @default: 0
+ * @var integer
+ */
+$scriptProperties['showEmptyFolder'] = (boolean) $modx->getOption('showEmptyFolder', $scriptProperties, 0);
+
 array_walk($scriptProperties, create_function('&$val', 'if (!is_array($val)) $val = trim($val);'));
 
 // $modx->getService brings more problem on multiple calls
@@ -747,7 +755,8 @@ if (empty($scriptProperties['downloadByOther'])) {
 }
 
 $contents = $fdl->getContents();
-if (empty($contents)) {
+
+if (empty($contents) && !$scriptProperties['showEmptyFolder']) {
     return;
 }
 
