@@ -1,8 +1,8 @@
 Changelog for FileDownload.
 
-FileDownload-R dev
+FileDownload-R 2.0.0-beta1 (February 19, 2016)
 ============================================
-+ [#28][#33] Fixed unicode problems
++ [#8][#28][#33] Fixed unicode problems
 + [#42] show empty folder
 + [#43] update build of fd_count, convert database
 + [#44] fixed saltText comparison
