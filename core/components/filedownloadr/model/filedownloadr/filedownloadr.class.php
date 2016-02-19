@@ -19,7 +19,7 @@
  * You should have received a copy of the GNU General Public License along with
  * FileDownload; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
  * Suite 330, Boston, MA 02111-1307 USA
- * 
+ *
  * The main class for the FileDownload snippet for MODX Revolution
  * This is the conversion of the original FileDownload snippet for MODX
  * Evolution, which was originally created by Kyle Jaebker.
@@ -1504,6 +1504,7 @@ class FileDownloadR {
      * @param type $ctx
      * @param type $filePath
      * @return type
+     * @deprecated since 2.0.0-beta1
      */
     private function _getDownloadCount($ctx, $filePath) {
         $fdlPath = $this->modx->getObject('fdPaths', array(

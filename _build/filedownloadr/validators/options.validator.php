@@ -31,19 +31,19 @@ if ($modx = & $object->xpdo) {
         case xPDOTransport::ACTION_UPGRADE:
             break;
         case xPDOTransport::ACTION_UNINSTALL:
-            if (empty($options['fdl_keep_db'])) {
-                $modelPath = $modx->getOption('core_path') . 'components/filedownloadr/model/';
-                $modelPath = realpath($modelPath) . DIRECTORY_SEPARATOR;
-                $tablePrefix = $modx->getOption('filedownloadr.table_prefix', null, $modx->config[modX::OPT_TABLE_PREFIX] . 'fd_');
-                if ($modx->addPackage('filedownloadr', $modelPath, $tablePrefix)) {
-                    $manager = $modx->getManager();
-                    if (!$manager->removeObjectContainer('fdCount')) {
-                        $modx->log(modX::LOG_LEVEL_ERROR, '[FileDownload] table was unable to be deleted');
-                        return false;
-                    }
-                    $modx->log(modX::LOG_LEVEL_INFO, '[FileDownload] table was deleted successfully');
-                }
-            }
+//            if (empty($options['fdl_keep_db'])) {
+//                $modelPath = $modx->getOption('core_path') . 'components/filedownloadr/model/';
+//                $modelPath = realpath($modelPath) . DIRECTORY_SEPARATOR;
+//                $tablePrefix = $modx->getOption('filedownloadr.table_prefix', null, $modx->config[modX::OPT_TABLE_PREFIX] . 'fd_');
+//                if ($modx->addPackage('filedownloadr', $modelPath, $tablePrefix)) {
+//                    $manager = $modx->getManager();
+//                    if (!$manager->removeObjectContainer('fdCount')) {
+//                        $modx->log(modX::LOG_LEVEL_ERROR, '[FileDownload] table was unable to be deleted');
+//                        return false;
+//                    }
+//                    $modx->log(modX::LOG_LEVEL_INFO, '[FileDownload] table was deleted successfully');
+//                }
+//            }
 
             break;
     }

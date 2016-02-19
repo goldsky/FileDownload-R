@@ -2,6 +2,7 @@ Changelog for FileDownload.
 
 FileDownload-R dev
 ============================================
++ [#43] update build of fd_count, convert database
 + [#44] fixed saltText comparison
 + [#47] fixed duplicate items on Group By Directory
 + rename folder
