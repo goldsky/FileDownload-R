@@ -9,11 +9,11 @@ class Example
 	 * @param   Example|null  $e  param3
 	 * @param   bool          $b  param4
 	 * @param   array/null    $a  param5
-	 * @return  array|bool    returns FALSE if error occured
+	 * @return  array|bool    Returns FALSE if error occurred
 	 */
 	public function myMethod($s, $i, $e = null, $b = true, array $a = null)
 	{
-		if (! ReflectionTypehint::isValid()) return false;
+		if (! ReflectionTypeHint::isValid()) return false;
 		//...
 	}
 }

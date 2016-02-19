@@ -2,6 +2,7 @@ Changelog for FileDownload.
 
 FileDownload-R dev
 ============================================
++ [#28][#33] Fixed unicode problems
 + [#42] show empty folder
 + [#43] update build of fd_count, convert database
 + [#44] fixed saltText comparison

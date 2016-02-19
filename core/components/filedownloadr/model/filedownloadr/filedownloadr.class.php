@@ -87,7 +87,6 @@ class FileDownloadR {
      * @var array
      */
     private $_chunks = array();
-
     public $mediaSource;
 
     /**
@@ -140,7 +139,7 @@ class FileDownloadR {
 
         $this->_imgType = $this->_imgTypeProp();
         if (empty($this->_imgType)) {
-            $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadR] could not load image types.');
+            $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadR] could not load image types.', '', __METHOD__, __FILE__, __LINE__);
             return false;
         }
         if (!empty($this->config['encoding'])) {
@@ -149,7 +148,7 @@ class FileDownloadR {
 
         if (!empty($this->config['plugins'])) {
             if (!$this->modx->loadClass('filedownloadr.FileDownloadPlugin', $this->config['modelPath'], true, true)) {
-                $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadR] could not load plugin class.');
+                $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadR] could not load plugin class.', '', __METHOD__, __FILE__, __LINE__);
                 return false;
             }
             $this->plugins = new FileDownloadPlugin($this);
@@ -172,7 +171,6 @@ class FileDownloadR {
         $this->config['origDir'] = !empty($this->config['origDir']) ? $this->trimArray(@explode(',', $this->config['origDir'])) : '';
         $this->config['getFile'] = !empty($this->config['getFile']) ? $this->_checkPath($this->config['getFile']) : '';
         $this->config = $this->replacePropPhs($this->config);
-
     }
 
     /**
@@ -458,7 +456,7 @@ class FileDownloadR {
         $chunk = $this->modx->newObject('modChunk');
 
         // just to create a name for the modChunk object.
-        $name = strtolower(basename($file));
+        $name = strtolower($this->_basename($file));
         $name = rtrim($name, '.tpl');
         $name = rtrim($name, '.chunk');
         $chunk->set('name', $name);
@@ -762,7 +760,7 @@ class FileDownloadR {
             }
         }
 
-        $filename = utf8_encode($file['filename']);
+        $filename = $this->utfEncoder($file['filename']);
         $fdlPath = $this->modx->getObject('fdPaths', array(
             'ctx' => $file['ctx'],
             'media_source_id' => $this->config['mediaSourceId'],
@@ -784,7 +782,7 @@ class FileDownloadR {
             if ($fdlPath->save() === false) {
                 $msg = $this->modx->lexicon($this->config['prefix'] . 'err_save_counter');
                 $this->setError($msg);
-                $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadR] ' . $msg);
+                $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadR] ' . $msg, '', __METHOD__, __FILE__, __LINE__);
                 return false;
             }
         }
@@ -817,9 +815,9 @@ class FileDownloadR {
             $d[] = $content;
 
             if ($content['type'] === 'dir') {
-                $this->_count['dirs']++;
+                $this->_count['dirs'] ++;
             } else {
-                $this->_count['files']++;
+                $this->_count['files'] ++;
             }
         }
 
@@ -842,19 +840,158 @@ class FileDownloadR {
     }
 
     /**
+     * Unicode character encoding work around.<br />
+     * For human reading.<br />
+     * The value is set from the module's config page.
+     *
+     * @link http://a4esl.org/c/charset.html
+     * @param   string  $text           the string to be encoded
+     * @param   string  $callback       call back function
+     * @param   string  $callbackParams call back parameters
+     * @return  string  returns the encoding
+     */
+    public function utfEncoder($text, $callback = false, $callbackParams = array()) {
+        $convertedText = $text;
+
+        if ($this->config['encoding'] == 'none') {
+            if ($callback !== false) {
+                $callbackParams = array_merge(array($text), $callbackParams);
+                $convertedText = call_user_func($callback, $callbackParams);
+            } else {
+                $convertedText = $text;
+            }
+        }
+
+//        if ($this->config['encoding'] == 'UTF-8') {
+//            if ($callback !== false && $callback != 'ucfirst') {
+//                $callbackParams = array_merge($text, $callbackParams);
+//                $convertedText = call_user_func($callback, $callbackParams);
+//            } elseif ($callback == 'ucfirst') {
+//                // http://bytes.com/topic/php/answers/444382-ucfirst-utf-8-setlocale#post1693669
+//                $fc = mb_strtoupper(mb_substr($text, 0, 1, 'UTF-8'), 'UTF-8');
+//                $convertedText = $fc . mb_substr($text, 1, mb_strlen($text, 'UTF-8'), 'UTF-8');
+//            } else {
+//                $convertedText = utf8_encode($text);
+//            }
+//        }
+//
+//        if ($this->config['encoding'] == 'UTF-8 (Rin)') {
+        if ($this->config['encoding'] == 'UTF-8') {
+            $convertedText = $this->utfEncoderRin($text, $callback, $callbackParams);
+        }
+
+        return $convertedText;
+    }
+
+    /**
+     * Unicode character decoding work around.<br />
+     * For file system reading.<br />
+     * The value is set from the module's config page.
+     *
+     * @link http://a4esl.org/c/charset.html
+     * @param   string  $text           the string to be decoded
+     * @param   string  $callback       call back function
+     * @param   string  $callbackParams call back parameters
+     * @return  string  returns the decoding
+     */
+    public function utfDecoder($text, $callback = false, $callbackParams = array()) {
+        $convertedText = $text;
+
+        if ($this->config['encoding'] == 'none') {
+            if ($callback !== false) {
+                $callbackParams = array_merge(array($text), $callbackParams);
+                $convertedText = call_user_func($callback, $callbackParams);
+            } else {
+                $convertedText = $text;
+            }
+        }
+
+//        if ($this->config['encoding'] == 'UTF-8') {
+//            if ($callback !== false) {
+//                $callbackParams = array_merge($text, $callbackParams);
+//                $convertedText = call_user_func($callback, $callbackParams);
+//            } else {
+//                $convertedText = utf8_decode($text);
+//            }
+//        }
+//
+//        if ($this->config['encoding'] == 'UTF-8 (Rin)') {
+        if ($this->config['encoding'] == 'UTF-8') {
+            $convertedText = $this->utfDecoderRin($text, $callback, $callbackParams);
+        }
+
+        return $convertedText;
+    }
+
+    /**
      * Load UTF-8 Class
      * @param   string  $callback       method's name
      * @param   array   $callbackParams call back parameters (in an array)
      * @author  Rin
-     * @link    http://forum.dklab.ru/viewtopic.php?p=91015#91015
+     * @link    https://github.com/rin-nas/php5-utf8
      * @return  string  converted text
      */
-    private function _utfRin($callback, array $callbackParams = array()) {
-        include_once($this->config['modelPath'] . 'UTF8-2.1.1/UTF8.php');
-        include_once($this->config['modelPath'] . 'UTF8-2.1.1/ReflectionTypehint.php');
+    public function utfRin($callback, array $callbackParams = array()) {
+        include_once($this->config['modelPath'] . 'php5-utf8/UTF8.php');
+        include_once($this->config['modelPath'] . 'php5-utf8/ReflectionTypeHint.php');
 
         $utf = call_user_func_array(array('UTF8', $callback), $callbackParams);
         return $utf;
+    }
+
+    /**
+     * Encoding using the class from
+     * @author  Rin <http://forum.dklab.ru/profile.php?mode=viewprofile&u=3940>
+     * @link    https://github.com/rin-nas/php5-utf8
+     * @param   string  $text           text to be converted
+     * @param   string  $callback       call back function's name
+     * @param   array   $callbackParams call back parameters (in an array)
+     * @return  string  converted text
+     */
+    public function utfEncoderRin($text, $callback = false, $callbackParams = array()) {
+        include_once($this->config['modelPath'] . 'php5-utf8/UTF8.php');
+        include_once($this->config['modelPath'] . 'php5-utf8/ReflectionTypeHint.php');
+        $convertedText = $text;
+
+        $mbDetectEncoding = mb_detect_encoding($text);
+        if ($callback !== false) {
+            $callbackParams = array_merge(array($text), $callbackParams);
+            $convertedText = call_user_func_array(array('UTF8', $callback), $callbackParams);
+        } else {
+            // fixedmachine -- http://modxcms.com/forums/index.php/topic,49266.msg292206.html#msg292206
+            $convertedText = UTF8::convert_to($text, $mbDetectEncoding);
+        }
+
+        return $convertedText;
+    }
+
+    /**
+     * Decoding using the class from
+     * @author  Rin <http://forum.dklab.ru/profile.php?mode=viewprofile&u=3940>
+     * @link    https://github.com/rin-nas/php5-utf8
+     * @param   string  $text           text to be converted
+     * @param   string  $callback       call back function's name
+     * @param   array   $callbackParams call back parameters (in an array)
+     * @return  string  converted text
+     */
+    public function utfDecoderRin($text, $callback = false, $callbackParams = array()) {
+        include_once($this->config['modelPath'] . 'php5-utf8/UTF8.php');
+        include_once($this->config['modelPath'] . 'php5-utf8/ReflectionTypeHint.php');
+        $convertedText = $text;
+
+        $mbDetectEncoding = mb_detect_encoding($text);
+        if ($callback !== false) {
+            $callbackParams = array_merge(array($text), $callbackParams);
+            $convertedText = call_user_func_array(array('UTF8', $callback), $callbackParams);
+        } elseif (!$mbDetectEncoding || ($mbDetectEncoding != 'ASCII' && $mbDetectEncoding != 'UTF-8')) {
+            // fixedmachine -- http://modxcms.com/forums/index.php/topic,49266.msg292206.html#msg292206
+            $convertedText = UTF8::convert_from($text, "ASCII");
+        } else {
+            $convertedText = UTF8::convert_from($text, $mbDetectEncoding);
+//            $convertedText = utf8_decode($text);
+        }
+
+        return $convertedText;
     }
 
     /**
@@ -872,8 +1009,7 @@ class FileDownloadR {
             if (empty($this->mediaSource)) {
                 $rootRealPath = realpath($rootPath);
                 if (!is_dir($rootPath) || empty($rootRealPath)) {
-                    // @todo: lexicon
-                    $this->modx->log(modX::LOG_LEVEL_ERROR, '&getDir parameter expects a correct dir path. <b>"' . $rootPath . '"</b> is given.');
+                    $this->modx->log(modX::LOG_LEVEL_ERROR, '&getDir parameter expects a correct dir path. <b>"' . $rootPath . '"</b> is given.', '', __METHOD__, __FILE__, __LINE__);
                     return false;
                 }
             }
@@ -929,10 +1065,10 @@ class FileDownloadR {
                         $imgType = $this->_imgType('dir');
                         $dir = array(
                             'ctx' => $checkedDb['ctx'],
-                            'fullPath' => utf8_encode($fullPath),
-                            'path' => utf8_encode($rootRealPath),
-                            'filename' => utf8_encode($file),
-                            'alias' => utf8_encode($alias),
+                            'fullPath' => $this->utfEncoder($fullPath),
+                            'path' => $this->utfEncoder($rootRealPath),
+                            'filename' => $this->utfEncoder($file),
+                            'alias' => $this->utfEncoder($alias),
                             'type' => $fileType,
                             'ext' => '',
                             'size' => '',
@@ -1000,10 +1136,10 @@ class FileDownloadR {
                         $imgType = $this->_imgType('dir');
                         $dir = array(
                             'ctx' => $checkedDb['ctx'],
-                            'fullPath' => utf8_encode($fullPath),
-                            'path' => utf8_encode($rootRealPath),
-                            'filename' => utf8_encode(basename($fullPath)),
-                            'alias' => utf8_encode($alias),
+                            'fullPath' => $this->utfEncoder($fullPath),
+                            'path' => $this->utfEncoder($rootRealPath),
+                            'filename' => $this->utfEncoder($this->_basename($fullPath)),
+                            'alias' => $this->utfEncoder($alias),
                             'type' => 'dir',
                             'ext' => '',
                             'size' => '',
@@ -1069,10 +1205,10 @@ class FileDownloadR {
             $fileRealPath = realpath($path);
             if (!is_file($fileRealPath) || !$fileRealPath) {
                 // @todo: lexicon
-                $this->modx->log(modX::LOG_LEVEL_ERROR, '&getFile parameter expects a correct file path. ' . $path . ' is given.');
+                $this->modx->log(modX::LOG_LEVEL_ERROR, '&getFile parameter expects a correct file path. ' . $path . ' is given.', '', __METHOD__, __FILE__, __LINE__);
                 return false;
             }
-            $baseName = basename($fileRealPath);
+            $baseName = $this->_basename($fileRealPath);
             $size = filesize($fileRealPath);
             $type = @filetype($fileRealPath);
         } else {
@@ -1083,8 +1219,8 @@ class FileDownloadR {
             } else {
                 $fileRealPath = realpath($path);
             }
-            $baseName = basename($fileRealPath);
-            if (method_exists($this->mediaSource,'getObjectFileSize')) {
+            $baseName = $this->_basename($fileRealPath);
+            if (method_exists($this->mediaSource, 'getObjectFileSize')) {
                 $size = $this->mediaSource->getObjectFileSize($path);
             } else {
                 $size = filesize(realpath($path));
@@ -1115,7 +1251,7 @@ class FileDownloadR {
         }
 
         if ($this->config['directLink']) {
-            $link = $this->_directLinkFileDownload(utf8_decode($checkedDb['filename']));
+            $link = $this->_directLinkFileDownload($this->utfDecoder($checkedDb['filename']));
             if (!$link) {
                 return false;
             }
@@ -1128,8 +1264,8 @@ class FileDownloadR {
         $info = array(
             'ctx' => $checkedDb['ctx'],
             'fullPath' => $fileRealPath,
-            'path' => utf8_encode(dirname($fileRealPath)),
-            'filename' => utf8_encode($baseName),
+            'path' => $this->utfEncoder(dirname($fileRealPath)),
+            'filename' => $this->utfEncoder($baseName),
             'alias' => $alias,
             'type' => $type,
             'ext' => $ext,
@@ -1159,6 +1295,17 @@ class FileDownloadR {
         $notation[1] = !isset($xPipes[1]) ? '' : trim($xPipes[1]);
 
         return $notation;
+    }
+
+    /**
+     * Custom basename, because PHP's basename can not read Chinese characters
+     * @param   string  $path   full path
+     */
+    private function _basename($path) {
+        $parts = @explode(DIRECTORY_SEPARATOR, $path);
+        $parts = array_reverse($parts);
+
+        return $parts[0];
     }
 
     /**
@@ -1341,7 +1488,7 @@ class FileDownloadR {
         if (intval($this->config['mediaSourceId']) !== $mediaSourceId) {
             return false;
         }
-        $filePath = utf8_decode($fdlPath->get('filename'));
+        $filePath = $this->utfDecoder($fdlPath->get('filename'));
         $plugins = $this->getPlugins('BeforeFileDownload', array(
             'hash' => $hash,
             'ctx' => $ctx,
@@ -1353,7 +1500,7 @@ class FileDownloadR {
             return false;
         }
         $fileExists = false;
-        $filename = basename($filePath);
+        $filename = $this->_basename($filePath);
         if (empty($this->mediaSource)) {
             if (file_exists($filePath)) {
                 $fileExists = true;
@@ -1378,7 +1525,7 @@ class FileDownloadR {
                 } else {
                     $msg = 'Unable to get the content from remote server';
                     $this->setError($msg);
-                    $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadR] ' . $msg);
+                    $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadR] ' . $msg, '', __METHOD__, __FILE__, __LINE__);
                 }
             } else {
                 $fileExists = false;
@@ -1494,7 +1641,7 @@ class FileDownloadR {
         if ($fdDownload->save() === false) {
             $msg = $this->modx->lexicon($this->config['prefix'] . 'err_save_counter');
             $this->setError($msg);
-            $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadR] ' . $msg);
+            $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadR] ' . $msg, '', __METHOD__, __FILE__, __LINE__);
             return false;
         }
     }
