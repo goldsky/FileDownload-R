@@ -335,7 +335,11 @@ if (!empty($_GET['fdlfile'])) {
     } else {
         $baseRef = $xRef[0];
     }
+    $baseRef = urldecode($baseRef);
     $page = $modx->makeUrl($modx->resource->get('id'), '', '', 'full');
+    /**
+     * check referrer and the page
+     */
     if ($baseRef !== $page) {
         return $modx->sendUnauthorizedPage();
     }
