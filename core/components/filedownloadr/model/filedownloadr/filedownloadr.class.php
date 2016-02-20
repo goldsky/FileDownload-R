@@ -733,6 +733,22 @@ class FileDownloadR {
     }
 
     /**
+     * Get dynamic file's basepath
+     * @param   string  $filename   file's name
+     * @return  string
+     */
+    public function getBasePath($filename) {
+        if (!empty($this->mediaSource)) {
+            if (method_exists($this->mediaSource, 'getBasePath')) {
+                return $this->mediaSource->getBasePath($filename);
+            } elseif (method_exists($this->mediaSource, 'getBaseUrl')) {
+                return $this->mediaSource->getBaseUrl();
+            }
+        }
+        return false;
+    }
+
+    /**
      * Check the called file contents with the registered database.
      * If it's not listed, auto save
      * @param   array   $file       Realpath filename / dirname
@@ -750,17 +766,15 @@ class FileDownloadR {
                 return false;
             }
         } else {
-            if (method_exists($this->mediaSource, 'getBasePath')) {
-                $search = $this->mediaSource->getBasePath($file['filename']);
-            } elseif (method_exists($this->mediaSource, 'getBaseUrl')) {
-                $search = $this->mediaSource->getBaseUrl();
-            }
+            $search = $this->getBasePath($file['filename']);
             if (!empty($search)) {
                 $file['filename'] = str_replace($search, '', $file['filename']);
             }
         }
 
-        $filename = $this->utfEncoder($file['filename']);
+//        $filename = $this->utfEncoder($file['filename']);
+        $filename = $file['filename'];
+
         $fdlPath = $this->modx->getObject('fdPaths', array(
             'ctx' => $file['ctx'],
             'media_source_id' => $this->config['mediaSourceId'],
@@ -853,7 +867,7 @@ class FileDownloadR {
     public function utfEncoder($text, $callback = false, $callbackParams = array()) {
         $convertedText = $text;
 
-        if ($this->config['encoding'] == 'none') {
+        if (strtoupper($this->config['encoding']) == 'NONE') {
             if ($callback !== false) {
                 $callbackParams = array_merge(array($text), $callbackParams);
                 $convertedText = call_user_func($callback, $callbackParams);
@@ -876,7 +890,7 @@ class FileDownloadR {
 //        }
 //
 //        if ($this->config['encoding'] == 'UTF-8 (Rin)') {
-        if ($this->config['encoding'] == 'UTF-8') {
+        if (strtoupper($this->config['encoding']) == 'UTF-8') {
             $convertedText = $this->utfEncoderRin($text, $callback, $callbackParams);
         }
 
@@ -897,7 +911,7 @@ class FileDownloadR {
     public function utfDecoder($text, $callback = false, $callbackParams = array()) {
         $convertedText = $text;
 
-        if ($this->config['encoding'] == 'none') {
+        if (strtoupper($this->config['encoding']) == 'NONE') {
             if ($callback !== false) {
                 $callbackParams = array_merge(array($text), $callbackParams);
                 $convertedText = call_user_func($callback, $callbackParams);
@@ -916,7 +930,7 @@ class FileDownloadR {
 //        }
 //
 //        if ($this->config['encoding'] == 'UTF-8 (Rin)') {
-        if ($this->config['encoding'] == 'UTF-8') {
+        if (strtoupper($this->config['encoding']) == 'UTF-8') {
             $convertedText = $this->utfDecoderRin($text, $callback, $callbackParams);
         }
 
@@ -1302,7 +1316,7 @@ class FileDownloadR {
      * @param   string  $path   full path
      */
     private function _basename($path) {
-        $parts = @explode(DIRECTORY_SEPARATOR, $path);
+        $parts = @explode($this->ds, $path);
         $parts = array_reverse($parts);
 
         return $parts[0];
@@ -1350,22 +1364,23 @@ class FileDownloadR {
             $link['url'] = $filePath;
         } else {
             $queries = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY);
-            $queries = @explode('&', $queries);
             $existingArgs = array();
-            foreach ($queries as $query) {
-                $xquery = @explode('=', $query);
-                $existingArgs[$xquery[0]] = !empty($xquery[1]) ? $xquery[1] : '';
+            if (!empty($queries)) {
+                $queries = @explode('&', $queries);
+                foreach ($queries as $query) {
+                    $xquery = @explode('=', $query);
+                    $existingArgs[$xquery[0]] = !empty($xquery[1]) ? $xquery[1] : '';
+                }
             }
-            $args = '';
+            $args = array();
             if (!empty($existingArgs)) {
                 unset($existingArgs['id']);
                 foreach ($existingArgs as $k => $v) {
-                    $args .= $k . '=' . $v . '&';
+                    $args[] = $k . '=' . $v;
                 }
             }
-            $args .= 'fdlfile=' . $hash;
-            $args .= '&msid=' . $this->config['mediaSourceId'];
-            $url = $this->modx->makeUrl($this->modx->resource->get('id'), $ctx, $args);
+            $args[] = 'fdlfile=' . $hash;
+            $url = $this->modx->makeUrl($this->modx->resource->get('id'), $ctx, @implode('&', $args));
             $link['url'] = $url;
         }
         $link['hash'] = $hash;
@@ -1384,14 +1399,14 @@ class FileDownloadR {
             $link['url'] = $filePath;
         } else {
             // to use this method, the file should always be placed on the web root
-            $corePath = str_replace('/', DIRECTORY_SEPARATOR, MODX_CORE_PATH);
+            $corePath = str_replace('/', $this->ds, MODX_CORE_PATH);
             if (stristr($filePath, $corePath)) {
                 return false;
             }
             // switching from absolute path to url is nuts
             if (empty($this->mediaSource)) {
                 $fileUrl = str_ireplace(MODX_BASE_PATH, MODX_SITE_URL, $filePath);
-                $fileUrl = str_replace(DIRECTORY_SEPARATOR, '/', $fileUrl);
+                $fileUrl = str_replace($this->ds, '/', $fileUrl);
                 $parseUrl = parse_url($fileUrl);
                 $url = ltrim($parseUrl['path'], '/' . MODX_HTTP_HOST);
                 $link['url'] = MODX_URL_SCHEME . MODX_HTTP_HOST . '/' . $url;
@@ -1416,25 +1431,26 @@ class FileDownloadR {
             return false;
         }
         $queries = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY);
-        $queries = @explode('&', $queries);
         $existingArgs = array();
-        foreach ($queries as $query) {
-            $xquery = @explode('=', $query);
-            $existingArgs[$xquery[0]] = !empty($xquery[1]) ? $xquery[1] : '';
+        if (!empty($queries)) {
+            $queries = @explode('&', $queries);
+            foreach ($queries as $query) {
+                $xquery = @explode('=', $query);
+                $existingArgs[$xquery[0]] = !empty($xquery[1]) ? $xquery[1] : '';
+            }
         }
-        $args = '';
+        $args = array();
         if (!empty($existingArgs)) {
             unset($existingArgs['id']);
             foreach ($existingArgs as $k => $v) {
-                $args .= $k . '=' . $v . '&';
+                $args[] = $k . '=' . $v;
             }
         }
-        $args .= 'fdldir=' . $hash;
+        $args[] = 'fdldir=' . $hash;
         if (!empty($this->config['fdlid'])) {
-            $args .= '&fdlid=' . $this->config['fdlid'];
-            $args .= '&msid=' . $this->config['mediaSourceId'];
+            $args[] = 'fdlid=' . $this->config['fdlid'];
         }
-        $url = $this->modx->makeUrl($this->modx->resource->get('id'), $ctx, $args);
+        $url = $this->modx->makeUrl($this->modx->resource->get('id'), $ctx, @implode('&', $args));
         $link = array();
         $link['url'] = $url;
         $link['hash'] = $hash;
@@ -1615,7 +1631,7 @@ class FileDownloadR {
         // save the new count
         $fdDownload = $this->modx->newObject('fdDownloads');
         $fdDownload->set('path_id', $fdlPath->getPrimaryKey());
-        $fdDownload->set('referer', $_SERVER['HTTP_REFERER']);
+        $fdDownload->set('referer', urldecode($_SERVER['HTTP_REFERER']));
         $fdDownload->set('user', $this->modx->user->get('id'));
         $fdDownload->set('timestamp', time());
         if (!empty($this->config['useGeolocation']) && !empty($this->config['geoApiKey'])) {
@@ -2088,8 +2104,8 @@ class FileDownloadR {
                 $trimmedPath = preg_replace($pattern, '', $path);
             }
             if (empty($this->mediaSource)) {
-                $modxCorePath = realpath(MODX_CORE_PATH) . DIRECTORY_SEPARATOR;
-                $modxAssetsPath = realpath(MODX_ASSETS_PATH) . DIRECTORY_SEPARATOR;
+                $modxCorePath = realpath(MODX_CORE_PATH) . $this->ds;
+                $modxAssetsPath = realpath(MODX_ASSETS_PATH) . $this->ds;
             } else {
                 $modxCorePath = MODX_CORE_PATH;
                 $modxAssetsPath = MODX_ASSETS_PATH;
@@ -2235,11 +2251,7 @@ class FileDownloadR {
      */
     private function _getHashedParam($ctx, $filename) {
         if (!empty($this->mediaSource)) {
-            if (method_exists($this->mediaSource, 'getBasePath')) {
-                $search = $this->mediaSource->getBasePath($filename);
-            } elseif (method_exists($this->mediaSource, 'getBaseUrl')) {
-                $search = $this->mediaSource->getBaseUrl();
-            }
+            $search = $this->getBasePath($filename);
             if (!empty($search)) {
                 $filename = str_replace($search, '', $filename);
             }
