@@ -61,7 +61,7 @@ if ($modx = & $object->xpdo) {
                     'hash' => $oldCountArray['hash'],
                 ));
                 if (!empty($path)) {
-//                    $oldCount->remove(); // remove?
+                    $oldCount->remove(); // remove?
                     continue;
                 }
                 $path = $modx->newObject('fdPaths');
@@ -83,7 +83,7 @@ if ($modx = & $object->xpdo) {
                 if ($path->save() === false) {
                     continue;
                 }
-//                $oldCount->remove(); // remove?
+                $oldCount->remove(); // remove?
             }
         }
     }
@@ -120,7 +120,9 @@ if ($modx = & $object->xpdo) {
             $manager->createObjectContainer('fdPaths');
 
             if ($oldPackage) {
-                if ($oldPackage->compareVersion('2.0.0-beta1', '>')) {
+                if ($oldPackage->compareVersion('2.0.0-beta1', '>') &&
+                        $oldPackage->compareVersion('2.0.0-beta1', '!=')
+                ) {
                     $count = (int) $modx->getCount('fdCount');
                     if ($count > 0) {
                         $modx->log(modX::LOG_LEVEL_INFO, "[FileDownloadR] is starting to convert the database...");
