@@ -723,7 +723,18 @@ if (!empty($_GET['fdldir']) || !empty($_GET['fdlfile'])) {
 }
 
 if (empty($scriptProperties['downloadByOther'])) {
-    if (!empty($sanitizedGets['fdldir'])) {
+    if (!empty($sanitizedGets['fdlfile'])) {
+        $checkHash = $fdl->checkHash($modx->context->key, $sanitizedGets['fdlfile']);
+        if (!$checkHash) {
+            return;
+        }
+        $downloadFile = $fdl->downloadFile($sanitizedGets['fdlfile']);
+        if (!$downloadFile) {
+            return;
+        }
+        // simply terminate, because this is a downloading state
+        die();
+    } else if (!empty($sanitizedGets['fdldir'])) {
         $checkHash = $fdl->checkHash($modx->context->key, $sanitizedGets['fdldir']);
         if (!$checkHash) {
             return;
@@ -740,18 +751,6 @@ if (empty($scriptProperties['downloadByOther'])) {
                 return;
             }
         }
-    }
-    if (!empty($sanitizedGets['fdlfile'])) {
-        $checkHash = $fdl->checkHash($modx->context->key, $sanitizedGets['fdlfile']);
-        if (!$checkHash) {
-            return;
-        }
-        $downloadFile = $fdl->downloadFile($sanitizedGets['fdlfile']);
-        if (!$downloadFile) {
-            return;
-        }
-        // simply terminate, because this is a downloading state
-        die();
     }
 }
 

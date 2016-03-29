@@ -1,5 +1,9 @@
 Changelog for FileDownload.
 
+FileDownload-R 2.0.0-pl (March 29, 2016)
+============================================
++ [#48] Fixed download from nested directories
+
 FileDownload-R 2.0.0-beta2 (February 22, 2016)
 ============================================
 + removing old data after converting

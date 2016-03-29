@@ -32,7 +32,7 @@
 class FileDownloadR {
 
     const VERSION = '2.0.0';
-    const RELEASE = 'beta2';
+    const RELEASE = 'pl';
 
     /**
      * modX object
