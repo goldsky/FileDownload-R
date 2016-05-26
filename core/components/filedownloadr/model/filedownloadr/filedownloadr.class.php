@@ -1523,8 +1523,11 @@ class FileDownloadR {
             }
         } else {
             if (method_exists($this->mediaSource, 'getBasePath')) {
-                if (file_exists($this->mediaSource->getBasePath($filePath) . $filePath)) {
+                $filePath = $this->mediaSource->getBasePath($filePath) . $filePath;
+                if (file_exists($filePath)) {
                     $fileExists = true;
+                } else {
+                    $fileExists = false;
                 }
             } elseif (method_exists($this->mediaSource, 'getBaseUrl')) {
                 $this->mediaSource->getObjectUrl($filePath);
