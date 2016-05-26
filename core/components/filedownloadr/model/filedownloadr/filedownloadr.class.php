@@ -1237,7 +1237,7 @@ class FileDownloadR {
             if (method_exists($this->mediaSource, 'getObjectFileSize')) {
                 $size = $this->mediaSource->getObjectFileSize($path);
             } else {
-                $size = filesize(realpath($path));
+                $size = filesize(realpath($fileRealPath));
             }
             $type = @filetype($fileRealPath);
         }

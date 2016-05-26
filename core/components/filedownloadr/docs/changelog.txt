@@ -1,5 +1,9 @@
 Changelog for FileDownload.
 
+FileDownload-R dev
+============================================
++ Fixed file size for media source
+
 FileDownload-R 2.0.0-pl (March 29, 2016)
 ============================================
 + [#48] Fixed download from nested directories
