@@ -1520,11 +1520,12 @@ class FileDownloadR {
         if (empty($this->mediaSource)) {
             if (file_exists($filePath)) {
                 $fileExists = true;
+                $realFilePath = $filePath;
             }
         } else {
             if (method_exists($this->mediaSource, 'getBasePath')) {
-                $filePath = $this->mediaSource->getBasePath($filePath) . $filePath;
-                if (file_exists($filePath)) {
+                $realFilePath = $this->mediaSource->getBasePath($filePath) . $filePath;
+                if (file_exists($realFilePath)) {
                     $fileExists = true;
                 } else {
                     $fileExists = false;
@@ -1539,7 +1540,7 @@ class FileDownloadR {
                     fwrite($handle, $content);
                     fseek($handle, 0);
                     fclose($handle);
-                    $filePath = $temp;
+                    $realFilePath = $temp;
                     $fileExists = true;
                 } else {
                     $msg = 'Unable to get the content from remote server';
@@ -1565,13 +1566,13 @@ class FileDownloadR {
             header('Expires: 0');  // no cache
             header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
             header('Cache-Control: private', false);
-            header('Last-Modified: ' . gmdate('D, d M Y H:i:s', filemtime($filePath)) . ' GMT');
+            header('Last-Modified: ' . gmdate('D, d M Y H:i:s', filemtime($realFilePath)) . ' GMT');
             header('Content-Description: File Transfer');
             header('Content-Type:'); //added to fix ZIP file corruption
             header('Content-Type: "application/force-download"');
             header('Content-Disposition: attachment; filename="' . $filename . '"');
             header('Content-Transfer-Encoding: binary');
-            header('Content-Length: ' . (string) (filesize($filePath))); // provide file size
+            header('Content-Length: ' . (string) (filesize($realFilePath))); // provide file size
             header('Connection: close');
             sleep(1);
 
@@ -1582,7 +1583,7 @@ class FileDownloadR {
 
             $chunksize = 1 * (1024 * 1024); // how many bytes per chunk
             $buffer = '';
-            $handle = @fopen($filePath, 'rb');
+            $handle = @fopen($realFilePath, 'rb');
             if ($handle === false) {
                 return false;
             }
