@@ -110,17 +110,6 @@ if (!empty($scriptProperties['downloadGroups']) && empty($scriptProperties['user
 }
 unset($scriptProperties['downloadGroups']);
 
-/**
- * This will make the delete link active for users that belong to the specified
- * groups. Multiple groups can be specified by using a comma delimited list.
- * @options: comma delimited list of User groups
- * @default: null
- * @example: Administrator, Registered Member
- * @var string
- * @since ver 2.1.0
- */
-$scriptProperties['deleteGroups'] = $modx->getOption('deleteGroups', $scriptProperties, '', true);
-
 /////////////////////////////////////////////////////////////////////////////////
 //                              Download Counting                              //
 /////////////////////////////////////////////////////////////////////////////////
