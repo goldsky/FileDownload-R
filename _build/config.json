@@ -1,0 +1,345 @@
+{
+  "name": "FileDownloadR",
+  "lowCaseName": "filedownloadr",
+  "description": "Display a list of downloadable files from a directory with download counter.",
+  "author": "goldsky",
+  "version": "2.1.0",
+  "package": {
+    "elements": {
+      "snippets": [
+        {
+          "name": "FileDownload",
+          "description": "Snippet to list downloadable files.",
+          "file": "filedownload.snippet.php",
+          "properties": [
+            {
+              "name": "ajaxContainerId",
+              "value": "file-download"
+            },
+            {
+              "name": "browseDirectories",
+              "type": "combo-boolean",
+              "value": "0"
+            },
+            {
+              "name": "chkDesc",
+              "value": ""
+            },
+            {
+              "name": "countDownloads",
+              "type": "combo-boolean",
+              "value": "1"
+            },
+            {
+              "name": "cssAltRow",
+              "value": "fd-altRow"
+            },
+            {
+              "name": "cssDir",
+              "value": "fd-dir"
+            },
+            {
+              "name": "cssExtension",
+              "type": "combo-boolean",
+              "value": "0"
+            },
+            {
+              "name": "cssExtensionPrefix",
+              "value": "fd-"
+            },
+            {
+              "name": "cssExtensionSuffix",
+              "value": ""
+            },
+            {
+              "name": "cssFile",
+              "value": "fd-file"
+            },
+            {
+              "name": "cssFirstDir",
+              "value": "fd-firstDir"
+            },
+            {
+              "name": "cssFirstFile",
+              "value": "fd-firstFile"
+            },
+            {
+              "name": "cssGroupDir",
+              "value": "fd-group-dir"
+            },
+            {
+              "name": "cssLastDir",
+              "value": "fd-lastDir"
+            },
+            {
+              "name": "cssLastFile",
+              "value": "fd-lastFile"
+            },
+            {
+              "name": "cssPath",
+              "value": "fd-path"
+            },
+            {
+              "name": "dateFormat",
+              "value": "Y-m-d"
+            },
+            {
+              "name": "extHidden",
+              "value": ""
+            },
+            {
+              "name": "extShown",
+              "value": ""
+            },
+            {
+              "name": "fileCss",
+              "value": ""
+            },
+            {
+              "name": "fileJs",
+              "value": ""
+            },
+            {
+              "name": "getDir",
+              "value": ""
+            },
+            {
+              "name": "getFile",
+              "value": ""
+            },
+            {
+              "name": "groupByDirectory",
+              "type": "combo-boolean",
+              "value": "0"
+            },
+            {
+              "name": "imgLocat",
+              "value": ""
+            },
+            {
+              "name": "imgTypes",
+              "value": "fdImages"
+            },
+            {
+              "name": "noDownload",
+              "type": "combo-boolean",
+              "value": "0"
+            },
+            {
+              "name": "saltText",
+              "value": "FileDownload"
+            },
+            {
+              "name": "sortBy",
+              "type": "list",
+              "options": [
+                {
+                  "name": "filedownloadr.filedownload.sortBy.filename",
+                  "value": "filename"
+                },
+                {
+                  "name": "filedownloadr.filedownload.sortBy.extension",
+                  "value": "extension"
+                },
+                {
+                  "name": "filedownloadr.filedownload.sortBy.path",
+                  "value": "path"
+                },
+                {
+                  "name": "filedownloadr.filedownload.sortBy.size",
+                  "value": "size"
+                },
+                {
+                  "name": "filedownloadr.filedownload.sortBy.sizeText",
+                  "value": "sizeText"
+                },
+                {
+                  "name": "filedownloadr.filedownload.sortBy.type",
+                  "value": "type"
+                },
+                {
+                  "name": "filedownloadr.filedownload.sortBy.date",
+                  "value": "date"
+                },
+                {
+                  "name": "filedownloadr.filedownload.sortBy.description",
+                  "value": "description"
+                },
+                {
+                  "name": "filedownloadr.filedownload.sortBy.count",
+                  "value": "count"
+                },
+                {
+                  "name": "filedownloadr.filedownload.sortBy.fullPath",
+                  "value": "fullPath"
+                }
+              ],
+              "value": "filename"
+            },
+            {
+              "name": "sortByCaseSensitive",
+              "type": "combo-boolean",
+              "value": "0"
+            },
+            {
+              "name": "sortOrder",
+              "type": "list",
+              "options": [
+                {
+                  "name": "filedownloadr.filedownload.sortOrder.ascending",
+                  "value": "asc"
+                },
+                {
+                  "name": "filedownloadr.filedownload.sortOrder.descending",
+                  "value": "desc"
+                }
+              ],
+              "value": "asc"
+            },
+            {
+              "name": "sortOrderNatural",
+              "type": "combo-boolean",
+              "value": "1"
+            },
+            {
+              "name": "tplDir",
+              "value": "tpl-row-dir"
+            },
+            {
+              "name": "tplFile",
+              "value": "tpl-row-file"
+            },
+            {
+              "name": "tplGroupDir",
+              "value": "tpl-group-dir"
+            },
+            {
+              "name": "tplIndex",
+              "value": "tpl-index"
+            },
+            {
+              "name": "tplWrapper",
+              "value": ""
+            },
+            {
+              "name": "userGroups",
+              "value": ""
+            }
+          ]
+        },
+        {
+          "name": "FileDownloadLink",
+          "description": "Snippet to list downloadable files.",
+          "file": "filedownloadlink.snippet.php",
+          "properties": [
+            {
+              "name": "chkDesc",
+              "value": ""
+            },
+            {
+              "name": "countDownloads",
+              "type": "combo-boolean",
+              "value": "1"
+            },
+            {
+              "name": "dateFormat",
+              "value": "Y-m-d"
+            },
+            {
+              "name": "fileCss",
+              "value": ""
+            },
+            {
+              "name": "fileJs",
+              "value": ""
+            },
+            {
+              "name": "getFile",
+              "value": ""
+            },
+            {
+              "name": "imgLocat",
+              "value": ""
+            },
+            {
+              "name": "imgTypes",
+              "value": "fdImages"
+            },
+            {
+              "name": "saltText",
+              "value": "FileDownload"
+            },
+            {
+              "name": "tpl",
+              "value": "@INLINE: <a href=\"[[+link]]\">[[+filename]]</a>"
+            },
+            {
+              "name": "userGroups",
+              "value": ""
+            }
+          ]
+        },
+        {
+          "name": "FileDownloadEmailPlugin",
+          "description": "Snippet as a plugin for FileDownload R's.",
+          "file": "filedownload.formit.email.plugin.php",
+          "properties": []
+        }
+      ],
+      "chunks": [
+        {
+          "name": "fdImages",
+          "description": "Image types of the files for FileDownload",
+          "file": "fdimages.chunk.txt"
+        },
+        {
+          "name": "fileDescription",
+          "description": "File descriptions for FileDownload snippet",
+          "file": "filedescription.chunk.txt"
+        },
+        {
+          "name": "FileDownloadEmailChunk",
+          "description": "Email chunk for FileDownload's plugin",
+          "file": "filedownloademail.chunk.html"
+        }
+      ]
+    },
+    "systemSettings": [
+      {
+        "key": "exclude_scan",
+        "type": "textfield",
+        "area": "file",
+        "value": ".,..,Thumbs.db,.htaccess,.htpasswd,.ftpquota,.DS_Store"
+      },
+      {
+        "key": "use_geolocation",
+        "type": "combo-boolean",
+        "area": "geolocation",
+        "value": "0"
+      },
+      {
+        "key": "ipinfodb_api_key",
+        "type": "textfield",
+        "area": "geolocation",
+        "value": ""
+      }
+    ]
+  },
+  "database": {
+    "tables": [
+      "fdCount",
+      "fdDownloads",
+      "fdPaths"
+    ]
+  },
+  "build": {
+    "readme": "docs/readme.txt",
+    "license": "docs/license.txt",
+    "changelog": "docs/changelog.txt",
+    "resolver": {
+      "after": [
+        "update_tables.php"
+      ]
+    }
+  }
+}

@@ -1,0 +1,43 @@
+table.fd-table {
+  width: 100%;
+  .fd-header {
+    background-color: firebrick;
+    color: white;
+  }
+  .fd-firstDir {
+  }
+  .fd-lastDir {
+  }
+  .fd-firstFile {
+  }
+  .fd-lastFile {
+  }
+  .fd-dir {
+  }
+  .fd-file {
+  }
+  .fd-path {
+  }
+  .fd-altRow {
+    background-color: #efefef;
+  }
+  .fd-group-dir {
+    background-color: #ddd;
+  }
+  tr {
+    border-bottom: 1px solid #ccc;
+    td {
+      padding: 5px;
+    }
+  }
+  .fd-xlsx {
+    background-color: #E3D1E6;
+  }
+  &.no-border, &.no-border > tr, &.no-border > tr > td {
+    border: none;
+  }
+  .fd-icon {
+    display: inline-block;
+    width: 16px;
+  }
+}

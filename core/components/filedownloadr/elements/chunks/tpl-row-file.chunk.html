@@ -1,0 +1,17 @@
+<tr [[+fd.class]]>
+    <td>
+        <span class="fd-icon">
+            <img src="[[+fd.image]]" alt=""/>
+        </span>
+        <a href="[[+fd.url]]">[[+fd.filename]]</a>
+        <span style="font-size:80%">([[+fd.count]] downloads)</span>
+    </td>
+    <td>[[+fd.sizeText]]</td>
+    <td>[[+fd.date]]</td>
+    <td>[[+fd.deleteurl:notempty=`<a href="[[+fd.deleteurl]]">Delete</a>`]]</td>
+</tr>
+[[-- This is the description row if the &chkDesc=`chunkName` is provided --]]
+[[+fd.description:notempty=`
+<tr>
+    <td colspan="4">[[+fd.description]]</td>
+</tr>`:default=``]]

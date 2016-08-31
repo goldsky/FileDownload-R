@@ -29,64 +29,77 @@
  * @author goldsky <goldsky@virtudraft.com>
  * @package main class
  */
-class FileDownloadR {
-
-    const VERSION = '2.0.0';
-    const RELEASE = 'pl';
-
+class FileDownloadR
+{
     /**
-     * modX object
-     * @var object
+     * A reference to the modX instance
+     * @var modX $modx
      */
     public $modx;
 
     /**
+     * The namespace
+     * @var string $namespace
+     */
+    public $namespace = 'filedownloadr';
+
+    /**
+     * The version
+     * @var string $version
+     */
+    public $version = '2.1.0';
+
+    /**
      * $scriptProperties
-     * @var array
+     * @var array $config
      */
     public $config = array();
 
     /**
      * To hold error message
-     * @var array
+     * @var array $_error
      */
     private $_error = array();
 
     /**
      * To hold output message
-     * @var array
+     * @var array $_output
      */
     private $_output = array();
 
     /**
      * To hold placeholder array, flatten array with prefixable
-     * @var array
+     * @var array $_placeholders
      */
     private $_placeholders = array();
 
     /**
      * To hold plugin
-     * @var array
+     * @var array $plugins
      */
     public $plugins;
 
     /**
      * To hold counting
-     * @var array
+     * @var array $_count
      */
     private $_count = array();
 
     /**
      * To hold image type
-     * @var array
+     * @var array $_imgType
      */
     private $_imgType = array();
 
     /**
      * store the chunk's HTML to property to save memory of loop rendering
-     * @var array
+     * @var array $_chunks
      */
     private $_chunks = array();
+
+    /**
+     * @var null|modMediaSource $mediaSource
+     */
     public $mediaSource;
 
     /**
@@ -97,15 +110,15 @@ class FileDownloadR {
 
     /**
      * constructor
-     * @param   modX    $modx
-     * @param   array   $config    parameters
+     * @param modX $modx
+     * @param array $config parameters
      */
-    public function __construct(modX $modx, $config = array()) {
+    public function __construct(modX $modx, $config = array())
+    {
         $this->modx = &$modx;
 
-        $corePath = $this->modx->getOption('core_path');
-        $basePath = $corePath . 'components/filedownloadr/';
-        $assetsUrl = $this->modx->getOption('assets_url') . 'components/filedownloadr/';
+        $corePath = $this->getOption('core_path', $config, $this->modx->getOption('core_path') . 'components/' . $this->namespace . '/');
+        $assetsUrl = $this->getOption('assets_url', $config, $this->modx->getOption('assets_url') . 'components/' . $this->namespace . '/');
 
         $this->_output = array(
             'rows' => '',
@@ -113,13 +126,12 @@ class FileDownloadR {
             'fileRows' => ''
         );
         $this->config = array_merge(array(
-            'version' => self::VERSION . '-' . self::RELEASE,
+            'version' => $this->version,
             'corePath' => $corePath,
-            'basePath' => $basePath,
-            'modelPath' => $basePath . 'model/',
-            'processorsPath' => $basePath . 'processors/',
-            'controllersPath' => $basePath . 'controllers/',
-            'chunksPath' => $basePath . 'elements/chunks/',
+            'modelPath' => $corePath . 'model/',
+            'processorsPath' => $corePath . 'processors/',
+            'controllersPath' => $corePath . 'controllers/',
+            'chunksPath' => $corePath . 'elements/chunks/',
             'jsUrl' => $assetsUrl . 'js/',
             'cssUrl' => $assetsUrl . 'css/',
             'imgTypeUrl' => $assetsUrl . 'img/filetypes/',
@@ -127,29 +139,29 @@ class FileDownloadR {
             'assetsUrl' => $assetsUrl,
             'encoding' => 'utf-8',
             'imgTypes' => 'fdimages'
-                ), $config);
+        ), $config);
 
-        $tablePrefix = $this->modx->getOption('filedownloadr.table_prefix', null, $this->modx->config[modX::OPT_TABLE_PREFIX] . 'fd_');
-        $this->modx->addPackage('filedownloadr', $this->config['modelPath'], $tablePrefix);
+        $tablePrefix = $this->modx->getOption($this->namespace . '.table_prefix', null, $this->modx->config[modX::OPT_TABLE_PREFIX]);
+        $this->modx->addPackage($this->namespace, $this->config['modelPath'], $tablePrefix);
 
         if (!$this->modx->lexicon) {
             $this->modx->getService('lexicon', 'modLexicon');
         }
-        $this->modx->lexicon->load('filedownloadr:default');
+        $this->modx->lexicon->load($this->namespace . ':default');
 
         $this->_imgType = $this->_imgTypeProp();
         if (empty($this->_imgType)) {
-            $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadR] could not load image types.', '', __METHOD__, __FILE__, __LINE__);
-            return false;
+            $this->modx->log(modX::LOG_LEVEL_ERROR, 'Could not load image types.', '', 'FileDownloadR', __FILE__, __LINE__);
+            return;
         }
         if (!empty($this->config['encoding'])) {
             mb_internal_encoding($this->config['encoding']);
         }
 
         if (!empty($this->config['plugins'])) {
-            if (!$this->modx->loadClass('filedownloadr.FileDownloadPlugin', $this->config['modelPath'], true, true)) {
-                $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadR] could not load plugin class.', '', __METHOD__, __FILE__, __LINE__);
-                return false;
+            if (!$this->modx->loadClass($this->namespace . '.FileDownloadPlugin', $this->config['modelPath'], true, true)) {
+                $this->modx->log(modX::LOG_LEVEL_ERROR, 'Could not load plugin class.', '', 'FileDownloadR', __FILE__, __LINE__);
+                return;
             }
             $this->plugins = new FileDownloadPlugin($this);
         }
@@ -174,10 +186,35 @@ class FileDownloadR {
     }
 
     /**
-     * Set class configuration exclusively for multiple snippet calls
-     * @param   array   $config     snippet's parameters
+     * Get a local configuration option or a namespaced system setting by key.
+     *
+     * @param string $key The option key to search for.
+     * @param array $options An array of options that override local options.
+     * @param mixed $default The default value returned if the option is not found locally or as a
+     * namespaced system setting; by default this value is null.
+     * @return mixed The option value or the default value specified.
      */
-    public function setConfigs($config = array()) {
+    public function getOption($key, $options = array(), $default = null)
+    {
+        $option = $default;
+        if (!empty($key) && is_string($key)) {
+            if ($options != null && array_key_exists($key, $options)) {
+                $option = $options[$key];
+            } elseif (array_key_exists($key, $this->config)) {
+                $option = $this->config[$key];
+            } elseif (array_key_exists("{$this->namespace}.{$key}", $this->modx->config)) {
+                $option = $this->modx->getOption("{$this->namespace}.{$key}");
+            }
+        }
+        return $option;
+    }
+
+    /**
+     * Set class configuration exclusively for multiple snippet calls
+     * @param array $config snippet's parameters
+     */
+    public function setConfigs($config = array())
+    {
         // Clear previous output for subsequent snippet calls
         $this->_output = array(
             'rows' => '',
@@ -195,35 +232,40 @@ class FileDownloadR {
 
     /**
      * Define individual config for the class
-     * @param   string  $key    array's key
-     * @param   string  $val    array's value
+     * @param string $key array's key
+     * @param string $val array's value
      */
-    public function setConfig($key, $val) {
+    public function setConfig($key, $val)
+    {
         $this->config[$key] = $val;
     }
 
-    public function getConfig($key) {
+    public function getConfig($key)
+    {
         return $this->config[$key];
     }
 
-    public function getConfigs() {
+    public function getConfigs()
+    {
         return $this->config;
     }
 
     /**
      * Set string error for boolean returned methods
-     * @return  void
+     * @param string $msg
      */
-    public function setError($msg) {
+    public function setError($msg)
+    {
         $this->_error[] = $msg;
     }
 
     /**
      * Get string error for boolean returned methods
-     * @param   string  $delimiter  delimiter of the imploded output (default: "\n")
-     * @return  string  output
+     * @param string $delimiter delimiter of the imploded output (default: "\n")
+     * @return string output
      */
-    public function getError($delimiter = "\n") {
+    public function getError($delimiter = "\n")
+    {
         if ($delimiter === '\n') {
             $delimiter = "\n";
         }
@@ -232,18 +274,20 @@ class FileDownloadR {
 
     /**
      * Set string output for boolean returned methods
-     * @return  void
+     * @param string $msg
      */
-    public function setOutput($msg) {
+    public function setOutput($msg)
+    {
         $this->_output[] = $msg;
     }
 
     /**
      * Get string output for boolean returned methods
-     * @param   string  $delimiter  delimiter of the imploded output (default: "\n")
-     * @return  string  output
+     * @param string $delimiter delimiter of the imploded output (default: "\n")
+     * @return string output
      */
-    public function getOutput($delimiter = "\n") {
+    public function getOutput($delimiter = "\n")
+    {
         if ($delimiter === '\n') {
             $delimiter = "\n";
         }
@@ -252,24 +296,26 @@ class FileDownloadR {
 
     /**
      * Set internal placeholder
-     * @param   string  $key    key
-     * @param   string  $value  value
-     * @param   string  $prefix add prefix if it's required
+     * @param string $key key
+     * @param string $value value
+     * @param string $prefix add prefix if it's required
      */
-    public function setPlaceholder($key, $value, $prefix = '') {
+    public function setPlaceholder($key, $value, $prefix = '')
+    {
         $prefix = !empty($prefix) ? $prefix : (isset($this->config['phsPrefix']) ? $this->config['phsPrefix'] : '');
         $this->_placeholders[$prefix . $key] = $this->trimString($value);
     }
 
     /**
      * Set internal placeholders
-     * @param   array   $placeholders   placeholders in an associative array
-     * @param   string  $prefix         add prefix if it's required
-     * @param   boolean $merge          define whether the output will be merge to global properties or not
-     * @param   string  $delimiter      define placeholder's delimiter
-     * @return  mixed   boolean|array of placeholders
+     * @param array $placeholders placeholders in an associative array
+     * @param string $prefix add prefix if it's required
+     * @param boolean $merge define whether the output will be merge to global properties or not
+     * @param string $delimiter define placeholder's delimiter
+     * @return mixed boolean|array of placeholders
      */
-    public function setPlaceholders($placeholders, $prefix = '', $merge = true, $delimiter = '.') {
+    public function setPlaceholders($placeholders, $prefix = '', $merge = true, $delimiter = '.')
+    {
         if (empty($placeholders)) {
             return false;
         }
@@ -288,28 +334,31 @@ class FileDownloadR {
      * Get internal placeholders in an associative array
      * @return array
      */
-    public function getPlaceholders() {
+    public function getPlaceholders()
+    {
         return $this->_placeholders;
     }
 
     /**
      * Get an internal placeholder
-     * @param   string  $key    key
-     * @return  string  value
+     * @param string $key key
+     * @return string value
      */
-    public function getPlaceholder($key) {
+    public function getPlaceholder($key)
+    {
         return $this->_placeholders[$key];
     }
 
     /**
      * Merge multi dimensional associative arrays with separator
-     * @param   array   $array      raw associative array
-     * @param   string  $keyName    parent key of this array
-     * @param   string  $separator  separator between the merged keys
-     * @param   array   $holder     to hold temporary array results
-     * @return  array   one level array
+     * @param array $array raw associative array
+     * @param string $keyName parent key of this array
+     * @param string $separator separator between the merged keys
+     * @param array $holder to hold temporary array results
+     * @return array one level array
      */
-    public function implodePhs(array $array, $keyName = null, $separator = '.', array $holder = array()) {
+    public function implodePhs(array $array, $keyName = null, $separator = '.', array $holder = array())
+    {
         $phs = !empty($holder) ? $holder : array();
         foreach ($array as $k => $v) {
             $key = !empty($keyName) ? $keyName . $separator . $k : $k;
@@ -324,12 +373,13 @@ class FileDownloadR {
 
     /**
      * Trim string value
-     * @param   string  $string     source text
-     * @param   string  $charlist   defined characters to be trimmed
+     * @param string $string source text
+     * @param string $charlist defined characters to be trimmed
      * @link http://php.net/manual/en/function.trim.php
-     * @return  string  trimmed text
+     * @return string trimmed text
      */
-    public function trimString($string, $charlist = null) {
+    public function trimString($string, $charlist = null)
+    {
         if (empty($string) && !is_numeric($string)) {
             return '';
         }
@@ -344,12 +394,13 @@ class FileDownloadR {
 
     /**
      * Trim array values
-     * @param   array   $array          array contents
-     * @param   string  $charlist       [default: null] defined characters to be trimmed
+     * @param array $input array contents
+     * @param string $charlist [default: null] defined characters to be trimmed
      * @link http://php.net/manual/en/function.trim.php
-     * @return  array   trimmed array
+     * @return array trimmed array
      */
-    public function trimArray($input, $charlist = null) {
+    public function trimArray($input, $charlist = null)
+    {
         if (is_array($input)) {
             $output = array_map(array($this, 'trimArray'), $input);
         } else {
@@ -361,29 +412,27 @@ class FileDownloadR {
 
     /**
      * Parsing template
-     * @param   string  $tpl    @BINDINGs options
-     * @param   array   $phs    placeholders
-     * @return  string  parsed output
+     * @param string $tpl @BINDINGs options
+     * @param array $phs placeholders
+     * @return string parsed output
      * @link    http://forums.modx.com/thread/74071/help-with-getchunk-and-modx-speed-please?page=2#dis-post-413789
      */
-    public function parseTpl($tpl, array $phs = array()) {
-        $output = '';
-
+    public function parseTpl($tpl, array $phs = array())
+    {
+        $phs = array_merge($this->config['additionalPlaceholders'], $phs);
         if (isset($this->_chunks[$tpl]) && !empty($this->_chunks[$tpl])) {
             return $this->parseTplCode($this->_chunks[$tpl], $phs);
         }
 
         if (preg_match('/^(@CODE|@INLINE)/i', $tpl)) {
-            $tplString = preg_replace('/^(@CODE|@INLINE)/i', '', $tpl);
+            $tplString = preg_replace('/^(@CODE|@INLINE):?/i', '', $tpl);
             // tricks @CODE: / @INLINE:
-            $tplString = ltrim($tplString, ':');
             $tplString = trim($tplString);
             $this->_chunks[$tpl] = $tplString;
             $output = $this->parseTplCode($tplString, $phs);
         } elseif (preg_match('/^@FILE/i', $tpl)) {
-            $tplFile = preg_replace('/^@FILE/i', '', $tpl);
+            $tplFile = preg_replace('/^@FILE:?/i', '', $tpl);
             // tricks @FILE:
-            $tplFile = ltrim($tplFile, ':');
             $tplFile = trim($tplFile);
             $tplFile = $this->replacePropPhs($tplFile);
             try {
@@ -391,18 +440,18 @@ class FileDownloadR {
             } catch (Exception $e) {
                 return $e->getMessage();
             }
-        }
-        // ignore @CHUNK / @CHUNK: / empty @BINDING
+        } // ignore @CHUNK / @CHUNK: / empty @BINDING
         else {
-            $tplChunk = preg_replace('/^@CHUNK/i', '', $tpl);
-            // tricks @CHUNK:
-            $tplChunk = ltrim($tpl, ':');
             $tplChunk = trim($tpl);
 
             $chunk = $this->modx->getObject('modChunk', array('name' => $tplChunk), true);
             if (empty($chunk)) {
                 // try to use @splittingred's fallback
-                $f = $this->config['chunksPath'] . strtolower($tplChunk) . '.chunk.tpl';
+                if (file_exists($this->config['chunksPath'] . strtolower($tplChunk) . '.chunk.html')) {
+                    $f = $this->config['chunksPath'] . strtolower($tplChunk) . '.chunk.html';
+                } else {
+                    $f = $this->config['chunksPath'] . strtolower($tplChunk) . '.chunk.tpl';
+                }
                 try {
                     $output = $this->parseTplFile($f, $phs);
                 } catch (Exception $e) {
@@ -410,10 +459,6 @@ class FileDownloadR {
                     return 'Chunk: ' . $tplChunk . ' is not found, neither the file ' . $output;
                 }
             } else {
-//                $output = $this->modx->getChunk($tplChunk, $phs);
-                /**
-                 * @link    http://forums.modx.com/thread/74071/help-with-getchunk-and-modx-speed-please?page=4#dis-post-464137
-                 */
                 $chunk = $this->modx->getParser()->getElement('modChunk', $tplChunk);
                 $this->_chunks[$tpl] = $chunk->get('content');
                 $chunk->setCacheable(false);
@@ -427,11 +472,12 @@ class FileDownloadR {
 
     /**
      * Parsing inline template code
-     * @param   string  $code   HTML with tags
-     * @param   array   $phs    placeholders
-     * @return  string  parsed output
+     * @param string $code HTML with tags
+     * @param array $phs placeholders
+     * @return string parsed output
      */
-    public function parseTplCode($code, array $phs = array()) {
+    public function parseTplCode($code, array $phs = array())
+    {
         $chunk = $this->modx->newObject('modChunk');
         $chunk->setContent($code);
         $chunk->setCacheable(false);
@@ -442,12 +488,13 @@ class FileDownloadR {
 
     /**
      * Parsing file based template
-     * @param   string  $file   file path
-     * @param   array   $phs    placeholders
-     * @return  string  parsed output
-     * @throws  Exception if file is not found
+     * @param string $file file path
+     * @param array $phs placeholders
+     * @return string parsed output
+     * @throws Exception if file is not found
      */
-    public function parseTplFile($file, array $phs = array()) {
+    public function parseTplFile($file, array $phs = array())
+    {
         if (!file_exists($file)) {
             throw new Exception('File: ' . $file . ' is not found.');
         }
@@ -480,11 +527,12 @@ class FileDownloadR {
      * $content = $myObject->processElementTags($content);
      * </code></pre>
      *
-     * @param   string  $content    the chunk output
-     * @param   array   $options    option for iteration
-     * @return  string  parsed content
+     * @param string $content the chunk output
+     * @param array $options option for iteration
+     * @return string parsed content
      */
-    public function processElementTags($content, array $options = array()) {
+    public function processElementTags($content, array $options = array())
+    {
         $maxIterations = intval($this->modx->getOption('parser_max_iterations', $options, 10));
         if (!$this->modx->parser) {
             $this->modx->getParser();
@@ -496,10 +544,11 @@ class FileDownloadR {
 
     /**
      * Replace the property's placeholders
-     * @param   string|array    $subject    Property
-     * @return  array           The replaced results
+     * @param string|array $subject Property
+     * @return array         The replaced results
      */
-    public function replacePropPhs($subject) {
+    public function replacePropPhs($subject)
+    {
         $pattern = array(
             '/\{core_path\}/',
             '/\{base_path\}/',
@@ -532,10 +581,11 @@ class FileDownloadR {
 
     /**
      * Get the clean path array and clean up some duplicate slashes
-     * @param   string  $paths  multiple paths with comma separated
-     * @return  array   Dir paths in an array
+     * @param string $paths multiple paths with comma separated
+     * @return array Dir paths in an array
      */
-    private function _checkPath($paths) {
+    private function _checkPath($paths)
+    {
         $forbiddenFolders = array(
             realpath(MODX_CORE_PATH),
             realpath(MODX_PROCESSORS_PATH),
@@ -580,15 +630,17 @@ class FileDownloadR {
      * with non-viewable characters.
      *
      * @version     1.3.2
-     * @author      Aidan Lister <aidan@php.net>
-     * @author      Peter Waller <iridum@php.net>
+     * @author     Aidan Lister <aidan@php.net>
+     * @author     Peter Waller <iridum@php.net>
      * @link        http://aidanlister.com/2004/04/viewing-binary-data-as-a-hexdump-in-php/
-     * @param       string  $data        The string to be dumped
-     * @param       bool    $htmloutput  [default: true] Set to false for non-HTML output
-     * @param       bool    $uppercase   [default: false] Set to true for uppercase hex
-     * @param       bool    $return      [default: false] Set to true to return the dump
+     * @param     string $data The string to be dumped
+     * @param     bool $htmloutput [default: true] Set to false for non-HTML output
+     * @param     bool $uppercase [default: false] Set to true for uppercase hex
+     * @param     bool $return [default: false] Set to true to return the dump
+     * @return string
      */
-    public function hexdump($data, $htmloutput = true, $uppercase = false, $return = false) {
+    public function hexdump($data, $htmloutput = true, $uppercase = false, $return = false)
+    {
         // Init
         $hexi = '';
         $ascii = '';
@@ -607,8 +659,8 @@ class FileDownloadR {
             // Replace non-viewable bytes with '.'
             if (ord($data[$i]) >= 32) {
                 $ascii .= ($htmloutput === true) ?
-                        htmlentities($data[$i]) :
-                        $data[$i];
+                    htmlentities($data[$i]) :
+                    $data[$i];
             } else {
                 $ascii .= '.';
             }
@@ -622,7 +674,7 @@ class FileDownloadR {
             // Add row
             if (++$j === 16 || $i === $len - 1) {
                 // Join the hexi / ascii output
-                $dump .= sprintf("%04$x  %-49s  %s", $offset, $hexi, $ascii);
+                $dump .= sprintf("%04$x %-49s %s", $offset, $hexi, $ascii);
 
                 // Reset vars
                 $hexi = $ascii = '';
@@ -638,13 +690,14 @@ class FileDownloadR {
 
         // Finish dump
         $dump .= $htmloutput === true ?
-                '</pre>' :
-                '';
+            '</pre>' :
+            '';
         $dump .= "\n";
 
         // Output method
         if ($return === false) {
             echo $dump;
+            return '';
         } else {
             return $dump;
         }
@@ -652,13 +705,13 @@ class FileDownloadR {
 
     /**
      * Retrieve the content of the given path
-     * @param   mixed   $root   The specified root path
-     * @return  array   All contents in an array
+     * @return array All contents in an array
      */
-    public function getContents() {
+    public function getContents()
+    {
         $plugins = $this->getPlugins('OnLoad', $this->config);
         if ($plugins === false) { // strict detection
-            return false;
+            return null;
         }
 
         $dirContents = array();
@@ -675,7 +728,6 @@ class FileDownloadR {
                 $fileContents = array();
             }
         }
-        $mergedContents = array();
         $mergedContents = array_merge($dirContents, $fileContents);
         $mergedContents = $this->_checkDuplication($mergedContents);
         $mergedContents = $this->_getDescription($mergedContents);
@@ -687,8 +739,10 @@ class FileDownloadR {
     /**
      * Existed description from the chunk of the &chkDesc parameter
      * @param array $contents
+     * @return array
      */
-    private function _getDescription(array $contents) {
+    private function _getDescription(array $contents)
+    {
         if (empty($contents)) {
             return $contents;
         }
@@ -734,10 +788,11 @@ class FileDownloadR {
 
     /**
      * Get dynamic file's basepath
-     * @param   string  $filename   file's name
-     * @return  string
+     * @param string $filename file's name
+     * @return string
      */
-    public function getBasePath($filename) {
+    public function getBasePath($filename)
+    {
         if (!empty($this->mediaSource)) {
             if (method_exists($this->mediaSource, 'getBasePath')) {
                 return $this->mediaSource->getBasePath($filename);
@@ -751,11 +806,12 @@ class FileDownloadR {
     /**
      * Check the called file contents with the registered database.
      * If it's not listed, auto save
-     * @param   array   $file       Realpath filename / dirname
-     * @param   boolean $autoCreate Auto create database if it doesn't exist
-     * @return  void
+     * @param array $file Realpath filename / dirname
+     * @param boolean $autoCreate Auto create database if it doesn't exist
+     * @return boolean
      */
-    private function _checkDb(array $file = array(), $autoCreate = true) {
+    private function _checkDb(array $file = array(), $autoCreate = true)
+    {
         if (empty($file)) {
             return false;
         }
@@ -772,8 +828,7 @@ class FileDownloadR {
             }
         }
 
-//        $filename = $this->utfEncoder($file['filename']);
-        $filename = $file['filename'];
+        $filename = $this->utfEncoder($file['filename']);
 
         $fdlPath = $this->modx->getObject('fdPaths', array(
             'ctx' => $file['ctx'],
@@ -796,22 +851,23 @@ class FileDownloadR {
             if ($fdlPath->save() === false) {
                 $msg = $this->modx->lexicon($this->config['prefix'] . 'err_save_counter');
                 $this->setError($msg);
-                $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadR] ' . $msg, '', __METHOD__, __FILE__, __LINE__);
+                $this->modx->log(modX::LOG_LEVEL_ERROR, $msg, '', 'FileDownloadR', __FILE__, __LINE__);
                 return false;
             }
         }
         $checked = $fdlPath->toArray();
-        $checked['count'] = (int) $this->modx->getCount('fdDownloads', array('path_id' => $fdlPath->getPrimaryKey()));
+        $checked['count'] = (int)$this->modx->getCount('fdDownloads', array('path_id' => $fdlPath->getPrimaryKey()));
 
         return $checked;
     }
 
     /**
      * Check any duplication output
-     * @param   array   $mergedContents merging the &getDir and &getFile result
-     * @return  array   Unique filenames
+     * @param array $mergedContents merging the &getDir and &getFile result
+     * @return array Unique filenames
      */
-    private function _checkDuplication(array $mergedContents) {
+    private function _checkDuplication(array $mergedContents)
+    {
         if (empty($mergedContents)) {
             return $mergedContents;
         }
@@ -829,9 +885,9 @@ class FileDownloadR {
             $d[] = $content;
 
             if ($content['type'] === 'dir') {
-                $this->_count['dirs'] ++;
+                $this->_count['dirs']++;
             } else {
-                $this->_count['files'] ++;
+                $this->_count['files']++;
             }
         }
 
@@ -840,10 +896,11 @@ class FileDownloadR {
 
     /**
      * Count the numbers retrieved objects (dirs/files)
-     * @param   string  $subject    the specified subject
-     * @return  int     number of the subject
+     * @param string $subject the specified subject
+     * @return int     number of the subject
      */
-    public function countContents($subject) {
+    public function countContents($subject)
+    {
         if ($subject === 'dirs') {
             return $this->_count['dirs'];
         } elseif ($subject === 'files') {
@@ -859,37 +916,23 @@ class FileDownloadR {
      * The value is set from the module's config page.
      *
      * @link http://a4esl.org/c/charset.html
-     * @param   string  $text           the string to be encoded
-     * @param   string  $callback       call back function
-     * @param   string  $callbackParams call back parameters
-     * @return  string  returns the encoding
+     * @param string $text the string to be encoded
+     * @param string $callback call back function
+     * @param array $callbackParams call back parameters
+     * @return string returns the encoded text
      */
-    public function utfEncoder($text, $callback = false, $callbackParams = array()) {
+    public function utfEncoder($text, $callback = '', $callbackParams = array())
+    {
         $convertedText = $text;
 
         if (strtoupper($this->config['encoding']) == 'NONE') {
-            if ($callback !== false) {
+            if ($callback !== '') {
                 $callbackParams = array_merge(array($text), $callbackParams);
                 $convertedText = call_user_func($callback, $callbackParams);
             } else {
                 $convertedText = $text;
             }
         }
-
-//        if ($this->config['encoding'] == 'UTF-8') {
-//            if ($callback !== false && $callback != 'ucfirst') {
-//                $callbackParams = array_merge($text, $callbackParams);
-//                $convertedText = call_user_func($callback, $callbackParams);
-//            } elseif ($callback == 'ucfirst') {
-//                // http://bytes.com/topic/php/answers/444382-ucfirst-utf-8-setlocale#post1693669
-//                $fc = mb_strtoupper(mb_substr($text, 0, 1, 'UTF-8'), 'UTF-8');
-//                $convertedText = $fc . mb_substr($text, 1, mb_strlen($text, 'UTF-8'), 'UTF-8');
-//            } else {
-//                $convertedText = utf8_encode($text);
-//            }
-//        }
-//
-//        if ($this->config['encoding'] == 'UTF-8 (Rin)') {
         if (strtoupper($this->config['encoding']) == 'UTF-8') {
             $convertedText = $this->utfEncoderRin($text, $callback, $callbackParams);
         }
@@ -903,33 +946,23 @@ class FileDownloadR {
      * The value is set from the module's config page.
      *
      * @link http://a4esl.org/c/charset.html
-     * @param   string  $text           the string to be decoded
-     * @param   string  $callback       call back function
-     * @param   string  $callbackParams call back parameters
-     * @return  string  returns the decoding
+     * @param string $text the string to be decoded
+     * @param string $callback call back function
+     * @param array $callbackParams call back parameters
+     * @return string returns the decoding
      */
-    public function utfDecoder($text, $callback = false, $callbackParams = array()) {
+    public function utfDecoder($text, $callback = '', $callbackParams = array())
+    {
         $convertedText = $text;
 
         if (strtoupper($this->config['encoding']) == 'NONE') {
-            if ($callback !== false) {
+            if ($callback !== '') {
                 $callbackParams = array_merge(array($text), $callbackParams);
                 $convertedText = call_user_func($callback, $callbackParams);
             } else {
                 $convertedText = $text;
             }
         }
-
-//        if ($this->config['encoding'] == 'UTF-8') {
-//            if ($callback !== false) {
-//                $callbackParams = array_merge($text, $callbackParams);
-//                $convertedText = call_user_func($callback, $callbackParams);
-//            } else {
-//                $convertedText = utf8_decode($text);
-//            }
-//        }
-//
-//        if ($this->config['encoding'] == 'UTF-8 (Rin)') {
         if (strtoupper($this->config['encoding']) == 'UTF-8') {
             $convertedText = $this->utfDecoderRin($text, $callback, $callbackParams);
         }
@@ -939,13 +972,14 @@ class FileDownloadR {
 
     /**
      * Load UTF-8 Class
-     * @param   string  $callback       method's name
-     * @param   array   $callbackParams call back parameters (in an array)
-     * @author  Rin
+     * @param string $callback method's name
+     * @param array $callbackParams call back parameters (in an array)
+     * @author Rin
      * @link    https://github.com/rin-nas/php5-utf8
-     * @return  string  converted text
+     * @return string converted text
      */
-    public function utfRin($callback, array $callbackParams = array()) {
+    public function utfRin($callback, array $callbackParams = array())
+    {
         include_once($this->config['modelPath'] . 'php5-utf8/UTF8.php');
         include_once($this->config['modelPath'] . 'php5-utf8/ReflectionTypeHint.php');
 
@@ -955,20 +989,20 @@ class FileDownloadR {
 
     /**
      * Encoding using the class from
-     * @author  Rin <http://forum.dklab.ru/profile.php?mode=viewprofile&u=3940>
+     * @author Rin <http://forum.dklab.ru/profile.php?mode=viewprofile&u=3940>
      * @link    https://github.com/rin-nas/php5-utf8
-     * @param   string  $text           text to be converted
-     * @param   string  $callback       call back function's name
-     * @param   array   $callbackParams call back parameters (in an array)
-     * @return  string  converted text
+     * @param string $text text to be converted
+     * @param string $callback call back function's name
+     * @param array $callbackParams call back parameters (in an array)
+     * @return string converted text
      */
-    public function utfEncoderRin($text, $callback = false, $callbackParams = array()) {
+    public function utfEncoderRin($text, $callback = '', $callbackParams = array())
+    {
         include_once($this->config['modelPath'] . 'php5-utf8/UTF8.php');
         include_once($this->config['modelPath'] . 'php5-utf8/ReflectionTypeHint.php');
-        $convertedText = $text;
 
         $mbDetectEncoding = mb_detect_encoding($text);
-        if ($callback !== false) {
+        if ($callback !== '') {
             $callbackParams = array_merge(array($text), $callbackParams);
             $convertedText = call_user_func_array(array('UTF8', $callback), $callbackParams);
         } else {
@@ -981,20 +1015,20 @@ class FileDownloadR {
 
     /**
      * Decoding using the class from
-     * @author  Rin <http://forum.dklab.ru/profile.php?mode=viewprofile&u=3940>
+     * @author Rin <http://forum.dklab.ru/profile.php?mode=viewprofile&u=3940>
      * @link    https://github.com/rin-nas/php5-utf8
-     * @param   string  $text           text to be converted
-     * @param   string  $callback       call back function's name
-     * @param   array   $callbackParams call back parameters (in an array)
-     * @return  string  converted text
+     * @param string $text text to be converted
+     * @param string $callback call back function's name
+     * @param array $callbackParams call back parameters (in an array)
+     * @return string converted text
      */
-    public function utfDecoderRin($text, $callback = false, $callbackParams = array()) {
+    public function utfDecoderRin($text, $callback = '', $callbackParams = array())
+    {
         include_once($this->config['modelPath'] . 'php5-utf8/UTF8.php');
         include_once($this->config['modelPath'] . 'php5-utf8/ReflectionTypeHint.php');
-        $convertedText = $text;
 
         $mbDetectEncoding = mb_detect_encoding($text);
-        if ($callback !== false) {
+        if ($callback !== '') {
             $callbackParams = array_merge(array($text), $callbackParams);
             $convertedText = call_user_func_array(array('UTF8', $callback), $callbackParams);
         } elseif (!$mbDetectEncoding || ($mbDetectEncoding != 'ASCII' && $mbDetectEncoding != 'UTF-8')) {
@@ -1002,7 +1036,6 @@ class FileDownloadR {
             $convertedText = UTF8::convert_from($text, "ASCII");
         } else {
             $convertedText = UTF8::convert_from($text, $mbDetectEncoding);
-//            $convertedText = utf8_decode($text);
         }
 
         return $convertedText;
@@ -1010,12 +1043,13 @@ class FileDownloadR {
 
     /**
      * Retrieve the content of the given directory path
-     * @param   array   $paths      The specified root path
-     * @return  array   Dir's contents in an array
+     * @param array $paths The specified root path
+     * @return array Dir's contents in an array
      */
-    private function _getDirContents(array $paths = array()) {
+    private function _getDirContents(array $paths = array())
+    {
         if (empty($paths)) {
-            return false;
+            return array();
         }
 
         $contents = array();
@@ -1023,8 +1057,8 @@ class FileDownloadR {
             if (empty($this->mediaSource)) {
                 $rootRealPath = realpath($rootPath);
                 if (!is_dir($rootPath) || empty($rootRealPath)) {
-                    $this->modx->log(modX::LOG_LEVEL_ERROR, '&getDir parameter expects a correct dir path. <b>"' . $rootPath . '"</b> is given.', '', __METHOD__, __FILE__, __LINE__);
-                    return false;
+                    $this->modx->log(modX::LOG_LEVEL_ERROR, '&getDir parameter expects a correct dir path. <b>"' . $rootPath . '"</b> is given.', '', 'FileDownloadR', __FILE__, __LINE__);
+                    return array();
                 }
             }
 
@@ -1033,7 +1067,7 @@ class FileDownloadR {
             ));
 
             if ($plugins === false) { // strict detection
-                return false;
+                return array();
             } elseif ($plugins === 'continue') {
                 continue;
             }
@@ -1041,13 +1075,14 @@ class FileDownloadR {
             if (empty($this->mediaSource)) {
                 $scanDir = scandir($rootPath);
 
-                $excludes = $this->modx->getOption('filedownloadr.exclude_scan', $this->config, '.,..,Thumbs.db,.htaccess,.htpasswd,.ftpquota,.DS_Store');
+                $excludes = $this->modx->getOption($this->namespace . '.exclude_scan', $this->config, '.,..,Thumbs.db,.htaccess,.htpasswd,.ftpquota,.DS_Store');
                 $excludes = array_map('trim', @explode(',', $excludes));
                 foreach ($scanDir as $file) {
                     if (in_array($file, $excludes)) {
                         continue;
                     }
 
+                    $rootRealPath = realpath($rootPath);
                     $fullPath = $rootRealPath . $this->ds . $file;
                     $fileType = @filetype($fullPath);
 
@@ -1090,7 +1125,7 @@ class FileDownloadR {
                             'unixdate' => $unixDate,
                             'date' => $date,
                             'image' => $this->config['imgLocat'] . $imgType,
-                            'count' => (int) $this->modx->getCount('fdDownloads', array('path_id' => $checkedDb['id'])),
+                            'count' => (int)$this->modx->getCount('fdDownloads', array('path_id' => $checkedDb['id'])),
                             'link' => $link['url'], // fallback
                             'url' => $link['url'],
                             'hash' => $checkedDb['hash']
@@ -1102,7 +1137,7 @@ class FileDownloadR {
             } else {
                 $scanDir = $this->mediaSource->getContainerList($rootPath);
 
-                $excludes = $this->modx->getOption('filedownloadr.exclude_scan', $this->config, '.,..,Thumbs.db,.htaccess,.htpasswd,.ftpquota,.DS_Store');
+                $excludes = $this->modx->getOption($this->namespace . '.exclude_scan', $this->config, '.,..,Thumbs.db,.htaccess,.htpasswd,.ftpquota,.DS_Store');
                 $excludes = array_map('trim', @explode(',', $excludes));
                 foreach ($scanDir as $file) {
                     if (in_array(($file['text']), $excludes)) {
@@ -1161,7 +1196,7 @@ class FileDownloadR {
                             'unixdate' => $unixDate,
                             'date' => $date,
                             'image' => $this->config['imgLocat'] . $imgType,
-                            'count' => (int) $this->modx->getCount('fdDownloads', array('path_id' => $checkedDb['id'])),
+                            'count' => (int)$this->modx->getCount('fdDownloads', array('path_id' => $checkedDb['id'])),
                             'link' => $link['url'], // fallback
                             'url' => $link['url'],
                             'hash' => $checkedDb['hash']
@@ -1178,7 +1213,7 @@ class FileDownloadR {
             ));
 
             if ($plugins === false) { // strict detection
-                return false;
+                return array();
             } elseif ($plugins === 'continue') {
                 continue;
             }
@@ -1189,10 +1224,11 @@ class FileDownloadR {
 
     /**
      * Retrieve the content of the given file path
-     * @param   array   $paths   The specified file path
-     * @return  array   File contents in an array
+     * @param array $paths The specified file path
+     * @return array File contents in an array
      */
-    private function _getFileContents(array $paths = array()) {
+    private function _getFileContents(array $paths = array())
+    {
         $contents = array();
         foreach ($paths as $fileRow) {
             $fileInfo = $this->_fileInformation($fileRow);
@@ -1207,10 +1243,11 @@ class FileDownloadR {
 
     /**
      * Retrieves the required information from a file
-     * @param   string  $file   absoulte file path or a file with an [| alias]
-     * @return  array   All about the file
+     * @param string $file absoulte file path or a file with an [| alias]
+     * @return array All about the file
      */
-    private function _fileInformation($file) {
+    private function _fileInformation($file)
+    {
         $notation = $this->_aliasName($file);
         $path = $notation[0];
         $alias = $notation[1];
@@ -1219,8 +1256,8 @@ class FileDownloadR {
             $fileRealPath = realpath($path);
             if (!is_file($fileRealPath) || !$fileRealPath) {
                 // @todo: lexicon
-                $this->modx->log(modX::LOG_LEVEL_ERROR, '&getFile parameter expects a correct file path. ' . $path . ' is given.', '', __METHOD__, __FILE__, __LINE__);
-                return false;
+                $this->modx->log(modX::LOG_LEVEL_ERROR, '&getFile parameter expects a correct file path. ' . $path . ' is given.', '', 'FileDownloadR', __FILE__, __LINE__);
+                return array();
             }
             $baseName = $this->_basename($fileRealPath);
             $size = filesize($fileRealPath);
@@ -1237,7 +1274,7 @@ class FileDownloadR {
             if (method_exists($this->mediaSource, 'getObjectFileSize')) {
                 $size = $this->mediaSource->getObjectFileSize($path);
             } else {
-                $size = filesize(realpath($path));
+                $size = filesize(realpath($fileRealPath));
             }
             $type = @filetype($fileRealPath);
         }
@@ -1248,10 +1285,10 @@ class FileDownloadR {
         $imgType = $this->_imgType($ext);
 
         if (!$this->_isExtShown($ext)) {
-            return false;
+            return array();
         }
         if ($this->_isExtHidden($ext)) {
-            return false;
+            return array();
         }
 
         $cdb = array();
@@ -1261,17 +1298,18 @@ class FileDownloadR {
 
         $checkedDb = $this->_checkDb($cdb);
         if (!$checkedDb) {
-            return false;
+            return array();
         }
 
         if ($this->config['directLink']) {
             $link = $this->_directLinkFileDownload($this->utfDecoder($checkedDb['filename']));
             if (!$link) {
-                return false;
+                return array();
             }
         } else {
             $link = $this->_linkFileDownload($checkedDb['filename'], $checkedDb['hash'], $checkedDb['ctx']);
         }
+        $linkdelete = $this->_linkFileDelete($checkedDb['filename'], $checkedDb['hash'], $checkedDb['ctx']);
 
         $unixDate = filemtime($fileRealPath);
         $date = date($this->config['dateFormat'], $unixDate);
@@ -1288,9 +1326,10 @@ class FileDownloadR {
             'unixdate' => $unixDate,
             'date' => $date,
             'image' => $this->config['imgLocat'] . $imgType,
-            'count' => (int) $this->modx->getCount('fdDownloads', array('path_id' => $checkedDb['id'])),
+            'count' => (int)$this->modx->getCount('fdDownloads', array('path_id' => $checkedDb['id'])),
             'link' => $link['url'], // fallback
             'url' => $link['url'],
+            'deleteurl' => $linkdelete['url'],
             'hash' => $checkedDb['hash']
         );
 
@@ -1299,10 +1338,11 @@ class FileDownloadR {
 
     /**
      * Get the alias/description from the pipe ( "|" ) symbol on the snippet
-     * @param   string  $path   the full path
-     * @return  array   [0] => the path [1] => the alias name
+     * @param string $path the full path
+     * @return array [0] => the path [1] => the alias name
      */
-    private function _aliasName($path) {
+    private function _aliasName($path)
+    {
         $xPipes = @explode('|', $path);
         $notation = array();
         $notation[0] = trim($xPipes[0]);
@@ -1313,9 +1353,10 @@ class FileDownloadR {
 
     /**
      * Custom basename, because PHP's basename can not read Chinese characters
-     * @param   string  $path   full path
+     * @param string $path full path
      */
-    private function _basename($path) {
+    private function _basename($path)
+    {
         $parts = @explode($this->ds, $path);
         $parts = array_reverse($parts);
 
@@ -1326,19 +1367,21 @@ class FileDownloadR {
      * Get the right image type to the specified file's extension, or fall back
      * to the default image.
      * @param string $ext
-     * @return type
+     * @return string
      */
-    private function _imgType($ext) {
-        return isset($this->_imgType[$ext]) ? $this->_imgType[$ext] : (isset($this->_imgType['default']) ? $this->_imgType['default'] : false);
+    private function _imgType($ext)
+    {
+        return isset($this->_imgType[$ext]) ? $this->_imgType[$ext] : (isset($this->_imgType['default']) ? $this->_imgType['default'] : '');
     }
 
     /**
      * Retrieve the images for the specified file extensions
-     * @return  array   file type's images
+     * @return array file type's images
      */
-    private function _imgTypeProp() {
+    private function _imgTypeProp()
+    {
         if (empty($this->config['imgTypes'])) {
-            return false;
+            return array();
         }
         $fdImagesChunk = $this->parseTpl($this->config['imgTypes']);
         $fdImagesChunkX = @explode(',', $fdImagesChunk);
@@ -1352,13 +1395,13 @@ class FileDownloadR {
     }
 
     /**
-     * @todo _linkFileDownload: change the hard coded html to template
-     * @param   string  $filePath   file's path
-     * @param   string  $hash       hash
-     * @param   string  $ctx        specifies a context to limit URL generation to.
-     * @return  array   the download link and the javascript's attribute
+     * @param string $filePath file's path
+     * @param string $hash hash
+     * @param string $ctx specifies a context to limit URL generation to.
+     * @return array the download link and the javascript's attribute
      */
-    private function _linkFileDownload($filePath, $hash, $ctx = 'web') {
+    private function _linkFileDownload($filePath, $hash, $ctx = 'web')
+    {
         $link = array();
         if ($this->config['noDownload']) {
             $link['url'] = $filePath;
@@ -1375,12 +1418,50 @@ class FileDownloadR {
             $args = array();
             if (!empty($existingArgs)) {
                 unset($existingArgs['id']);
+                unset($existingArgs['flddelete']);
                 foreach ($existingArgs as $k => $v) {
                     $args[] = $k . '=' . $v;
                 }
             }
-            $args[] = 'fdlfile=' . $hash;
-            $url = $this->modx->makeUrl($this->modx->resource->get('id'), $ctx, @implode('&', $args));
+            $args['fdlfile'] = $hash;
+            $url = $this->modx->makeUrl($this->modx->resource->get('id'), $ctx, $args);
+            $link['url'] = $url;
+        }
+        $link['hash'] = $hash;
+        return $link;
+    }
+
+    /**
+     * @param string $filePath file's path
+     * @param string $hash hash
+     * @param string $ctx specifies a context to limit URL generation to.
+     * @return array the download link and the javascript's attribute
+     */
+    private function _linkFileDelete($filePath, $hash, $ctx = 'web')
+    {
+        $link = array();
+        if (!$this->isAllowed('deleteGroups')) {
+            $link['url'] = '';
+        } else {
+            $queries = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY);
+            $existingArgs = array();
+            if (!empty($queries)) {
+                $queries = @explode('&', $queries);
+                foreach ($queries as $query) {
+                    $xquery = @explode('=', $query);
+                    $existingArgs[$xquery[0]] = !empty($xquery[1]) ? $xquery[1] : '';
+                }
+            }
+            $args = array();
+            if (!empty($existingArgs)) {
+                unset($existingArgs['id']);
+                unset($existingArgs['fldfile']);
+                foreach ($existingArgs as $k => $v) {
+                    $args[] = $k . '=' . $v;
+                }
+            }
+            $args['flddelete'] = $hash;
+            $url = $this->modx->makeUrl($this->modx->resource->get('id'), $ctx, $args);
             $link['url'] = $url;
         }
         $link['hash'] = $hash;
@@ -1389,10 +1470,11 @@ class FileDownloadR {
 
     /**
      * Set the direct link to the file path
-     * @param   string  $filePath   absolute file path
-     * @return  array   the download link and the javascript's attribute
+     * @param string $filePath absolute file path
+     * @return array the download link and the javascript's attribute
      */
-    private function _directLinkFileDownload($filePath) {
+    private function _directLinkFileDownload($filePath)
+    {
         $link = array();
         $link['url'] = '';
         if ($this->config['noDownload']) {
@@ -1401,7 +1483,7 @@ class FileDownloadR {
             // to use this method, the file should always be placed on the web root
             $corePath = str_replace('/', $this->ds, MODX_CORE_PATH);
             if (stristr($filePath, $corePath)) {
-                return false;
+                return array();
             }
             // switching from absolute path to url is nuts
             if (empty($this->mediaSource)) {
@@ -1421,14 +1503,14 @@ class FileDownloadR {
     }
 
     /**
-     * @todo _linkDirOpen: change the hard coded html to template
-     * @param   string  $hash       hash
-     * @param   string  $ctx        specifies a context to limit URL generation to.
-     * @return  array   the open directory link and the javascript's attribute
+     * @param string $hash hash
+     * @param string $ctx specifies a context to limit URL generation to.
+     * @return array the open directory link and the javascript's attribute
      */
-    private function _linkDirOpen($hash, $ctx = 'web') {
+    private function _linkDirOpen($hash, $ctx = 'web')
+    {
         if (!$this->config['browseDirectories']) {
-            return false;
+            return array();
         }
         $queries = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY);
         $existingArgs = array();
@@ -1446,11 +1528,11 @@ class FileDownloadR {
                 $args[] = $k . '=' . $v;
             }
         }
-        $args[] = 'fdldir=' . $hash;
+        $args['fdldir'] = $hash;
         if (!empty($this->config['fdlid'])) {
-            $args[] = 'fdlid=' . $this->config['fdlid'];
+            $args['fdlid'] = $this->config['fdlid'];
         }
-        $url = $this->modx->makeUrl($this->modx->resource->get('id'), $ctx, @implode('&', $args));
+        $url = $this->modx->makeUrl($this->modx->resource->get('id'), $ctx, $args);
         $link = array();
         $link['url'] = $url;
         $link['hash'] = $hash;
@@ -1460,11 +1542,12 @@ class FileDownloadR {
     /**
      * Set the new value to the getDir property to browse inside the clicked
      * directory
-     * @param   string  $hash       the hashed link
-     * @param   bool    $selected   to patch multiple snippet call
-     * @return  bool    true | false
+     * @param string $hash the hashed link
+     * @param bool $selected to patch multiple snippet call
+     * @return bool    true | false
      */
-    public function setDirProp($hash, $selected = true) {
+    public function setDirProp($hash, $selected = true)
+    {
         if (empty($hash) || !$selected) {
             return false;
         }
@@ -1485,10 +1568,11 @@ class FileDownloadR {
 
     /**
      * Download action
-     * @param   string  $hash   hashed text
-     * @return  void    file is pulled to the browser
+     * @param string $hash hashed text
+     * @return boolean|void file is pulled to the browser
      */
-    public function downloadFile($hash) {
+    public function downloadFile($hash)
+    {
         if (empty($hash)) {
             return false;
         }
@@ -1510,7 +1594,7 @@ class FileDownloadR {
             'ctx' => $ctx,
             'media_source_id' => $mediaSourceId,
             'filePath' => $filePath,
-            'count' => (int) $this->modx->getCount('fdDownloads', array('path_id' => $fdlPath->get('id'))),
+            'count' => (int)$this->modx->getCount('fdDownloads', array('path_id' => $fdlPath->get('id'))),
         ));
         if ($plugins === false) { // strict detection
             return false;
@@ -1520,10 +1604,12 @@ class FileDownloadR {
         if (empty($this->mediaSource)) {
             if (file_exists($filePath)) {
                 $fileExists = true;
+                $realFilePath = $filePath;
             }
         } else {
             if (method_exists($this->mediaSource, 'getBasePath')) {
-                if (file_exists($this->mediaSource->getBasePath($filePath) . $filePath)) {
+                $realFilePath = $this->mediaSource->getBasePath($filePath) . $filePath;
+                if (file_exists($realFilePath)) {
                     $fileExists = true;
                 }
             } elseif (method_exists($this->mediaSource, 'getBaseUrl')) {
@@ -1536,12 +1622,12 @@ class FileDownloadR {
                     fwrite($handle, $content);
                     fseek($handle, 0);
                     fclose($handle);
-                    $filePath = $temp;
+                    $realFilePath = $temp;
                     $fileExists = true;
                 } else {
                     $msg = 'Unable to get the content from remote server';
                     $this->setError($msg);
-                    $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadR] ' . $msg, '', __METHOD__, __FILE__, __LINE__);
+                    $this->modx->log(modX::LOG_LEVEL_ERROR, $msg, '', 'FileDownloadR', __FILE__, __LINE__);
                 }
             } else {
                 $fileExists = false;
@@ -1558,17 +1644,17 @@ class FileDownloadR {
             ob_end_clean(); //added to fix ZIP file corruption
             ob_start(); //added to fix ZIP file corruption
 
-            header('Pragma: public');  // required
-            header('Expires: 0');  // no cache
+            header('Pragma: public'); // required
+            header('Expires: 0'); // no cache
             header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
             header('Cache-Control: private', false);
-            header('Last-Modified: ' . gmdate('D, d M Y H:i:s', filemtime($filePath)) . ' GMT');
+            header('Last-Modified: ' . gmdate('D, d M Y H:i:s', filemtime($realFilePath)) . ' GMT');
             header('Content-Description: File Transfer');
             header('Content-Type:'); //added to fix ZIP file corruption
             header('Content-Type: "application/force-download"');
             header('Content-Disposition: attachment; filename="' . $filename . '"');
             header('Content-Transfer-Encoding: binary');
-            header('Content-Length: ' . (string) (filesize($filePath))); // provide file size
+            header('Content-Length: ' . (string)(filesize($realFilePath))); // provide file size
             header('Connection: close');
             sleep(1);
 
@@ -1578,8 +1664,7 @@ class FileDownloadR {
             flush();
 
             $chunksize = 1 * (1024 * 1024); // how many bytes per chunk
-            $buffer = '';
-            $handle = @fopen($filePath, 'rb');
+            $handle = @fopen($realFilePath, 'rb');
             if ($handle === false) {
                 return false;
             }
@@ -1606,7 +1691,7 @@ class FileDownloadR {
                 'ctx' => $ctx,
                 'media_source_id' => $mediaSourceId,
                 'filePath' => $filePath,
-                'count' => (int) $this->modx->getCount('fdDownloads', array('path_id' => $fdlPath->get('id'))),
+                'count' => (int)$this->modx->getCount('fdDownloads', array('path_id' => $fdlPath->get('id'))),
             ));
 
             exit;
@@ -1616,17 +1701,63 @@ class FileDownloadR {
     }
 
     /**
-     * Add download counter
-     * @param   string  $hash   secret hash
-     * @return  boolean
+     * Delete action
+     * @param string $hash hashed text
+     * @return boolean
      */
-    private function _setDownloadCount($hash) {
-        if (!$this->config['countDownloads']) {
+    public function deleteFile($hash)
+    {
+        if (empty($hash)) {
             return false;
         }
         $fdlPath = $this->modx->getObject('fdPaths', array('hash' => $hash));
         if (!$fdlPath) {
             return false;
+        }
+        $ctx = $fdlPath->get('ctx');
+        if ($this->modx->context->key !== $ctx) {
+            return false;
+        }
+        $mediaSourceId = $fdlPath->get('media_source_id');
+        if (intval($this->config['mediaSourceId']) !== $mediaSourceId) {
+            return false;
+        }
+        $filePath = $this->utfDecoder($fdlPath->get('filename'));
+        $fileExists = false;
+
+        if ($this->isAllowed('deleteGroups')) {
+            if (empty($this->mediaSource)) {
+                if (file_exists($filePath)) {
+                    @unlink($filePath);
+                    $fileExists = true;
+                }
+            } else {
+                if (method_exists($this->mediaSource, 'getBasePath')) {
+                    if (file_exists($this->mediaSource->getBasePath($filePath) . $filePath)) {
+                        @unlink($this->mediaSource->getBasePath($filePath) . $filePath);
+                        $fileExists = true;
+                    }
+                } else if (method_exists($this->mediaSource, 'getBaseUrl')) {
+                    // @todo remove the file from the media source
+                }
+            }
+        }
+
+        return $fileExists;
+    }
+
+    /**
+     * Add download counter
+     * @param string $hash secret hash
+     */
+    private function _setDownloadCount($hash)
+    {
+        if (!$this->config['countDownloads']) {
+            return;
+        }
+        $fdlPath = $this->modx->getObject('fdPaths', array('hash' => $hash));
+        if (!$fdlPath) {
+            return;
         }
         // save the new count
         $fdDownload = $this->modx->newObject('fdDownloads');
@@ -1657,36 +1788,17 @@ class FileDownloadR {
         if ($fdDownload->save() === false) {
             $msg = $this->modx->lexicon($this->config['prefix'] . 'err_save_counter');
             $this->setError($msg);
-            $this->modx->log(modX::LOG_LEVEL_ERROR, '[FileDownloadR] ' . $msg, '', __METHOD__, __FILE__, __LINE__);
-            return false;
+            $this->modx->log(modX::LOG_LEVEL_ERROR, $msg, '', 'FileDownloadR', __FILE__, __LINE__);
         }
-    }
-
-    /**
-     * Get the download counting for the specified file and context
-     * @param type $ctx
-     * @param type $filePath
-     * @return type
-     * @deprecated since 2.0.0-beta1
-     */
-    private function _getDownloadCount($ctx, $filePath) {
-        $fdlPath = $this->modx->getObject('fdPaths', array(
-            'ctx' => $ctx,
-            'filename' => $filePath
-        ));
-        if (!$fdlPath) {
-            return 0;
-        }
-
-        return $fdlPath->get('count');
     }
 
     /**
      * Check whether the file with the specified extension is hidden from the list
-     * @param   string  $ext    file's extension
-     * @return  bool    true | false
+     * @param string $ext file's extension
+     * @return bool    true | false
      */
-    private function _isExtHidden($ext) {
+    private function _isExtHidden($ext)
+    {
         if (empty($this->config['extHidden'])) {
             return false;
         }
@@ -1701,10 +1813,11 @@ class FileDownloadR {
 
     /**
      * Check whether the file with the specified extension is shown to the list
-     * @param   string  $ext    file's extension
-     * @return  bool    true | false
+     * @param string $ext file's extension
+     * @return bool    true | false
      */
-    private function _isExtShown($ext) {
+    private function _isExtShown($ext)
+    {
         if (empty($this->config['extShown'])) {
             return true;
         }
@@ -1719,14 +1832,15 @@ class FileDownloadR {
 
     /**
      * Check the user's group
-     * @param   void
-     * @return  bool    true | false
+     * @param void
+     * @return bool    true | false
      */
-    public function isAllowed() {
+    public function isAllowed($type = 'userGroups')
+    {
         if (empty($this->config['userGroups'])) {
             return true;
         } else {
-            $userGroupsX = @explode(',', $this->config['userGroups']);
+            $userGroupsX = @explode(',', $this->config[$type]);
             array_walk($userGroupsX, create_function('&$val', '$val = trim($val);'));
             $userAccessGroupNames = $this->_userAccessGroupNames();
 
@@ -1742,9 +1856,10 @@ class FileDownloadR {
 
     /**
      * Get logged in usergroup names
-     * @return  array   access group names
+     * @return array access group names
      */
-    private function _userAccessGroupNames() {
+    private function _userAccessGroupNames()
+    {
         $userAccessGroupNames = array();
 
         $userId = $this->modx->user->get('id');
@@ -1753,6 +1868,7 @@ class FileDownloadR {
         }
 
         $userObj = $this->modx->getObject('modUser', $userId);
+        /** @var modUserGroupMember[] $userGroupObj */
         $userGroupObj = $userObj->getMany('UserGroupMembers');
         foreach ($userGroupObj as $uGO) {
             $userGroupNameObj = $this->modx->getObject('modUserGroup', $uGO->get('user_group'));
@@ -1764,10 +1880,11 @@ class FileDownloadR {
 
     /**
      * Prettify the file size with thousands unit byte
-     * @param   int     $fileSize filesize()
-     * @return  string  the pretty number
+     * @param int $fileSize filesize()
+     * @return string the pretty number
      */
-    private function _fileSizeText($fileSize) {
+    private function _fileSizeText($fileSize)
+    {
         if ($fileSize === 0) {
             $returnVal = '0 bytes';
         } else if ($fileSize > 1024 * 1024 * 1024) {
@@ -1791,16 +1908,14 @@ class FileDownloadR {
      * - sortByCaseSensitive
      * - browseDirectories
      * - groupByDirectory
-     * @param   array   $contents   unsorted contents
-     * @return  array   sorted contents
+     * @param array $contents unsorted contents
+     * @return array sorted contents
      */
-    private function _sortOrder(array $contents) {
+    private function _sortOrder(array $contents)
+    {
         if (empty($contents)) {
             return $contents;
-        } else {
-            $sort = $contents;
         }
-
         if (empty($this->config['groupByDirectory'])) {
             $sort = $this->_groupByType($contents);
         } else {
@@ -1826,12 +1941,13 @@ class FileDownloadR {
 
     /**
      * Grouping the contents by filetype
-     * @param   array   $contents   contents
-     * @return  array   grouped contents
+     * @param array $contents contents
+     * @return array grouped contents
      */
-    private function _groupByType(array $contents) {
+    private function _groupByType(array $contents)
+    {
         if (empty($contents)) {
-            return false;
+            return array();
         }
 
         $sortType = array();
@@ -1842,7 +1958,7 @@ class FileDownloadR {
             $sortType[$file['type']][$k] = $file;
         }
         if (empty($sortType)) {
-            return false;
+            return array();
         }
 
         foreach ($sortType as $k => $file) {
@@ -1902,15 +2018,12 @@ class FileDownloadR {
 
     /**
      * Multi dimensional sorting
-     * @param   array   $array          content array
-     * @param   string  $index          order index
-     * @param   string  $order          asc [| void]
-     * @param   bool    $natSort        true | false
-     * @param   bool    $caseSensitive  true | false
-     * @return  array   the sorted array
-     * @link    modified from http://www.php.net/manual/en/function.sort.php#104464
+     * @param array $array content array
+     * @return array the sorted array
+     * @link modified from http://www.php.net/manual/en/function.sort.php#104464
      */
-    private function _sortMultiOrders($array) {
+    private function _sortMultiOrders($array)
+    {
         if (!is_array($array) || count($array) < 1) {
             return $array;
         }
@@ -1951,10 +2064,11 @@ class FileDownloadR {
 
     /**
      * Generate the class names for the directory rows
-     * @param   int     $row    the row number
-     * @return  string  imploded class names
+     * @param int $row the row number
+     * @return string imploded class names
      */
-    private function _cssDir($row) {
+    private function _cssDir($row)
+    {
         $totalRow = $this->_count['dirs'];
         $cssName = array();
         if (!empty($this->config['cssDir'])) {
@@ -1980,11 +2094,12 @@ class FileDownloadR {
 
     /**
      * Generate the class names for the file rows
-     * @param   int     $row    the row number
-     * @param   string  $ext    extension
-     * @return  string  imploded class names
+     * @param int $row the row number
+     * @param string $ext extension
+     * @return string imploded class names
      */
-    private function _cssFile($row, $ext) {
+    private function _cssFile($row, $ext)
+    {
         $totalRow = $this->_count['files'];
         $cssName = array();
         if (!empty($this->config['cssFile'])) {
@@ -2021,13 +2136,15 @@ class FileDownloadR {
 
     /**
      * Parsing the directory template
-     * @param   array   $contents   properties
-     * @return  string  rendered HTML
+     * @param array $contents properties
+     * @return string rendered HTML
      */
-    private function _tplDir(array $contents) {
+    private function _tplDir(array $contents)
+    {
         if (empty($contents)) {
             return '';
         }
+        $phs = array();
         foreach ($contents as $k => $v) {
             $phs[$this->config['prefix'] . $k] = $v;
         }
@@ -2038,13 +2155,15 @@ class FileDownloadR {
 
     /**
      * Parsing the file template
-     * @param   array   $fileInfo   properties
-     * @return  string  rendered HTML
+     * @param array $fileInfo properties
+     * @return string rendered HTML
      */
-    private function _tplFile(array $fileInfo) {
+    private function _tplFile(array $fileInfo)
+    {
         if (empty($fileInfo) || empty($this->config['tplFile'])) {
             return '';
         }
+        $phs = array();
         foreach ($fileInfo as $k => $v) {
             $phs[$this->config['prefix'] . $k] = $v;
         }
@@ -2055,10 +2174,11 @@ class FileDownloadR {
 
     /**
      * Path template if &groupByDirectory is enabled
-     * @param   string  $path   Path's name
-     * @return  string  rendered HTML
+     * @param string $path Path's name
+     * @return string rendered HTML
      */
-    private function _tplDirectory($path) {
+    private function _tplDirectory($path)
+    {
         if (empty($path) || is_array($path)) {
             return '';
         }
@@ -2072,9 +2192,10 @@ class FileDownloadR {
 
     /**
      * Wraps templates
-     * @return  string  rendered template
+     * @return string rendered template
      */
-    private function _tplWrapper() {
+    private function _tplWrapper()
+    {
         $phs[$this->config['prefix'] . 'classPath'] = (!empty($this->config['cssPath'])) ? ' class="' . $this->config['cssPath'] . '"' : '';
         $phs[$this->config['prefix'] . 'path'] = $this->_breadcrumbs();
         $rows = !empty($this->_output['rows']) ? $this->_output['rows'] : '';
@@ -2092,10 +2213,11 @@ class FileDownloadR {
 
     /**
      * Trim the absolute path to be a relatively safe path
-     * @param   string  $path   the absolute path
-     * @return  string  trimmed path
+     * @param string $path the absolute path
+     * @return string trimmed path
      */
-    private function _trimPath($path) {
+    private function _trimPath($path)
+    {
         $trimmedPath = $path;
         foreach ($this->config['origDir'] as $dir) {
             $dir = trim($dir, '/') . '/';
@@ -2122,10 +2244,11 @@ class FileDownloadR {
 
     /**
      * Get absolute path of the given relative path, based on media source
-     * @param   string  $path   relative path
-     * @return  string  absolute path
+     * @param string $path relative path
+     * @return string absolute path
      */
-    private function _getAbsolutePath($path) {
+    private function _getAbsolutePath($path)
+    {
         $output = '';
         if (empty($this->mediaSource)) {
             $output = realpath($path) . $this->ds;
@@ -2141,10 +2264,11 @@ class FileDownloadR {
 
     /**
      * Create a breadcrumbs link
-     * @param   void
-     * @return  string  a breadcrumbs link
+     * @param void
+     * @return string a breadcrumbs link
      */
-    private function _breadcrumbs() {
+    private function _breadcrumbs()
+    {
         if (empty($this->config['browseDirectories'])) {
             return '';
         }
@@ -2227,29 +2351,32 @@ class FileDownloadR {
         return $breadcrumb;
     }
 
-    public function parseTemplate() {
+    public function parseTemplate()
+    {
         $o = $this->_tplWrapper();
         return $o;
     }
 
     /**
      * Sets the salted parameter to the database
-     * @param   string  $ctx        context
-     * @param   string  $filename   filename
-     * @return  string  hashed parameter
+     * @param string $ctx context
+     * @param string $filename filename
+     * @return string hashed parameter
      */
-    private function _setHashedParam($ctx, $filename) {
+    private function _setHashedParam($ctx, $filename)
+    {
         $input = $this->config['saltText'] . $ctx . $this->config['mediaSourceId'] . $filename;
         return str_rot13(base64_encode(hash('sha512', $input)));
     }
 
     /**
      * Gets the salted parameter from the System Settings + stored hashed parameter.
-     * @param   string  $ctx        context
-     * @param   string  $filename   filename
-     * @return  string  hashed parameter
+     * @param string $ctx context
+     * @param string $filename filename
+     * @return string hashed parameter
      */
-    private function _getHashedParam($ctx, $filename) {
+    private function _getHashedParam($ctx, $filename)
+    {
         if (!empty($this->mediaSource)) {
             $search = $this->getBasePath($filename);
             if (!empty($search)) {
@@ -2269,11 +2396,12 @@ class FileDownloadR {
 
     /**
      * Check whether the REQUEST parameter exists in the database.
-     * @param   string  $ctx    context
-     * @param   string  $hash   hash value
-     * @return  bool    true | false
+     * @param string $ctx context
+     * @param string $hash hash value
+     * @return bool    true | false
      */
-    public function checkHash($ctx, $hash) {
+    public function checkHash($ctx, $hash)
+    {
         $fdlPath = $this->modx->getObject('fdPaths', array(
             'ctx' => $ctx,
             'hash' => $hash
@@ -2286,14 +2414,15 @@ class FileDownloadR {
 
     /**
      * Get applied plugins and set custom properties by event's provider
-     * @param type $eventName
-     * @param type $customProperties
-     * @param type $toString
-     * @return type
+     * @param string $eventName
+     * @param array $customProperties
+     * @param boolean $toString
+     * @return array
      */
-    public function getPlugins($eventName, $customProperties = array(), $toString = false) {
+    public function getPlugins($eventName, $customProperties = array(), $toString = false)
+    {
         if (empty($this->plugins)) {
-            return;
+            return null;
         }
         if (!is_array($customProperties)) {
             $customProperties = array();

@@ -24,8 +24,13 @@
  * @author      goldsky <goldsky@virtudraft.com>
  * @package     filedownload
  * @subpackage  filedownloadlink snippet
+ *
+ * @var modX $modx
+ * @var array $scriptProperties
  */
-$scriptProperties['encoding'] = $modx->getOption('encoding', $scriptProperties, 'UTF-8');
+$assetsUrl = $modx->getOption('filedownloadr.assets_url', $scriptProperties, $modx->getOption('assets_url') . 'components/filedownloadr/', true);
+
+$scriptProperties['encoding'] = $modx->getOption('encoding', $scriptProperties, 'UTF-8', true);
 header('Content-Type: text/html; charset=' . $scriptProperties['encoding']);
 mb_internal_encoding($scriptProperties['encoding']);
 
@@ -42,7 +47,7 @@ mb_internal_encoding($scriptProperties['encoding']);
  * @default: null
  * @var string
  */
-$scriptProperties['getFile'] = $modx->getOption('getFile', $scriptProperties);
+$scriptProperties['getFile'] = $modx->getOption('getFile', $scriptProperties, '', true);
 /**
  * for Output Filter Modifier
  * @link http://rtfm.modx.com/display/revolution20/Custom+Output+Filter+Examples#CustomOutputFilterExamples-CreatingaCustomOutputModifier
@@ -71,7 +76,7 @@ if ($comma) {
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['chkDesc'] = $modx->getOption('chkDesc', $scriptProperties);
+$scriptProperties['chkDesc'] = $modx->getOption('chkDesc', $scriptProperties, '', true);
 /**
  * The dateFormat parameter will change the format of the date displayed for
  * each file in the output.
@@ -81,7 +86,7 @@ $scriptProperties['chkDesc'] = $modx->getOption('chkDesc', $scriptProperties);
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['dateFormat'] = $modx->getOption('dateFormat', $scriptProperties, 'Y-m-d');
+$scriptProperties['dateFormat'] = $modx->getOption('dateFormat', $scriptProperties, 'Y-m-d', true);
 
 /////////////////////////////////////////////////////////////////////////////////
 //                                 Permissions                                 //
@@ -97,13 +102,25 @@ $scriptProperties['dateFormat'] = $modx->getOption('dateFormat', $scriptProperti
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'userGroups' instead.
  */
-$scriptProperties['downloadGroups'] = $modx->getOption('downloadGroups', $scriptProperties);
+$scriptProperties['downloadGroups'] = $modx->getOption('downloadGroups', $scriptProperties, '', true);
 if (!empty($scriptProperties['downloadGroups']) && empty($scriptProperties['userGroups'])) {
     $scriptProperties['userGroups'] = $scriptProperties['downloadGroups'];
 } else {
-    $scriptProperties['userGroups'] = $modx->getOption('userGroups', $scriptProperties);
+    $scriptProperties['userGroups'] = $modx->getOption('userGroups', $scriptProperties, '', true);
 }
 unset($scriptProperties['downloadGroups']);
+
+/**
+ * This will make the delete link active for users that belong to the specified
+ * groups. Multiple groups can be specified by using a comma delimited list.
+ * @options: comma delimited list of User groups
+ * @default: null
+ * @example: Administrator, Registered Member
+ * @var string
+ * @since ver 2.1.0
+ */
+$scriptProperties['deleteGroups'] = $modx->getOption('deleteGroups', $scriptProperties, '', true);
+
 /////////////////////////////////////////////////////////////////////////////////
 //                              Download Counting                              //
 /////////////////////////////////////////////////////////////////////////////////
@@ -115,7 +132,7 @@ unset($scriptProperties['downloadGroups']);
  * @var bool
  * @since ver 1.2.0
  */
-$scriptProperties['countDownloads'] = $modx->getOption('countDownloads', $scriptProperties, 1);
+$scriptProperties['countDownloads'] = $modx->getOption('countDownloads', $scriptProperties, 1, true);
 /////////////////////////////////////////////////////////////////////////////////
 //                                   Images                                    //
 /////////////////////////////////////////////////////////////////////////////////
@@ -123,12 +140,13 @@ $scriptProperties['countDownloads'] = $modx->getOption('countDownloads', $script
  * Path to the images to associate with each file extension.
  * The images will be outputted with [[+fd.image]] placeholder.
  * @options: path to images
- * @default: assets/components/filedownloadr/img/filetypes/
+ * @default: {assets_url}components/filedownloadr/img/filetypes/
  * @example: assets/images/icons
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['imgLocat'] = $modx->getOption('imgLocat', $scriptProperties, 'assets/components/filedownloadr/img/filetypes/');
+$scriptProperties['imgLocat'] = $modx->getOption('imgLocat', $scriptProperties, $assetsUrl . 'img/filetypes/', true);
+
 /**
  * This allows for associations between file extensions and an image.
  * The information on these associations should be put into a chunk similar to
@@ -142,35 +160,36 @@ $scriptProperties['imgLocat'] = $modx->getOption('imgLocat', $scriptProperties, 
  * @default: null
  * @example:
  *     chunk's name: fdImages
- *     chunk content:jpg     = image.png,
- *     png     = image.png,
- *     gif     = image.png,
- *     php     = document-php.png,
- *     js      = document-code.png,
- *     pdf     = document-pdf.png,
- *     txt     = document-text.png,
- *     zip     = folder-zipper.png,
- *     html    = globe.png,
- *     xls     = document-excel.png,
- *     xlsx    = document-excel.png,
- *     doc     = document-word.png,
- *     docx    = document-word.png,
- *     mdb     = document-access.png,
- *     ppt     = document-powerpoint.png,
- *     pptx    = document-powerpoint.png,
- *     pps     = slide-powerpoint.png,
- *     ppsx    = slide-powerpoint.png,
- *     mov     = film.png,
- *     avi     = film.png,
- *     mp3     = music.png,
- *     wav     = music.png,
- *     flv     = document-flash-movie.png,
- *     dir     = folder.png,
- *     default = document.png
+ *     chunk content:
+ *          jpg     = image.png,
+ *          png     = image.png,
+ *          gif     = image.png,
+ *          php     = document-php.png,
+ *          js      = document-code.png,
+ *          pdf     = document-pdf.png,
+ *          txt     = document-text.png,
+ *          zip     = folder-zipper.png,
+ *          html    = globe.png,
+ *          xls     = document-excel.png,
+ *          xlsx    = document-excel.png,
+ *          doc     = document-word.png,
+ *          docx    = document-word.png,
+ *          mdb     = document-access.png,
+ *          ppt     = document-powerpoint.png,
+ *          pptx    = document-powerpoint.png,
+ *          pps     = slide-powerpoint.png,
+ *          ppsx    = slide-powerpoint.png,
+ *          mov     = film.png,
+ *          avi     = film.png,
+ *          mp3     = music.png,
+ *          wav     = music.png,
+ *          flv     = document-flash-movie.png,
+ *          dir     = folder.png,
+ *          default = document.png
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['imgTypes'] = $modx->getOption('imgTypes', $scriptProperties);
+$scriptProperties['imgTypes'] = $modx->getOption('imgTypes', $scriptProperties, 'fdimages', true);
 
 /////////////////////////////////////////////////////////////////////////////////
 //                            Templates & Styles                               //
@@ -189,12 +208,12 @@ if (!empty($scriptProperties['tplCode'])) {
 
 /**
  * Template for forbidden access
- * @options: @BINDINGs
- * @default: @FILE: [[++core_path]]components/filedownloadr/elements/chunks/tpl-notallowed.chunk.tpl
+ * @options: chunk's name
+ * @default: tpl-notallowed
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['tplNotAllowed'] = $modx->getOption('tplNotAllowed', $scriptProperties, '@FILE: [[++core_path]]components/filedownloadr/elements/chunks/tpl-notallowed.chunk.tpl');
+$scriptProperties['tplNotAllowed'] = $modx->getOption('tplNotAllowed', $scriptProperties, 'tpl-notallowed');
 
 /**
  * This property will make the list only displays files without their download links.
@@ -202,7 +221,7 @@ $scriptProperties['tplNotAllowed'] = $modx->getOption('tplNotAllowed', $scriptPr
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['noDownload'] = $modx->getOption('noDownload', $scriptProperties);
+$scriptProperties['noDownload'] = $modx->getOption('noDownload', $scriptProperties, '', true);
 /**
  * Turn on the ajax mode for the script.
  * @options: 1 | 0
@@ -210,14 +229,14 @@ $scriptProperties['noDownload'] = $modx->getOption('noDownload', $scriptProperti
  * @var bool
  * @since ver 2.0.0
  */
-$scriptProperties['ajaxMode'] = $modx->getOption('ajaxMode', $scriptProperties);
+$scriptProperties['ajaxMode'] = $modx->getOption('ajaxMode', $scriptProperties, '0', true);
 /**
  * The MODX's resource page id as the Ajax processor file
  * @var int
  * @since ver 2.0.0
  * @subpackage FileDownloadController
  */
-$scriptProperties['ajaxControllerPage'] = $modx->getOption('ajaxControllerPage', $scriptProperties);
+$scriptProperties['ajaxControllerPage'] = $modx->getOption('ajaxControllerPage', $scriptProperties, '', true);
 /**
  * The Ajax's element container id
  * @default: file-download
@@ -225,23 +244,21 @@ $scriptProperties['ajaxControllerPage'] = $modx->getOption('ajaxControllerPage',
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['ajaxContainerId'] = $modx->getOption('ajaxContainerId', $scriptProperties, 'file-download');
+$scriptProperties['ajaxContainerId'] = $modx->getOption('ajaxContainerId', $scriptProperties, 'file-download', true);
 /**
  * FileDownloadR's Javascript file for the page header
- * @default: assets/components/filedownloadr/js/fd.js
+ * @default: empty
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['fileJs'] = $modx->getOption('fileJs', $scriptProperties
-        , $modx->getOption('assets_url') . 'components/filedownloadr/js/fd.js');
+$scriptProperties['fileJs'] = $modx->getOption('fileJs', $scriptProperties, '', true);
 /**
  * FileDownloadR's Cascading Style Sheet file for the page header
- * @default: assets/components/filedownloadr/css/fd.css
+ * @default: {assets_url}components/filedownloadr/css/fd.css
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['fileCss'] = $modx->getOption('fileCss', $scriptProperties
-        , $modx->getOption('assets_url') . 'components/filedownloadr/css/fd.css');
+$scriptProperties['fileCss'] = $modx->getOption('fileCss', $scriptProperties, $assetsUrl . 'css/fd.min.css', true);
 
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
@@ -257,54 +274,58 @@ $scriptProperties['fileCss'] = $modx->getOption('fileCss', $scriptProperties
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['saltText'] = $modx->getOption('saltText', $scriptProperties);
+$scriptProperties['saltText'] = $modx->getOption('saltText', $scriptProperties, 'FileDownloadR', true);
 /**
  * This parameter provides the direct link
  * @default: 0
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['directLink'] = $modx->getOption('directLink', $scriptProperties, 0);
+$scriptProperties['directLink'] = $modx->getOption('directLink', $scriptProperties, 0, true);
 /**
  * This is a given ID to the snippet to deal with multiple snippet calls and
  * &browseDirectories altogether
  * @default: null
  * @var string
  */
-$scriptProperties['plugins'] = $modx->getOption('plugins', $scriptProperties);
+$scriptProperties['fdlid'] = $modx->getOption('fdlid', $scriptProperties, '', true);
+/**
+ * Attach plugin to the output
+ * @default: null
+ * @var string
+ */
+$scriptProperties['plugins'] = $modx->getOption('plugins', $scriptProperties, '', true);
 
 /**
- * This is a given ID to the snippet to deal with multiple snippet calls and
- * &browseDirectories altogether
- * @default: null
+ * prefix for the placeholders
+ * @default: fd.
  * @var string
  */
-$scriptProperties['prefix'] = $modx->getOption('prefix', $scriptProperties, 'fd.');
+$scriptProperties['prefix'] = $modx->getOption('prefix', $scriptProperties, 'fd.', true);
 
 /**
  * Use IP location or not
  * @default: false
  * @var boolean
  */
-$scriptProperties['useGeolocation'] = (boolean) $modx->getOption('useGeolocation', $scriptProperties, false);
+$scriptProperties['useGeolocation'] = (boolean)$modx->getOption('useGeolocation', $scriptProperties, $modx->getOption('filedownloadr.use_geolocation', null, false), true);
 
 /**
  * API key of IPInfoDB.com
  * @default: ''
  * @var string
  */
-$scriptProperties['geoApiKey'] = $modx->getOption('geoApiKey', $scriptProperties, $modx->getOption('filedownloadr.ipinfodb_api_key', $scriptProperties, ''));
+$scriptProperties['geoApiKey'] = $modx->getOption('geoApiKey', $scriptProperties, $modx->getOption('filedownloadr.ipinfodb_api_key', $scriptProperties, '', true));
 
 array_walk($scriptProperties, create_function('&$val', 'if (!is_array($val)) $val = trim($val);'));
 
-$fdl = $modx->getService('filedownloadr'
-        , 'FileDownloadR'
-        , $modx->getOption('core_path') . 'components/filedownloadr/model/filedownloadr/'
-        , $scriptProperties
-);
+$corePath = $modx->getOption('filedownloadr.core_path', null, $modx->getOption('core_path') . 'components/filedownloadr/');
+$fdl = $modx->getService('filedownloadr', 'FileDownloadR', $corePath . 'model/filedownloadr/', array_merge($scriptProperties, array(
+    'core_path' => $corePath
+)));
 
 if (!($fdl instanceof FileDownloadR)) {
-    return 'instanceof error.';
+    return 'FileDownloadR instanceof error.';
 }
 
 $fdl->setConfigs($scriptProperties);
@@ -343,28 +364,28 @@ if (!empty($_GET['fdlfile'])) {
     if ($baseRef !== $page) {
         return $modx->sendUnauthorizedPage();
     }
-    $sanitizedGets = $modx->sanitize($_GET);
 }
 
 if (empty($scriptProperties['downloadByOther'])) {
     if (!empty($_GET['fdlfile'])) {
-        if (!$fdl->checkHash($modx->context->key, $sanitizedGets['fdlfile']))
+        $sanitizedGets = $modx->sanitize($_GET);
+        if (!$fdl->checkHash($modx->context->key, $sanitizedGets['fdlfile'])) {
             return;
+        }
         $downloadFile = $fdl->downloadFile($sanitizedGets['fdlfile']);
         if (!$downloadFile) {
             return;
         }
-        return;
+        // simply terminate, because this is a downloading state
+        die();
     }
 }
 
 $contents = $fdl->getContents();
 
-if (!$contents) {
+if (empty($contents)) {
     return;
 }
-
-$output = '';
 
 $fileInfos = $contents['file'][0];
 $filePhs = array();
@@ -381,21 +402,18 @@ $fileInfos = array_merge($fileInfos, $filePhs);
 if (!empty($scriptProperties['input'])) {
     $output = $fileInfos[$scriptProperties['options']];
     if (empty($output)
-            && !is_numeric($output) // avoid 0 (zero) of the download counting.
+        && !is_numeric($output) // avoid 0 (zero) of the download counting.
     ) {
         $output = $fdl->parseTpl($scriptProperties['tpl'], $fileInfos);
     }
 } elseif (!empty($toArray)) {
-    $output = '<pre>';
-    $output .= print_r($fileInfos, true);
-    $output .= '</pre>';
+    $output = '<pre>' . print_r($fileInfos, true) . '</pre>';
 } else {
     $output = $fdl->parseTpl($scriptProperties['tpl'], $fileInfos);
 }
 
 if (!empty($toPlaceholder)) {
     $modx->setPlaceholder($toPlaceholder, $output);
-    return;
+    return '';
 }
-
 return $output;

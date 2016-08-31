@@ -1,5 +1,13 @@
 Changelog for FileDownload.
 
+FileDownload-R 2.1.0-pl (August 31, 2016)
+============================================
++ add file delete support
++ inspected/refactored the current code
++ additional snippet properties of the FileDownload snippet are set as placeholders in
+  the associated chunks
++ build process with GPM
+
 FileDownload-R 2.0.0-pl (March 29, 2016)
 ============================================
 + [#48] Fixed download from nested directories

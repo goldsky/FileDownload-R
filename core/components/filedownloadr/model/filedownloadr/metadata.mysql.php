@@ -3,7 +3,8 @@
 $xpdo_meta_map = array (
   'xPDOSimpleObject' => 
   array (
-    0 => 'fdDownloads',
-    1 => 'fdPaths',
+    0 => 'fdCount',
+    1 => 'fdDownloads',
+    2 => 'fdPaths',
   ),
 );

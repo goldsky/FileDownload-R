@@ -1,0 +1,7 @@
+/*!
+ * FileDownloadR - Display a list of downloadable files from a directory with download counter.
+ * Version: 2.1.0
+ * Build date: 2016-08-30
+ */
+
+table.fd-table{width:100%}table.fd-table .fd-header{background-color:#b22222;color:#fff}table.fd-table .fd-altRow{background-color:#efefef}table.fd-table .fd-group-dir{background-color:#ddd}table.fd-table tr{border-bottom:1px solid #ccc}table.fd-table tr td{padding:5px}table.fd-table .fd-xlsx{background-color:#E3D1E6}table.fd-table.no-border,table.fd-table.no-border>tr,table.fd-table.no-border>tr>td{border:none}table.fd-table .fd-icon{display:inline-block;width:16px}
