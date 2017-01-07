@@ -70,7 +70,7 @@ module.exports = function (grunt) {
                     srcBasePath: 'develop/filedownloadr/',
                     host: '<%= sshconfig.host %>',
                     username: '<%= sshconfig.username %>',
-                    privateKey: grunt.file.read("/Users/jako/.ssh/id_dsa"),
+                    privateKey: '<%= sshconfig.privateKey %>',
                     passphrase: '<%= sshconfig.passphrase %>',
                     showProgress: true
                 }
