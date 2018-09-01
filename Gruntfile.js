@@ -2,16 +2,15 @@ module.exports = function (grunt) {
     // Project configuration.
     grunt.initConfig({
         modx: grunt.file.readJSON('_build/config.json'),
-        sshconfig: grunt.file.readJSON('/Users/jako/Documents/MODx/partout.json'),
         banner: '/*!\n' +
         ' * <%= modx.name %> - <%= modx.description %>\n' +
         ' * Version: <%= modx.version %>\n' +
         ' * Build date: <%= grunt.template.today("yyyy-mm-dd") %>\n' +
         ' */\n',
         usebanner: {
-            dist: {
+            css: {
                 options: {
-                    position: 'top',
+                    position: 'bottom',
                     banner: '<%= banner %>'
                 },
                 files: {
@@ -23,12 +22,11 @@ module.exports = function (grunt) {
         },
         sass: {
             options: {
+                implementation: require('node-sass'),
                 outputStyle: 'expanded',
-                indentType: 'tab',
-                indentWidth: 1,
                 sourcemap: false
             },
-            dist: {
+            web: {
                 files: {
                     'source/css/fd.css': 'source/sass/fd.scss'
                 }
@@ -43,45 +41,32 @@ module.exports = function (grunt) {
                     })
                 ]
             },
-            dist: {
+            web: {
                 src: [
                     'source/css/fd.css'
                 ]
-
             }
         },
         cssmin: {
-            filedownloadr: {
+            web: {
                 src: [
                     'source/css/fd.css'
                 ],
                 dest: 'assets/components/filedownloadr/css/fd.min.css'
             }
         },
-        sftp: {
-            css: {
-                files: {
-                    "./": [
-                        'assets/components/filedownloadr/css/web/fd.min.css'
-                    ]
-                },
-                options: {
-                    path: '<%= sshconfig.hostpath %>develop/filedownloadr/',
-                    srcBasePath: 'develop/filedownloadr/',
-                    host: '<%= sshconfig.host %>',
-                    username: '<%= sshconfig.username %>',
-                    privateKey: '<%= sshconfig.privateKey %>',
-                    passphrase: '<%= sshconfig.passphrase %>',
-                    showProgress: true
-                }
-            }
-       },
         watch: {
             css: {
                 files: [
                     'source/**/*.scss'
                 ],
-                tasks: ['sass', 'postcss', 'cssmin', 'usebanner:css', 'sftp:css']
+                tasks: ['sass', 'postcss', 'cssmin', 'usebanner:css']
+            },
+            config: {
+                files: [
+                    '_build/config.json'
+                ],
+                tasks: ['default']
             }
         },
         bump: {
@@ -113,16 +98,15 @@ module.exports = function (grunt) {
     });
 
     //load the packages
-    grunt.loadNpmTasks('grunt-contrib-uglify');
-    grunt.loadNpmTasks('grunt-contrib-cssmin');
-    grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-banner');
-    grunt.loadNpmTasks('grunt-ssh');
-    grunt.loadNpmTasks('grunt-sass');
+    grunt.loadNpmTasks('grunt-contrib-cssmin');
+    grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-postcss');
+    grunt.loadNpmTasks('grunt-sass');
     grunt.loadNpmTasks('grunt-string-replace');
     grunt.renameTask('string-replace', 'bump');
 
     //register the task
-    grunt.registerTask('default', ['bump', 'sass', 'postcss', 'cssmin', 'usebanner', 'sftp']);
+    grunt.registerTask('default', ['bump', 'sass', 'postcss', 'cssmin', 'usebanner']);
 };
