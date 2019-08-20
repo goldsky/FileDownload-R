@@ -36,9 +36,7 @@ module.exports = function (grunt) {
             options: {
                 processors: [
                     require('pixrem')(),
-                    require('autoprefixer')({
-                        browsers: 'last 2 versions, ie >= 8'
-                    })
+                    require('autoprefixer')()
                 ]
             },
             web: {
