@@ -1,8 +1,11 @@
 <?php
+/**
+ * @package filedownloadr
+ */
 $xpdo_meta_map['fdCount']= array (
-  'package' => 'filedownload',
+  'package' => 'filedownloadr',
   'version' => '1.1',
-  'table' => 'count',
+  'table' => 'fd_count',
   'extends' => 'xPDOSimpleObject',
   'fields' => 
   array (

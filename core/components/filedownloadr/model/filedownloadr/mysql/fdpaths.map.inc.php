@@ -1,8 +1,11 @@
 <?php
+/**
+ * @package filedownloadr
+ */
 $xpdo_meta_map['fdPaths']= array (
   'package' => 'filedownloadr',
   'version' => '1.1',
-  'table' => 'paths',
+  'table' => 'fd_paths',
   'extends' => 'xPDOSimpleObject',
   'fields' => 
   array (

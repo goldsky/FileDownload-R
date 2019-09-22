@@ -25,10 +25,36 @@
  * @author      goldsky <goldsky@virtudraft.com>
  * @package     filedownload
  * @subpackage  filedownload snippet
+ *
+ * @var modX $modx
+ * @var array $scriptProperties
  */
-$scriptProperties['encoding'] = $modx->getOption('encoding', $scriptProperties, 'UTF-8');
+$assetsUrl = $modx->getOption('filedownloadr.assets_url', $scriptProperties, $modx->getOption('assets_url') . 'components/filedownloadr/', true);
+
+$scriptProperties['encoding'] = $modx->getOption('encoding', $scriptProperties, 'UTF-8', true);
 header('Content-Type: text/html; charset=' . $scriptProperties['encoding']);
 mb_internal_encoding($scriptProperties['encoding']);
+
+/////////////////////////////////////////////////////////////////////////////////
+//                           Additional Placeholders                           //
+/////////////////////////////////////////////////////////////////////////////////
+
+// Adding extra parameters into special place so we can put them in a results
+$additionalPlaceholders = $properties = array();
+if (isset($this) && $this instanceof modSnippet) {
+    $properties = $this->get('properties');
+} /** @var modSnippet $snippet */
+elseif ($snippet = $modx->getObject('modSnippet', array('name' => 'pdoResources'))) {
+    $properties = $snippet->get('properties');
+}
+if (!empty($properties)) {
+    foreach ($scriptProperties as $k => $v) {
+        if (!isset($properties[$k])) {
+            $additionalPlaceholders[$k] = $v;
+        }
+    }
+}
+$scriptProperties['additionalPlaceholders'] = $additionalPlaceholders;
 
 /////////////////////////////////////////////////////////////////////////////////
 //                               Main Parameters                               //
@@ -44,8 +70,8 @@ mb_internal_encoding($scriptProperties['encoding']);
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['getDir'] = $modx->getOption('getDir', $scriptProperties);
-$scriptProperties['origDir'] = $modx->getOption('getDir', $scriptProperties); // getDir will be overridden by &_GET['fdldir'] in setDirProp()
+$scriptProperties['getDir'] = $modx->getOption('getDir', $scriptProperties, '', true);
+$scriptProperties['origDir'] = $scriptProperties['getDir']; // getDir will be overridden by &_GET['fdldir'] in setDirProp()
 
 /**
  * The getFile parameter will make the snippet output only the file specified.
@@ -59,7 +85,7 @@ $scriptProperties['origDir'] = $modx->getOption('getDir', $scriptProperties); //
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['getFile'] = $modx->getOption('getFile', $scriptProperties);
+$scriptProperties['getFile'] = $modx->getOption('getFile', $scriptProperties, '', true);
 
 if (empty($scriptProperties['getDir']) && empty($scriptProperties['getFile'])) {
     return '<!-- FileDownloadR parameters are empty -->';
@@ -74,11 +100,11 @@ if (empty($scriptProperties['getDir']) && empty($scriptProperties['getFile'])) {
  * @var bool
  * @since ver 1.2.0
  */
-$scriptProperties['browseDirectories'] = $modx->getOption('browseDirectories', $scriptProperties, 0);
+$scriptProperties['browseDirectories'] = $modx->getOption('browseDirectories', $scriptProperties, 0, true);
 // typo fall back
 $scriptProperties['browseDirectory'] = !empty($scriptProperties['browseDirectory']) ?
-        $scriptProperties['browseDirectory'] :
-        $scriptProperties['browseDirectories'];
+    $scriptProperties['browseDirectory'] :
+    $scriptProperties['browseDirectories'];
 /**
  * If multiple directories are specified in the getDir parameter, this property
  * will group the files by each directory.
@@ -89,11 +115,11 @@ $scriptProperties['browseDirectory'] = !empty($scriptProperties['browseDirectory
  * @var bool
  * @since ver 1.2.0
  */
-$scriptProperties['groupByDirectory'] = $modx->getOption('groupByDirectory', $scriptProperties, 0);
+$scriptProperties['groupByDirectory'] = $modx->getOption('groupByDirectory', $scriptProperties, 0, true);
 // typo fall back
 $scriptProperties['groupByDirectories'] = !empty($scriptProperties['groupByDirectories']) ?
-        $scriptProperties['groupByDirectories'] :
-        $scriptProperties['groupByDirectory'];
+    $scriptProperties['groupByDirectories'] :
+    $scriptProperties['groupByDirectory'];
 /**
  * This allows descriptions to be added to the file listing included in a chunk.
  * All of the files and descriptions should be listed in the chunk using the
@@ -108,7 +134,7 @@ $scriptProperties['groupByDirectories'] = !empty($scriptProperties['groupByDirec
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['chkDesc'] = $modx->getOption('chkDesc', $scriptProperties);
+$scriptProperties['chkDesc'] = $modx->getOption('chkDesc', $scriptProperties, '', true);
 /**
  * @var string
  * @since ver 1.2.0
@@ -131,7 +157,7 @@ $scriptProperties['chkDesc'] = $modx->getOption('chkDesc', $scriptProperties);
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['sortBy'] = $modx->getOption('sortBy', $scriptProperties, 'filename');
+$scriptProperties['sortBy'] = $modx->getOption('sortBy', $scriptProperties, 'filename', true);
 /**
  * Case sensitive option for sorting
  * @options: 1 | 0
@@ -139,7 +165,7 @@ $scriptProperties['sortBy'] = $modx->getOption('sortBy', $scriptProperties, 'fil
  * @var bool
  * @since ver 2.0.0
  */
-$scriptProperties['sortByCaseSensitive'] = $modx->getOption('sortByCaseSensitive', $scriptProperties, 0);
+$scriptProperties['sortByCaseSensitive'] = $modx->getOption('sortByCaseSensitive', $scriptProperties, 0, true);
 /**
  * Sort files in ascending or descending order.
  * @options: asc | desc
@@ -147,7 +173,7 @@ $scriptProperties['sortByCaseSensitive'] = $modx->getOption('sortByCaseSensitive
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['sortOrder'] = $modx->getOption('sortOrder', $scriptProperties, 'asc');
+$scriptProperties['sortOrder'] = $modx->getOption('sortOrder', $scriptProperties, 'asc', true);
 /**
  * Sort order option by a natural order
  * @options: 1 | 0
@@ -155,7 +181,7 @@ $scriptProperties['sortOrder'] = $modx->getOption('sortOrder', $scriptProperties
  * @var bool
  * @since ver 2.0.0
  */
-$scriptProperties['sortOrderNatural'] = $modx->getOption('sortOrderNatural', $scriptProperties, 1);
+$scriptProperties['sortOrderNatural'] = $modx->getOption('sortOrderNatural', $scriptProperties, 1, true);
 /**
  * This will limit the inclusion files displayed to files with a valid extension
  * from the list.
@@ -166,11 +192,11 @@ $scriptProperties['sortOrderNatural'] = $modx->getOption('sortOrderNatural', $sc
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'extShown' instead.
  */
-$scriptProperties['showExt'] = $modx->getOption('showExt', $scriptProperties);
+$scriptProperties['showExt'] = $modx->getOption('showExt', $scriptProperties, '', true);
 if (!empty($scriptProperties['showExt']) && empty($scriptProperties['extShown'])) {
     $scriptProperties['extShown'] = $scriptProperties['showExt'];
 } else {
-    $scriptProperties['extShown'] = $modx->getOption('extShown', $scriptProperties);
+    $scriptProperties['extShown'] = $modx->getOption('extShown', $scriptProperties, '', true);
 }
 unset($scriptProperties['showExt']);
 /**
@@ -183,11 +209,11 @@ unset($scriptProperties['showExt']);
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'extHidden' instead.
  */
-$scriptProperties['hideExt'] = $modx->getOption('hideExt', $scriptProperties);
+$scriptProperties['hideExt'] = $modx->getOption('hideExt', $scriptProperties, '', true);
 if (!empty($scriptProperties['hideExt']) && empty($scriptProperties['extHidden'])) {
     $scriptProperties['extHidden'] = $scriptProperties['hideExt'];
 } else {
-    $scriptProperties['extHidden'] = $modx->getOption('extHidden', $scriptProperties);
+    $scriptProperties['extHidden'] = $modx->getOption('extHidden', $scriptProperties, '', true);
 }
 unset($scriptProperties['hideExt']);
 /**
@@ -199,7 +225,7 @@ unset($scriptProperties['hideExt']);
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['dateFormat'] = $modx->getOption('dateFormat', $scriptProperties, 'Y-m-d');
+$scriptProperties['dateFormat'] = $modx->getOption('dateFormat', $scriptProperties, 'Y-m-d', true);
 
 /////////////////////////////////////////////////////////////////////////////////
 //                                 Permissions                                 //
@@ -215,13 +241,25 @@ $scriptProperties['dateFormat'] = $modx->getOption('dateFormat', $scriptProperti
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'userGroups' instead.
  */
-$scriptProperties['downloadGroups'] = $modx->getOption('downloadGroups', $scriptProperties);
+$scriptProperties['downloadGroups'] = $modx->getOption('downloadGroups', $scriptProperties, '', true);
 if (!empty($scriptProperties['downloadGroups']) && empty($scriptProperties['userGroups'])) {
     $scriptProperties['userGroups'] = $scriptProperties['downloadGroups'];
 } else {
-    $scriptProperties['userGroups'] = $modx->getOption('userGroups', $scriptProperties);
+    $scriptProperties['userGroups'] = $modx->getOption('userGroups', $scriptProperties, '', true);
 }
 unset($scriptProperties['downloadGroups']);
+
+/**
+ * This will make the delete link active for users that belong to the specified
+ * groups. Multiple groups can be specified by using a comma delimited list.
+ * @options: comma delimited list of User groups
+ * @default: null
+ * @example: Administrator, Registered Member
+ * @var string
+ * @since ver 2.1.0
+ */
+$scriptProperties['deleteGroups'] = $modx->getOption('deleteGroups', $scriptProperties, '', true);
+
 /////////////////////////////////////////////////////////////////////////////////
 //                              Download Counting                              //
 /////////////////////////////////////////////////////////////////////////////////
@@ -233,7 +271,7 @@ unset($scriptProperties['downloadGroups']);
  * @var bool
  * @since ver 1.2.0
  */
-$scriptProperties['countDownloads'] = $modx->getOption('countDownloads', $scriptProperties, 1);
+$scriptProperties['countDownloads'] = $modx->getOption('countDownloads', $scriptProperties, 1, true);
 /////////////////////////////////////////////////////////////////////////////////
 //                                   Images                                    //
 /////////////////////////////////////////////////////////////////////////////////
@@ -241,12 +279,12 @@ $scriptProperties['countDownloads'] = $modx->getOption('countDownloads', $script
  * Path to the images to associate with each file extension.
  * The images will be outputted with [[+fd.image]] placeholder.
  * @options: path to images
- * @default: assets/components/filedownloadr/img/filetypes/
+ * @default: {assets_url}components/filedownloadr/img/filetypes/
  * @example: assets/images/icons
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['imgLocat'] = $modx->getOption('imgLocat', $scriptProperties, 'assets/components/filedownloadr/img/filetypes/');
+$scriptProperties['imgLocat'] = $modx->getOption('imgLocat', $scriptProperties, $assetsUrl . 'img/filetypes/', true);
 $scriptProperties['imgTypeUrl'] = $scriptProperties['imgLocat'];
 
 /**
@@ -291,7 +329,7 @@ $scriptProperties['imgTypeUrl'] = $scriptProperties['imgLocat'];
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['imgTypes'] = $modx->getOption('imgTypes', $scriptProperties, 'fdimages');
+$scriptProperties['imgTypes'] = $modx->getOption('imgTypes', $scriptProperties, 'fdimages', true);
 
 /////////////////////////////////////////////////////////////////////////////////
 //                            Templates & Styles                               //
@@ -303,7 +341,7 @@ $scriptProperties['imgTypes'] = $modx->getOption('imgTypes', $scriptProperties, 
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['tplDir'] = $modx->getOption('tplDir', $scriptProperties, 'tpl-row-dir');
+$scriptProperties['tplDir'] = $modx->getOption('tplDir', $scriptProperties, 'tpl-row-dir', true);
 /**
  * This is the file row template (chunk/file)
  * @options: chunk's name
@@ -311,7 +349,7 @@ $scriptProperties['tplDir'] = $modx->getOption('tplDir', $scriptProperties, 'tpl
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['tplFile'] = $modx->getOption('tplFile', $scriptProperties, 'tpl-row-file');
+$scriptProperties['tplFile'] = $modx->getOption('tplFile', $scriptProperties, 'tpl-row-file', true);
 /**
  * This is the file row template (chunk/file)
  * @options: chunk's name
@@ -319,7 +357,7 @@ $scriptProperties['tplFile'] = $modx->getOption('tplFile', $scriptProperties, 't
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['tplGroupDir'] = $modx->getOption('tplGroupDir', $scriptProperties, 'tpl-group-dir');
+$scriptProperties['tplGroupDir'] = $modx->getOption('tplGroupDir', $scriptProperties, 'tpl-group-dir', true);
 /**
  * This is the container template (chunk/file) of all of the snippet's results
  * @options: chunk's name
@@ -327,23 +365,23 @@ $scriptProperties['tplGroupDir'] = $modx->getOption('tplGroupDir', $scriptProper
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['tplWrapper'] = $modx->getOption('tplWrapper', $scriptProperties, 'tpl-wrapper');
+$scriptProperties['tplWrapper'] = $modx->getOption('tplWrapper', $scriptProperties, 'tpl-wrapper', true);
 /**
  * This is the container template for folders
  * @options: chunk's name, or empty to disable
- * @default: tpl-wrapper-dir
+ * @default:
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['tplWrapperDir'] = $modx->getOption('tplWrapperDir', $scriptProperties);
+$scriptProperties['tplWrapperDir'] = $modx->getOption('tplWrapperDir', $scriptProperties, '');
 /**
  * This is the container template for files
  * @options: chunk's name, or empty to disable
- * @default: tpl-wrapper-dir
+ * @default:
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['tplWrapperFile'] = $modx->getOption('tplWrapperFile', $scriptProperties);
+$scriptProperties['tplWrapperFile'] = $modx->getOption('tplWrapperFile', $scriptProperties, '');
 /**
  * index.html file/chunk to hide the download folders
  * @options: chunk's name
@@ -351,16 +389,16 @@ $scriptProperties['tplWrapperFile'] = $modx->getOption('tplWrapperFile', $script
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['tplIndex'] = $modx->getOption('tplIndex', $scriptProperties, 'tpl-index');
+$scriptProperties['tplIndex'] = $modx->getOption('tplIndex', $scriptProperties, 'tpl-index', true);
 
 /**
  * Template for forbidden access
- * @options: @BINDINGs
- * @default: @FILE: [[++core_path]]components/filedownloadr/elements/chunks/tpl-notallowed.chunk.tpl
+ * @options: chunk's name
+ * @default: tpl-notallowed
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['tplNotAllowed'] = $modx->getOption('tplNotAllowed', $scriptProperties, '@FILE: [[++core_path]]components/filedownloadr/elements/chunks/tpl-notallowed.chunk.tpl');
+$scriptProperties['tplNotAllowed'] = $modx->getOption('tplNotAllowed', $scriptProperties, 'tpl-notallowed');
 
 /**
  * This specifies the class that will be applied to every other file/directory so
@@ -371,11 +409,11 @@ $scriptProperties['tplNotAllowed'] = $modx->getOption('tplNotAllowed', $scriptPr
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'cssAltRow' instead.
  */
-$scriptProperties['altCss'] = $modx->getOption('altCss', $scriptProperties);
+$scriptProperties['altCss'] = $modx->getOption('altCss', $scriptProperties, 'fd-alt', true);
 if (!empty($scriptProperties['altCss']) && empty($scriptProperties['cssAltRow'])) {
     $scriptProperties['cssAltRow'] = $scriptProperties['altCss'];
 } else {
-    $scriptProperties['cssAltRow'] = $modx->getOption('cssAltRow', $scriptProperties);
+    $scriptProperties['cssAltRow'] = $modx->getOption('cssAltRow', $scriptProperties, 'fd-alt', true);
 }
 unset($scriptProperties['altCss']);
 
@@ -387,11 +425,11 @@ unset($scriptProperties['altCss']);
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'cssFirstDir' instead.
  */
-$scriptProperties['firstFolderCss'] = $modx->getOption('firstFolderCss', $scriptProperties);
+$scriptProperties['firstFolderCss'] = $modx->getOption('firstFolderCss', $scriptProperties, 'fd-firstDir', true);
 if (!empty($scriptProperties['firstFolderCss']) && empty($scriptProperties['cssFirstDir'])) {
     $scriptProperties['cssFirstDir'] = $scriptProperties['firstFolderCss'];
 } else {
-    $scriptProperties['cssFirstDir'] = $modx->getOption('cssFirstDir', $scriptProperties);
+    $scriptProperties['cssFirstDir'] = $modx->getOption('cssFirstDir', $scriptProperties, 'fd-firstDir', true);
 }
 unset($scriptProperties['firstFolderCss']);
 /**
@@ -402,11 +440,11 @@ unset($scriptProperties['firstFolderCss']);
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'cssLastDir' instead.
  */
-$scriptProperties['lastFolderCss'] = $modx->getOption('lastFolderCss', $scriptProperties);
+$scriptProperties['lastFolderCss'] = $modx->getOption('lastFolderCss', $scriptProperties, 'fd-lastDir', true);
 if (!empty($scriptProperties['lastFolderCss']) && empty($scriptProperties['cssLastDir'])) {
     $scriptProperties['cssLastDir'] = $scriptProperties['lastFolderCss'];
 } else {
-    $scriptProperties['cssLastDir'] = $modx->getOption('cssLastDir', $scriptProperties);
+    $scriptProperties['cssLastDir'] = $modx->getOption('cssLastDir', $scriptProperties, 'fd-lastDir', true);
 }
 unset($scriptProperties['lastFolderCss']);
 /**
@@ -417,11 +455,11 @@ unset($scriptProperties['lastFolderCss']);
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'cssFirstFile' instead.
  */
-$scriptProperties['firstFileCss'] = $modx->getOption('firstFileCss', $scriptProperties);
+$scriptProperties['firstFileCss'] = $modx->getOption('firstFileCss', $scriptProperties, 'fd-firstFile', true);
 if (!empty($scriptProperties['firstFileCss']) && empty($scriptProperties['cssFirstFile'])) {
     $scriptProperties['cssFirstFile'] = $scriptProperties['firstFileCss'];
 } else {
-    $scriptProperties['cssFirstFile'] = $modx->getOption('cssFirstFile', $scriptProperties);
+    $scriptProperties['cssFirstFile'] = $modx->getOption('cssFirstFile', $scriptProperties, 'fd-firstFile', true);
 }
 unset($scriptProperties['firstFileCss']);
 /**
@@ -432,11 +470,11 @@ unset($scriptProperties['firstFileCss']);
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'cssLastFile' instead.
  */
-$scriptProperties['lastFileCss'] = $modx->getOption('lastFileCss', $scriptProperties);
+$scriptProperties['lastFileCss'] = $modx->getOption('lastFileCss', $scriptProperties, 'fd-lastFile', true);
 if (!empty($scriptProperties['lastFileCss']) && empty($scriptProperties['cssLastFile'])) {
     $scriptProperties['cssLastFile'] = $scriptProperties['lastFileCss'];
 } else {
-    $scriptProperties['cssLastFile'] = $modx->getOption('cssLastFile', $scriptProperties);
+    $scriptProperties['cssLastFile'] = $modx->getOption('cssLastFile', $scriptProperties, 'fd-lastFile', true);
 }
 unset($scriptProperties['lastFileCss']);
 /**
@@ -447,11 +485,11 @@ unset($scriptProperties['lastFileCss']);
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'cssDir' instead.
  */
-$scriptProperties['folderCss'] = $modx->getOption('folderCss', $scriptProperties);
+$scriptProperties['folderCss'] = $modx->getOption('folderCss', $scriptProperties, 'fd-dir', true);
 if (!empty($scriptProperties['folderCss']) && empty($scriptProperties['cssDir'])) {
     $scriptProperties['cssDir'] = $scriptProperties['folderCss'];
 } else {
-    $scriptProperties['cssDir'] = $modx->getOption('cssDir', $scriptProperties);
+    $scriptProperties['cssDir'] = $modx->getOption('cssDir', $scriptProperties, 'fd-dir', true);
 }
 unset($scriptProperties['folderCss']);
 /**
@@ -462,7 +500,7 @@ unset($scriptProperties['folderCss']);
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'cssFile' instead.
  */
-$scriptProperties['cssFile'] = $modx->getOption('cssFile', $scriptProperties);
+$scriptProperties['cssFile'] = $modx->getOption('cssFile', $scriptProperties, 'fd-file', true);
 /**
  * This specifies the class that will be applied to the directory for multi-
  * directory grouping.
@@ -472,11 +510,11 @@ $scriptProperties['cssFile'] = $modx->getOption('cssFile', $scriptProperties);
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'cssGroupDir' instead.
  */
-$scriptProperties['directoryCss'] = $modx->getOption('directoryCss', $scriptProperties);
+$scriptProperties['directoryCss'] = $modx->getOption('directoryCss', $scriptProperties, 'fd-group-dir', true);
 if (!empty($scriptProperties['directoryCss']) && empty($scriptProperties['cssGroupDir'])) {
     $scriptProperties['cssGroupDir'] = $scriptProperties['directoryCss'];
 } else {
-    $scriptProperties['cssGroupDir'] = $modx->getOption('cssGroupDir', $scriptProperties);
+    $scriptProperties['cssGroupDir'] = $modx->getOption('cssGroupDir', $scriptProperties, 'fd-group-dir', true);
 }
 unset($scriptProperties['directoryCss']);
 /**
@@ -488,11 +526,11 @@ unset($scriptProperties['directoryCss']);
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'cssPath' instead.
  */
-$scriptProperties['pathCss'] = $modx->getOption('pathCss', $scriptProperties);
+$scriptProperties['pathCss'] = $modx->getOption('pathCss', $scriptProperties, 'fd-path', true);
 if (!empty($scriptProperties['pathCss']) && empty($scriptProperties['cssPath'])) {
     $scriptProperties['cssPath'] = $scriptProperties['pathCss'];
 } else {
-    $scriptProperties['cssPath'] = $modx->getOption('cssPath', $scriptProperties);
+    $scriptProperties['cssPath'] = $modx->getOption('cssPath', $scriptProperties, 'fd-path', true);
 }
 unset($scriptProperties['pathCss']);
 /**
@@ -505,11 +543,11 @@ unset($scriptProperties['pathCss']);
  * @since ver 1.2.0
  * @deprecated deprecated since 2.0.0. Use 'cssExtension' instead.
  */
-$scriptProperties['extCss'] = $modx->getOption('extCss', $scriptProperties);
+$scriptProperties['extCss'] = $modx->getOption('extCss', $scriptProperties, '0', true);
 if (!empty($scriptProperties['extCss']) && empty($scriptProperties['cssExtension'])) {
     $scriptProperties['cssExtension'] = $scriptProperties['extCss'];
 } else {
-    $scriptProperties['cssExtension'] = $modx->getOption('cssExtension', $scriptProperties);
+    $scriptProperties['cssExtension'] = $modx->getOption('cssExtension', $scriptProperties, '0', true);
 }
 unset($scriptProperties['extCss']);
 /**
@@ -519,7 +557,7 @@ unset($scriptProperties['extCss']);
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['cssExtensionPrefix'] = $modx->getOption('cssExtensionPrefix', $scriptProperties, 'fd-');
+$scriptProperties['cssExtensionPrefix'] = $modx->getOption('cssExtensionPrefix', $scriptProperties, 'fd-', true);
 /**
  * Suffix to the above cssExtension class name
  * @default: null
@@ -527,14 +565,14 @@ $scriptProperties['cssExtensionPrefix'] = $modx->getOption('cssExtensionPrefix',
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['cssExtensionSuffix'] = $modx->getOption('cssExtensionSuffix', $scriptProperties);
+$scriptProperties['cssExtensionSuffix'] = $modx->getOption('cssExtensionSuffix', $scriptProperties, '', true);
 /**
  * This property will make the list only displays files without their download links.
  * @default: null
  * @var string
  * @since ver 1.2.0
  */
-$scriptProperties['noDownload'] = $modx->getOption('noDownload', $scriptProperties);
+$scriptProperties['noDownload'] = $modx->getOption('noDownload', $scriptProperties, '', true);
 /**
  * Pass the downloading job to the plugin. This provides flexibility to do
  * conditional statements inside the plugins, or initiate the downloading using
@@ -544,7 +582,7 @@ $scriptProperties['noDownload'] = $modx->getOption('noDownload', $scriptProperti
  * @var bool
  * @since ver 2.0.0
  */
-$scriptProperties['downloadByOther'] = $modx->getOption('downloadByOther', $scriptProperties);
+$scriptProperties['downloadByOther'] = $modx->getOption('downloadByOther', $scriptProperties, '0', true);
 /**
  * Turn on the ajax mode for the script.
  * @options: 1 | 0
@@ -552,14 +590,14 @@ $scriptProperties['downloadByOther'] = $modx->getOption('downloadByOther', $scri
  * @var bool
  * @since ver 2.0.0
  */
-$scriptProperties['ajaxMode'] = $modx->getOption('ajaxMode', $scriptProperties);
+$scriptProperties['ajaxMode'] = $modx->getOption('ajaxMode', $scriptProperties, '0', true);
 /**
  * The MODX's resource page id as the Ajax processor file
  * @var int
  * @since ver 2.0.0
  * @subpackage FileDownloadController
  */
-$scriptProperties['ajaxControllerPage'] = $modx->getOption('ajaxControllerPage', $scriptProperties);
+$scriptProperties['ajaxControllerPage'] = $modx->getOption('ajaxControllerPage', $scriptProperties, '', true);
 /**
  * The Ajax's element container id
  * @default: file-download
@@ -567,22 +605,21 @@ $scriptProperties['ajaxControllerPage'] = $modx->getOption('ajaxControllerPage',
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['ajaxContainerId'] = $modx->getOption('ajaxContainerId', $scriptProperties, 'file-download');
+$scriptProperties['ajaxContainerId'] = $modx->getOption('ajaxContainerId', $scriptProperties, 'file-download', true);
 /**
  * FileDownloadR's Javascript file for the page header
  * @default: empty
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['fileJs'] = $modx->getOption('fileJs', $scriptProperties);
+$scriptProperties['fileJs'] = $modx->getOption('fileJs', $scriptProperties, '', true);
 /**
  * FileDownloadR's Cascading Style Sheet file for the page header
- * @default: assets/components/filedownloadr/css/fd.css
+ * @default: {assets_url}components/filedownloadr/css/fd.css
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['fileCss'] = $modx->getOption('fileCss', $scriptProperties
-        , $modx->getOption('assets_url') . 'components/filedownloadr/css/fd.css');
+$scriptProperties['fileCss'] = $modx->getOption('fileCss', $scriptProperties, $assetsUrl . 'css/fd.min.css', true);
 
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
@@ -598,27 +635,27 @@ $scriptProperties['fileCss'] = $modx->getOption('fileCss', $scriptProperties
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['saltText'] = $modx->getOption('saltText', $scriptProperties);
+$scriptProperties['saltText'] = $modx->getOption('saltText', $scriptProperties, 'FileDownloadR', true);
 /**
  * This parameter provides the direct link
  * @default: 0
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['directLink'] = $modx->getOption('directLink', $scriptProperties, 0);
+$scriptProperties['directLink'] = $modx->getOption('directLink', $scriptProperties, 0, true);
 /**
  * This is a given ID to the snippet to deal with multiple snippet calls and
  * &browseDirectories altogether
  * @default: null
  * @var string
  */
-$scriptProperties['fdlid'] = $modx->getOption('fdlid', $scriptProperties);
+$scriptProperties['fdlid'] = $modx->getOption('fdlid', $scriptProperties, '', true);
 /**
  * Attach plugin to the output
  * @default: null
  * @var string
  */
-$scriptProperties['plugins'] = $modx->getOption('plugins', $scriptProperties);
+$scriptProperties['plugins'] = $modx->getOption('plugins', $scriptProperties, '', true);
 /**
  * This is the breadcrumb's link template (chunk/file)
  * @options: chunk's name
@@ -626,41 +663,41 @@ $scriptProperties['plugins'] = $modx->getOption('plugins', $scriptProperties);
  * @var string
  * @since ver 2.0.0
  */
-$scriptProperties['tplBreadcrumb'] = $modx->getOption('tplBreadcrumb', $scriptProperties, 'tpl-breadcrumb');
+$scriptProperties['tplBreadcrumb'] = $modx->getOption('tplBreadcrumb', $scriptProperties, 'tpl-breadcrumb', true);
 /**
  * This is the separator character for the breadcrumb
  * @default: /
  * @var string
  */
-$scriptProperties['breadcrumbSeparator'] = $modx->getOption('breadcrumbSeparator', $scriptProperties, ' / ');
+$scriptProperties['breadcrumbSeparator'] = $modx->getOption('breadcrumbSeparator', $scriptProperties, ' / ', true);
 
 /**
  * prefix for the placeholders
  * @default: fd.
  * @var string
  */
-$scriptProperties['prefix'] = $modx->getOption('prefix', $scriptProperties, 'fd.');
+$scriptProperties['prefix'] = $modx->getOption('prefix', $scriptProperties, 'fd.', true);
 
 /**
  * Media Source's ID
  * @default: 0
  * @var integer
  */
-$scriptProperties['mediaSourceId'] = (int) $modx->getOption('mediaSourceId', $scriptProperties, 0);
+$scriptProperties['mediaSourceId'] = (int)$modx->getOption('mediaSourceId', $scriptProperties, 0, true);
 
 /**
  * Use IP location or not
  * @default: false
  * @var boolean
  */
-$scriptProperties['useGeolocation'] = (boolean) $modx->getOption('useGeolocation', $scriptProperties, $modx->getOption('filedownloadr.use_geolocation', $scriptProperties, false));
+$scriptProperties['useGeolocation'] = (boolean)$modx->getOption('useGeolocation', $scriptProperties, $modx->getOption('filedownloadr.use_geolocation', null, false), true);
 
 /**
  * API key of IPInfoDB.com
  * @default: ''
  * @var string
  */
-$scriptProperties['geoApiKey'] = $modx->getOption('geoApiKey', $scriptProperties, $modx->getOption('filedownloadr.ipinfodb_api_key', $scriptProperties, ''));
+$scriptProperties['geoApiKey'] = $modx->getOption('geoApiKey', $scriptProperties, $modx->getOption('filedownloadr.ipinfodb_api_key', $scriptProperties, '', true));
 
 /**
  * Show empty folder when required
@@ -668,18 +705,17 @@ $scriptProperties['geoApiKey'] = $modx->getOption('geoApiKey', $scriptProperties
  * @default: 0
  * @var integer
  */
-$scriptProperties['showEmptyFolder'] = (boolean) $modx->getOption('showEmptyFolder', $scriptProperties, 0);
+$scriptProperties['showEmptyFolder'] = (boolean)$modx->getOption('showEmptyFolder', $scriptProperties, 0, true);
 
 array_walk($scriptProperties, create_function('&$val', 'if (!is_array($val)) $val = trim($val);'));
 
-// $modx->getService brings more problem on multiple calls
-if (!class_exists('FileDownloadR')) {
-    require_once $modx->getOption('core_path') . 'components/filedownloadr/model/filedownloadr/filedownloadr.class.php';
-}
-$fdl = new FileDownloadR($modx, $scriptProperties);
+$corePath = $modx->getOption('filedownloadr.core_path', null, $modx->getOption('core_path') . 'components/filedownloadr/');
+$fdl = $modx->getService('filedownloadr', 'FileDownloadR', $corePath . 'model/filedownloadr/', array_merge($scriptProperties, array(
+    'core_path' => $corePath
+)));
 
 if (!($fdl instanceof FileDownloadR)) {
-    return '[FileDownload] instanceof error.';
+    return 'FileDownloadR instanceof error.';
 }
 
 if (!$fdl->isAllowed()) {
@@ -696,10 +732,7 @@ if ($scriptProperties['ajaxMode'] && !empty($scriptProperties['ajaxControllerPag
     }
 }
 
-/**
- * do sanitizing first
- */
-if (!empty($_GET['fdldir']) || !empty($_GET['fdlfile'])) {
+if (!empty($_GET['fdldir']) || !empty($_GET['fdlfile']) || !empty($_GET['fdldelete'])) {
     $ref = $_SERVER['HTTP_REFERER'];
     // deal with multiple snippets which have &browseDirectories
     $xRef = @explode('?', $ref);
@@ -719,13 +752,12 @@ if (!empty($_GET['fdldir']) || !empty($_GET['fdlfile'])) {
     if ($baseRef !== $page) {
         return $modx->sendUnauthorizedPage();
     }
-    $sanitizedGets = $modx->sanitize($_GET);
 }
 
 if (empty($scriptProperties['downloadByOther'])) {
+    $sanitizedGets = $modx->sanitize($_GET);
     if (!empty($sanitizedGets['fdlfile'])) {
-        $checkHash = $fdl->checkHash($modx->context->key, $sanitizedGets['fdlfile']);
-        if (!$checkHash) {
+        if (!$fdl->checkHash($modx->context->key, $sanitizedGets['fdlfile'])) {
             return;
         }
         $downloadFile = $fdl->downloadFile($sanitizedGets['fdlfile']);
@@ -740,7 +772,8 @@ if (empty($scriptProperties['downloadByOther'])) {
             return;
         }
         if ((!empty($sanitizedGets['fdlid']) && !empty($scriptProperties['fdlid'])) &&
-                ($sanitizedGets['fdlid'] != $scriptProperties['fdlid'])) {
+            ($sanitizedGets['fdlid'] != $scriptProperties['fdlid'])
+        ) {
             $selected = false;
         } else {
             $selected = true;
@@ -751,6 +784,12 @@ if (empty($scriptProperties['downloadByOther'])) {
                 return;
             }
         }
+    } else if (!empty($sanitizedGets['fdldelete'])) {
+        $checkHash = $fdl->checkHash($modx->context->key, $sanitizedGets['fdldelete']);
+        if (!$checkHash) {
+            return;
+        }
+        $fdl->deleteFile($sanitizedGets['fdldelete']);
     }
 }
 
