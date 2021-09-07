@@ -1,5 +1,44 @@
 <?php
 if ($object->xpdo) {
+        function convertCount(modX $modx, $offset) {
+        $c = $modx->newQuery('fdCount');
+        $c->limit(1000, $offset);
+        $oldCounts = $modx->getCollection('fdCount', $c);
+        if ($oldCounts) {
+            foreach ($oldCounts as $oldCount) {
+                $oldCountArray = $oldCount->toArray();
+                $path = $modx->getObject('fdPaths', array(
+                    'ctx' => $oldCountArray['ctx'],
+                    'filename' => $oldCountArray['filename'],
+                    'hash' => $oldCountArray['hash'],
+                ));
+                if (!empty($path)) {
+                    $oldCount->remove(); // remove?
+                    continue;
+                }
+                $path = $modx->newObject('fdPaths');
+                $path->fromArray(array(
+                    'ctx' => $oldCountArray['ctx'],
+                    'media_source_id' => 0,
+                    'filename' => $oldCountArray['filename'],
+                    'hash' => $oldCountArray['hash'],
+                ));
+                $downloads = array();
+                for ($i = 0; $i < $oldCountArray['count'] ; $i++) {
+                    $download = $modx->newObject('fdDownloads');
+                    $download->fromArray(array(
+                        'timestamp' => time(),
+                    ));
+                    $downloads[] = $download;
+                }
+                $path->addMany($downloads);
+                if ($path->save() === false) {
+                    continue;
+                }
+                $oldCount->remove(); // remove?
+            }
+        }
+    }
 
     switch ($options[xPDOTransport::PACKAGE_ACTION]) {
         case xPDOTransport::ACTION_UPGRADE:
