@@ -4,7 +4,7 @@
   "author": "goldsky",
   "private": true,
   "devDependencies": {
-    "autoprefixer": "^10.3.4",
+    "autoprefixer": "^10.3.6",
     "grunt": "^1.4.1",
     "grunt-banner": "^0.6.0",
     "grunt-contrib-cssmin": "^4.0.0",
